@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Complete AI Learning Roadmap — Everything You Need</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Clash+Display:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #04040a;
+  --accent: #7b2fff;
+  --hot: #ff2d78;
+  --cool: #00e5ff;
+  --warm: #ffb800;
+  --green: #00ff9d;
+  --text: #e0e0f0;
+  --muted: #4a4a6a;
+  --card: #0a0a14;
+  --border: rgba(255,255,255,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Starfield bg */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0,229,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 28px; }
+
+/* NAV */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,4,10,0.9);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-right: auto; letter-spacing: 2px; }
+.nav-pill {
+  font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(123,47,255,0.4);
+  color: rgba(123,47,255,0.8); text-decoration: none; transition: all 0.2s;
+}
+.nav-pill:hover, .nav-pill.active { background: rgba(123,47,255,0.15); border-color: var(--accent); color: #fff; }
+
+/* HERO */
+.hero { padding: 90px 0 50px; }
+.hero-eyebrow {
+  font-family: 'Syne Mono', monospace; font-size: 11px; letter-spacing: 4px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(123,47,255,0.3); }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 100px);
+  line-height: 0.92; margin-bottom: 28px;
+  color: #fff;
+}
+.hero-desc { max-width: 680px; font-size: 16px; color: rgba(210,210,240,0.72); line-height: 1.8; margin-bottom: 40px; }
+
+/* MAIN FLOWCHART */
+.flowchart-container {
+  padding: 70px 0;
+  border-top: 1px solid var(--border);
+}
+
+.flowchart-canvas-wrapper {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  padding: 40px 30px;
+  margin-bottom: 30px;
+}
+
+#flowchartCanvas {
+  display: block;
+  width: 100%;
+  height: 1400px;
+  border-radius: 8px;
+}
+
+/* INTERACTIVE SECTIONS */
+.flowchart-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 18px;
+  margin-top: 40px;
+  padding: 30px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.legend-block {
+  padding: 18px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  border-left: 4px solid var(--legend-color, var(--accent));
+  transition: all 0.2s;
+}
+
+.legend-block:hover {
+  background: rgba(255,255,255,0.04);
+  border-left-color: var(--legend-color, var(--accent));
+}
+
+.legend-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--legend-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.legend-desc {
+  font-size: 13px;
+  color: rgba(170,170,200,0.8);
+  line-height: 1.6;
+}
+
+/* LEARNING PATHS */
+.learning-paths {
+  padding: 70px 0;
+  border-top: 1px solid var(--border);
+}
+
+.section-label {
+  font-family: 'Syne Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(32px, 5vw, 56px);
+  line-height: 1;
+  margin-bottom: 40px;
+  color: #fff;
+}
+
+.paths-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.path-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  transition: all 0.3s;
+  border-top: 4px solid var(--path-color, var(--accent));
+  position: relative;
+  overflow: hidden;
+}
+
+.path-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.03), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.path-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--path-color, var(--accent));
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+}
+
+.path-card:hover::before {
+  opacity: 1;
+}
+
+.path-icon {
+  font-size: 32px;
+  margin-bottom: 16px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.path-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  color: #fff;
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+
+.path-description {
+  font-size: 13px;
+  color: rgba(170,170,200,0.8);
+  line-height: 1.8;
+  margin-bottom: 18px;
+}
+
+.path-skills {
+  font-size: 11px;
+  font-family: 'Syne Mono', monospace;
+  color: var(--path-color, var(--accent));
+  line-height: 1.8;
+}
+
+/* TOPIC CARDS */
+.topics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 50px;
+}
+
+.topic-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.topic-card::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle, var(--topic-color, var(--accent)) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 0;
+}
+
+.topic-card:hover {
+  border-color: var(--topic-color, var(--accent));
+  box-shadow: 0 0 20px rgba(123,47,255,0.2);
+}
+
+.topic-card:hover::before {
+  opacity: 0.08;
+}
+
+.topic-icon {
+  font-size: 24px;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.topic-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 6px;
+  position: relative;
+  z-index: 1;
+}
+
+.topic-desc {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+}
+
+/* FOOTER */
+footer {
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .flowchart-canvas-wrapper {
+    padding: 24px 16px;
+  }
+  
+  #flowchartCanvas {
+    height: 2000px;
+  }
+  
+  .paths-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">AI ROADMAP</div>
+  <a href="#flowchart" class="nav-pill">Flowchart</a>
+  <a href="#paths" class="nav-pill">Learning Paths</a>
+  <a href="#topics" class="nav-pill">Topics</a>
+</nav>
+
+<div class="wrap">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">Complete Learning Journey</div>
+    <h1>Everything You Need to Master AI</h1>
+    <p class="hero-desc">A comprehensive visual roadmap covering the complete spectrum of artificial intelligence—from foundational mathematics and machine learning fundamentals to advanced deep learning architectures, practical implementation strategies, and emerging specialized domains. Nothing to miss.</p>
+  </section>
+
+  <!-- FLOWCHART SECTION -->
+  <section class="flowchart-container" id="flowchart">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 32px;">
+      <div style="font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase;">Visual Learning Flow</div>
+      <div style="flex: 1; height: 1px; background: rgba(123,47,255,0.3);"></div>
+    </div>
+
+    <div class="flowchart-canvas-wrapper">
+      <canvas id="flowchartCanvas"></canvas>
+    </div>
+
+    <!-- Legend -->
+    <div class="flowchart-legend">
+      <div class="legend-block" style="--legend-color: #00ff9d;">
+        <div class="legend-title">🎯 Foundations</div>
+        <div class="legend-desc">Core mathematics, programming, and fundamentals needed before diving into AI</div>
+      </div>
+      <div class="legend-block" style="--legend-color: #00e5ff;">
+        <div class="legend-title">🧠 Core ML</div>
+        <div class="legend-desc">Machine Learning algorithms and classical approaches</div>
+      </div>
+      <div class="legend-block" style="--legend-color: #7b2fff;">
+        <div class="legend-title">⚡ Deep Learning</div>
+        <div class="legend-desc">Neural networks, architectures, and advanced training techniques</div>
+      </div>
+      <div class="legend-block" style="--legend-color: #ffb800;">
+        <div class="legend-title">🔬 Specialized</div>
+        <div class="legend-desc">Advanced domains like NLP, Computer Vision, Reinforcement Learning</div>
+      </div>
+      <div class="legend-block" style="--legend-color: #ff2d78;">
+        <div class="legend-title">🛠️ Practical</div>
+        <div class="legend-desc">Implementation, deployment, and real-world applications</div>
+      </div>
+      <div class="legend-block" style="--legend-color: #ff9f1c;">
+        <div class="legend-title">🚀 Advanced</div>
+        <div class="legend-desc">Research-level topics and emerging techniques</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEARNING PATHS -->
+  <section class="learning-paths" id="paths">
+    <div class="section-label">Structured Progression</div>
+    <h2 class="section-title">Learning Paths by Role</h2>
+
+    <div class="paths-grid">
+      <div class="path-card" style="--path-color: #00e5ff;">
+        <div class="path-icon">📊</div>
+        <div class="path-name">Data Scientist</div>
+        <div class="path-description">Focus on statistical analysis, classical ML, and data-driven insights</div>
+        <div class="path-skills">
+          • Linear Algebra & Statistics<br>
+          • Supervised Learning<br>
+          • Feature Engineering<br>
+          • Model Evaluation<br>
+          • Scikit-learn, Pandas, NumPy
+        </div>
+      </div>
+
+      <div class="path-card" style="--path-color: #7b2fff;">
+        <div class="path-icon">🧠</div>
+        <div class="path-name">Deep Learning Engineer</div>
+        <div class="path-description">Master neural networks, architectures, and large-scale training</div>
+        <div class="path-skills">
+          • Neural Network Theory<br>
+          • CNNs, RNNs, Transformers<br>
+          • Training & Optimization<br>
+          • TensorFlow/PyTorch<br>
+          • GPU Computing
+        </div>
+      </div>
+
+      <div class="path-card" style="--path-color: #ffb800;">
+        <div class="path-icon">🤖</div>
+        <div class="path-name">NLP Specialist</div>
+        <div class="path-description">Natural language processing and large language models</div>
+        <div class="path-skills">
+          • Text Processing<br>
+          • Word Embeddings<br>
+          • Seq2Seq Models<br>
+          • Transformers & LLMs<br>
+          • Fine-tuning & Prompting
+        </div>
+      </div>
+
+      <div class="path-card" style="--path-color: #00ff9d;">
+        <div class="path-icon">👁️</div>
+        <div class="path-name">Computer Vision Engineer</div>
+        <div class="path-description">Image processing, object detection, and visual understanding</div>
+        <div class="path-skills">
+          • Image Fundamentals<br>
+          • Classical CV<br>
+          • CNNs & Detection<br>
+          • Segmentation<br>
+          • 3D Vision
+        </div>
+      </div>
+
+      <div class="path-card" style="--path-color: #ff2d78;">
+        <div class="path-icon">⚙️</div>
+        <div class="path-name">ML Ops Engineer</div>
+        <div class="path-description">Production systems, deployment, and model management</div>
+        <div class="path-skills">
+          • Model Deployment<br>
+          • Containerization<br>
+          • CI/CD Pipelines<br>
+          • Monitoring & Scaling<br>
+          • Docker & Kubernetes
+        </div>
+      </div>
+
+      <div class="path-card" style="--path-color: #ff9f1c;">
+        <div class="path-icon">🔬</div>
+        <div class="path-name">AI Researcher</div>
+        <div class="path-description">Cutting-edge research and novel algorithm development</div>
+        <div class="path-skills">
+          • Advanced Math<br>
+          • Paper Implementation<br>
+          • Experimentation<br>
+          • Novel Architectures<br>
+          • Academic Publishing
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOPICS BREAKDOWN -->
+  <section style="padding: 70px 0; border-top: 1px solid var(--border);" id="topics">
+    <div class="section-label">Comprehensive Knowledge Areas</div>
+    <h2 class="section-title">Key Topics Covered</h2>
+
+    <h3 style="font-size: 18px; margin-bottom: 18px; color: #fff; font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px;">FOUNDATIONS</h3>
+    <div class="topics-grid">
+      <div class="topic-card" style="--topic-color: #00ff9d;">
+        <span class="topic-icon">∑</span>
+        <div class="topic-name">Linear Algebra</div>
+        <div class="topic-desc">Vectors, matrices, eigenvalues, tensor operations</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #00ff9d;">
+        <span class="topic-icon">📈</span>
+        <div class="topic-name">Calculus & Optimization</div>
+        <div class="topic-desc">Derivatives, gradients, backpropagation, optimization algorithms</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #00ff9d;">
+        <span class="topic-icon">🎲</span>
+        <div class="topic-name">Probability & Statistics</div>
+        <div class="topic-desc">Distributions, Bayes, hypothesis testing, inference</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #00ff9d;">
+        <span class="topic-icon">💻</span>
+        <div class="topic-name">Programming</div>
+        <div class="topic-desc">Python, data structures, algorithms, best practices</div>
+      </div>
+    </div>
+
+    <h3 style="font-size: 18px; margin-bottom: 18px; margin-top: 40px; color: #fff; font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px;">MACHINE LEARNING FUNDAMENTALS</h3>
+    <div class="topics-grid">
+      <div class="topic-card" style="--topic-color: #00e5ff;">
+        <span class="topic-icon">🎯</span>
+        <div class="topic-name">Supervised Learning</div>
+        <div class="topic-desc">Regression, classification, loss functions</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #00e5ff;">
+        <span class="topic-icon">🔍</span>
+        <div class="topic-name">Unsupervised Learning</div>
+        <div class="topic-desc">Clustering, dimensionality reduction, anomaly detection</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #00e5ff;">
+        <span class="topic-icon">⚖️</span>
+        <div class="topic-name">Model Evaluation</div>
+        <div class="topic-desc">Metrics, cross-validation, hyperparameter tuning, overfitting</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #00e5ff;">
+        <span class="topic-icon">🏗️</span>
+        <div class="topic-name">Classical Algorithms</div>
+        <div class="topic-desc">Decision trees, SVM, ensemble methods, KNN, Naive Bayes</div>
+      </div>
+    </div>
+
+    <h3 style="font-size: 18px; margin-bottom: 18px; margin-top: 40px; color: #fff; font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px;">DEEP LEARNING ARCHITECTURES</h3>
+    <div class="topics-grid">
+      <div class="topic-card" style="--topic-color: #7b2fff;">
+        <span class="topic-icon">🧬</span>
+        <div class="topic-name">Neural Networks</div>
+        <div class="topic-desc">Perceptrons, layers, activation functions, forward/backward pass</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #7b2fff;">
+        <span class="topic-icon">📸</span>
+        <div class="topic-name">CNNs</div>
+        <div class="topic-desc">Convolutional layers, pooling, ResNets, feature maps</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #7b2fff;">
+        <span class="topic-icon">🔄</span>
+        <div class="topic-name">RNNs & LSTMs</div>
+        <div class="topic-desc">Recurrent connections, memory cells, sequence modeling</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #7b2fff;">
+        <span class="topic-icon">⭐</span>
+        <div class="topic-name">Transformers</div>
+        <div class="topic-desc">Attention mechanisms, multi-head attention, self-attention, positional encoding</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #7b2fff;">
+        <span class="topic-icon">🎨</span>
+        <div class="topic-name">Generative Models</div>
+        <div class="topic-desc">GANs, VAEs, Diffusion models, autoencoders</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #7b2fff;">
+        <span class="topic-icon">🔗</span>
+        <div class="topic-name">Graph Neural Networks</div>
+        <div class="topic-desc">Graph convolutions, node embeddings, message passing</div>
+      </div>
+    </div>
+
+    <h3 style="font-size: 18px; margin-bottom: 18px; margin-top: 40px; color: #fff; font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px;">SPECIALIZED DOMAINS</h3>
+    <div class="topics-grid">
+      <div class="topic-card" style="--topic-color: #ffb800;">
+        <span class="topic-icon">📝</span>
+        <div class="topic-name">NLP</div>
+        <div class="topic-desc">Tokenization, embeddings, language models, translation, sentiment</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #ffb800;">
+        <span class="topic-icon">🎬</span>
+        <div class="topic-name">Computer Vision</div>
+        <div class="topic-desc">Image classification, detection, segmentation, pose estimation</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #ffb800;">
+        <span class="topic-icon">🎮</span>
+        <div class="topic-name">Reinforcement Learning</div>
+        <div class="topic-desc">Q-learning, policy gradient, reward design, agents</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #ffb800;">
+        <span class="topic-icon">💬</span>
+        <div class="topic-name">Large Language Models</div>
+        <div class="topic-desc">LLMs, prompt engineering, fine-tuning, RAG, agents</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #ffb800;">
+        <span class="topic-icon">🎵</span>
+        <div class="topic-name">Audio & Speech</div>
+        <div class="topic-desc">Audio processing, speech recognition, synthesis, generation</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #ffb800;">
+        <span class="topic-icon">⏱️</span>
+        <div class="topic-name">Time Series</div>
+        <div class="topic-desc">Forecasting, ARIMA, attention models, sequence prediction</div>
+      </div>
+    </div>
+
+    <h3 style="font-size: 18px; margin-bottom: 18px; margin-top: 40px; color: #fff; font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px;">TRAINING & OPTIMIZATION</h3>
+    <div class="topics-grid">
+      <div class="topic-card" style="--topic-color: #ff2d78;">
+        <span class="topic-icon">⬇️</span>
+        <div class="topic-name">Optimization Algorithms</div>
+        <div class="topic-desc">SGD, Adam, RMSprop, learning rates, momentum</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #ff2d78;">
+        <span class="topic-icon">🎓</span>
+        <div class="topic-name">Regularization</div>
+        <div class="topic-desc">L1/L2, dropout, batch norm, early stopping, data augmentation</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #ff2d78;">
+        <span class="topic-icon">🚀</span>
+        <div class="topic-name">Training Techniques</div>
+        <div class="topic-desc">Transfer learning, fine-tuning, few-shot learning, meta-learning</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #ff2d78;">
+        <span class="topic-icon">⚡</span>
+        <div class="topic-name">Distributed Training</div>
+        <div class="topic-desc">Data parallelism, model parallelism, mixed precision, scaling</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #ff2d78;">
+        <span class="topic-icon">🔧</span>
+        <div class="topic-name">Hardware & Frameworks</div>
+        <div class="topic-desc">GPUs, TPUs, PyTorch, TensorFlow, efficient inference</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #ff2d78;">
+        <span class="topic-icon">📊</span>
+        <div class="topic-name">Experimentation</div>
+        <div class="topic-desc">Logging, tracking, ablation studies, reproducibility</div>
+      </div>
+    </div>
+
+    <h3 style="font-size: 18px; margin-bottom: 18px; margin-top: 40px; color: #fff; font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px;">ADVANCED & EMERGING</h3>
+    <div class="topics-grid">
+      <div class="topic-card" style="--topic-color: #ff9f1c;">
+        <span class="topic-icon">🔐</span>
+        <div class="topic-name">Interpretability & Explainability</div>
+        <div class="topic-desc">SHAP, LIME, attention visualization, feature importance</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #ff9f1c;">
+        <span class="topic-icon">⚠️</span>
+        <div class="topic-name">Robustness & Safety</div>
+        <div class="topic-desc">Adversarial examples, uncertainty, fairness, bias mitigation</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #ff9f1c;">
+        <span class="topic-icon">🔬</span>
+        <div class="topic-name">Multimodal Learning</div>
+        <div class="topic-desc">Vision-language models, cross-modal fusion, alignment</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #ff9f1c;">
+        <span class="topic-icon">🎯</span>
+        <div class="topic-name">AI Agents & Planning</div>
+        <div class="topic-desc">Agent architectures, planning algorithms, tool use, reasoning</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #ff9f1c;">
+        <span class="topic-icon">🌱</span>
+        <div class="topic-name">Continual Learning</div>
+        <div class="topic-desc">Catastrophic forgetting, lifelong learning, domain adaptation</div>
+      </div>
+      <div class="topic-card" style="--topic-color: #ff9f1c;">
+        <span class="topic-icon">🚢</span>
+        <div class="topic-name">Production & Deployment</div>
+        <div class="topic-desc">MLOps, model serving, monitoring, A/B testing, version control</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Footer -->
+<footer>
+  <p class="footer-text">Complete AI Learning Roadmap — Master Every Essential Topic</p>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════
+// AI Learning Flowchart Canvas
+// ═══════════════════════════════════════════
+
+const canvas = document.getElementById('flowchartCanvas');
+const ctx = canvas.getContext('2d');
+
+// Set canvas resolution for retina displays
+const dpr = window.devicePixelRatio || 1;
+canvas.width = canvas.offsetWidth * dpr;
+canvas.height = canvas.offsetHeight * dpr;
+ctx.scale(dpr, dpr);
+
+const width = canvas.offsetWidth;
+const height = canvas.offsetHeight;
+
+// Color scheme matching design system
+const colors = {
+  foundation: '#00ff9d',
+  coreML: '#00e5ff',
+  deepLearning: '#7b2fff',
+  specialized: '#ffb800',
+  practical: '#ff2d78',
+  advanced: '#ff9f1c'
+};
+
+// Flowchart structure - hierarchical learning path
+const layers = [
+  {
+    title: 'FOUNDATIONS',
+    color: colors.foundation,
+    items: ['Math', 'Programming', 'Statistics'],
+    y: 60
+  },
+  {
+    title: 'FUNDAMENTALS',
+    color: colors.coreML,
+    items: ['Supervised Learning', 'Unsupervised', 'Evaluation'],
+    y: 200
+  },
+  {
+    title: 'NEURAL NETWORKS',
+    color: colors.deepLearning,
+    items: ['Basics', 'Optimization', 'Backprop'],
+    y: 340
+  },
+  {
+    title: 'ARCHITECTURES',
+    color: colors.deepLearning,
+    items: ['CNNs', 'RNNs', 'Transformers', 'Generative'],
+    y: 500
+  },
+  {
+    title: 'SPECIALIZATION',
+    color: colors.specialized,
+    items: ['NLP', 'Vision', 'Audio', 'RL'],
+    y: 700
+  },
+  {
+    title: 'ADVANCED TECHNIQUES',
+    color: colors.practical,
+    items: ['Training', 'Optimization', 'Deployment'],
+    y: 880
+  },
+  {
+    title: 'MASTERY DOMAINS',
+    color: colors.advanced,
+    items: ['Research', 'Safety', 'Agents', 'Scaling'],
+    y: 1060
+  },
+  {
+    title: 'REAL-WORLD APPLICATIONS',
+    color: colors.practical,
+    items: ['Production ML', 'MLOps', 'Ethics'],
+    y: 1220
+  }
+];
+
+// Draw flowchart
+function drawFlowchart() {
+  ctx.fillStyle = 'transparent';
+  ctx.fillRect(0, 0, width, height);
+
+  // Draw connecting flow lines
+  for (let i = 0; i < layers.length - 1; i++) {
+    const y1 = layers[i].y + 100;
+    const y2 = layers[i + 1].y;
+    const midY = (y1 + y2) / 2;
+
+    // Gradient line
+    const gradient = ctx.createLinearGradient(width / 2, y1, width / 2, y2);
+    gradient.addColorStop(0, layers[i].color + '40');
+    gradient.addColorStop(0.5, layers[i].color + '20');
+    gradient.addColorStop(1, layers[i + 1].color + '40');
+
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(width / 2, y1);
+    // Bezier curve for smooth flow
+    ctx.bezierCurveTo(width / 2, midY, width / 2, midY, width / 2, y2);
+    ctx.stroke();
+
+    // Arrow
+    const arrowSize = 8;
+    ctx.fillStyle = layers[i + 1].color + '80';
+    ctx.beginPath();
+    ctx.moveTo(width / 2, y2);
+    ctx.lineTo(width / 2 - arrowSize, y2 - arrowSize * 2);
+    ctx.lineTo(width / 2 + arrowSize, y2 - arrowSize * 2);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Draw layer boxes
+  layers.forEach((layer, layerIdx) => {
+    const x = width / 2;
+    const y = layer.y;
+
+    // Layer title background
+    const titleHeight = 40;
+    ctx.fillStyle = layer.color + '15';
+    ctx.strokeStyle = layer.color + '40';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - 200, y);
+    ctx.lineTo(x + 200, y);
+    ctx.lineTo(x + 200, y + titleHeight);
+    ctx.lineTo(x - 200, y + titleHeight);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Layer title
+    ctx.fillStyle = layer.color;
+    ctx.font = 'bold 12px "Syne Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(layer.title, x, y + 25);
+
+    // Draw items in a grid below title
+    const itemsPerRow = Math.ceil(Math.sqrt(layer.items.length));
+    const itemWidth = 380 / itemsPerRow;
+    const itemHeight = 60;
+    const startX = x - (itemsPerRow * itemWidth) / 2;
+    const startY = y + titleHeight + 20;
+
+    layer.items.forEach((item, idx) => {
+      const row = Math.floor(idx / itemsPerRow);
+      const col = idx % itemsPerRow;
+      const ix = startX + col * itemWidth + itemWidth / 2;
+      const iy = startY + row * itemHeight;
+
+      // Item box
+      ctx.fillStyle = 'rgba(255,255,255,0.02)';
+      ctx.strokeStyle = layer.color + '30';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(ix - itemWidth / 2 + 8, iy - 15, itemWidth - 16, 35, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      // Item text
+      ctx.fillStyle = layer.color;
+      ctx.font = '11px "Syne", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(item, ix, iy + 8);
+    });
+  });
+
+  // Draw side indicators
+  const indicators = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
+  indicators.forEach((label, i) => {
+    const y = 100 + (i * 300);
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = '9px "Syne Mono", monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(label.toUpperCase(), width - 30, y);
+  });
+}
+
+// Helper function for rounded rectangles (fallback for older browsers)
+CanvasRenderingContext2D.prototype.roundRect = CanvasRenderingContext2D.prototype.roundRect || function(x, y, w, h, r) {
+  if (w < 2 * r) r = w / 2;
+  if (h < 2 * r) r = h / 2;
+  this.beginPath();
+  this.moveTo(x + r, y);
+  this.arcTo(x + w, y, x + w, y + h, r);
+  this.arcTo(x + w, y + h, x, y + h, r);
+  this.arcTo(x, y + h, x, y, r);
+  this.arcTo(x, y, x + w, y, r);
+  this.closePath();
+};
+
+drawFlowchart();
+
+// Redraw on resize
+window.addEventListener('resize', () => {
+  canvas.width = canvas.offsetWidth * dpr;
+  canvas.height = canvas.offsetHeight * dpr;
+  ctx.scale(dpr, dpr);
+  drawFlowchart();
+});
+
+// Smooth scroll for nav links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function(e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+});
+
+// Interactive path cards - hover effect with mouse tracking
+document.querySelectorAll('.path-card').forEach(card => {
+  card.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    card.style.setProperty('--mx', (x / rect.width) * 100 + '%');
+    card.style.setProperty('--my', (y / rect.height) * 100 + '%');
+  });
+});
+
+</script>
+
+</body>
+</html>
