@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python Programming Fundamentals — The Language of AI</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Clash+Display:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #04040a;
+  --accent: #7b2fff;
+  --hot: #ff2d78;
+  --cool: #00e5ff;
+  --warm: #ffb800;
+  --green: #00ff9d;
+  --text: #e0e0f0;
+  --muted: #4a4a6a;
+  --card: #0a0a14;
+  --border: rgba(255,255,255,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+/* Starfield bg */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0,229,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+/* NAV */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,4,10,0.9);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-right: auto; letter-spacing: 2px; }
+.nav-pill {
+  font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(123,47,255,0.4);
+  color: rgba(123,47,255,0.8); text-decoration: none; transition: all 0.2s;
+}
+.nav-pill:hover, .nav-pill.active { background: rgba(123,47,255,0.15); border-color: var(--accent); color: #fff; }
+
+/* HERO */
+.hero { padding: 90px 0 50px; }
+.hero-eyebrow {
+  font-family: 'Syne Mono', monospace; font-size: 11px; letter-spacing: 4px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(123,47,255,0.3); }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 100px);
+  line-height: 0.92; margin-bottom: 28px;
+  color: #fff;
+}
+
+.hero-desc { max-width: 750px; font-size: 16px; color: rgba(210,210,240,0.72); line-height: 1.8; margin-bottom: 40px; }
+
+/* SECTION */
+section { padding: 70px 0; border-top: 1px solid var(--border); }
+.section-label { font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 64px); line-height: 1; margin-bottom: 40px; color: #fff; }
+
+/* CONCEPT CARD */
+.concept-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px;
+  margin-bottom: 32px;
+  border-left: 4px solid var(--card-accent, var(--accent));
+  transition: all 0.3s;
+}
+
+.concept-card:hover {
+  border-color: var(--card-accent, var(--accent));
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  transform: translateY(-2px);
+}
+
+.concept-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--card-accent, var(--accent));
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.concept-body {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.9;
+  margin-bottom: 28px;
+}
+
+.concept-body p {
+  margin-bottom: 16px;
+}
+
+.concept-body strong {
+  color: #fff;
+}
+
+.code-block {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 24px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #fff;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.code-comment {
+  color: #5c7a8a;
+}
+
+.code-keyword {
+  color: var(--accent);
+}
+
+.code-string {
+  color: var(--green);
+}
+
+.code-number {
+  color: var(--warm);
+}
+
+.code-function {
+  color: var(--cool);
+}
+
+.teaching-box {
+  background: rgba(123,47,255,0.1);
+  border-left: 4px solid var(--accent);
+  padding: 20px;
+  border-radius: 10px;
+  margin: 24px 0;
+  font-size: 14px;
+  color: rgba(210,210,240,0.9);
+  line-height: 1.8;
+}
+
+.teaching-box strong {
+  color: #fff;
+}
+
+/* IMPACT BOX - WHERE/WHY/WHEN */
+.impact-box {
+  background: linear-gradient(135deg, rgba(123,47,255,0.15) 0%, rgba(0,229,255,0.08) 100%);
+  border: 1px solid rgba(123,47,255,0.3);
+  border-radius: 14px;
+  padding: 32px;
+  margin-top: 32px;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.impact-item {
+  padding: 24px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  border-left: 4px solid var(--impact-color, var(--accent));
+}
+
+.impact-item-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--impact-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.impact-item-content {
+  font-size: 13px;
+  color: rgba(200,200,220,0.88);
+  line-height: 1.8;
+}
+
+/* COMPARISON CARDS */
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin: 28px 0;
+}
+
+.comparison-card {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 24px;
+  border-left: 3px solid var(--comp-color, var(--accent));
+}
+
+.comp-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  color: var(--comp-color, var(--accent));
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+
+.comp-content {
+  font-size: 13px;
+  color: rgba(200,200,220,0.85);
+  line-height: 1.8;
+}
+
+/* EXAMPLE SECTION */
+.example-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  margin: 28px 0;
+  border-left: 3px solid var(--warm);
+}
+
+.example-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--warm);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.example-description {
+  font-size: 14px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.8;
+  margin-bottom: 16px;
+}
+
+/* TIMELINE */
+.timeline {
+  position: relative;
+  padding: 40px 0;
+}
+
+.timeline-item {
+  padding: 28px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 24px;
+  margin-left: 40px;
+  position: relative;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -32px;
+  top: 32px;
+  width: 16px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: 3px solid var(--bg);
+}
+
+.timeline-item::after {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: 48px;
+  width: 2px;
+  height: 44px;
+  background: rgba(123,47,255,0.3);
+}
+
+.timeline-item:last-child::after {
+  display: none;
+}
+
+.timeline-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  color: var(--cool);
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+}
+
+.timeline-desc {
+  font-size: 14px;
+  color: rgba(200,200,220,0.85);
+  line-height: 1.8;
+}
+
+/* FOOTER */
+footer {
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .hero { padding: 60px 0 40px; }
+  section { padding: 50px 0; }
+  .impact-grid { grid-template-columns: 1fr; }
+  .comparison-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">PYTHON PROGRAMMING</div>
+  <a href="#basics" class="nav-pill">Basics</a>
+  <a href="#functions" class="nav-pill">Functions</a>
+  <a href="#oop" class="nav-pill">OOP</a>
+  <a href="#advanced" class="nav-pill">Advanced</a>
+</nav>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">The Language of Machine Learning</div>
+    <h1>Python Programming</h1>
+    <p class="hero-desc">Python has become the dominant language for machine learning and artificial intelligence for good reason. It's readable, expressive, and has an enormous ecosystem of libraries like NumPy, Pandas, PyTorch, and TensorFlow. But Python is more than just ML framework syntax. Understanding how to write good Python code—clean, modular, testable code—is fundamental to building systems that work at scale. This isn't about memorizing syntax. It's about learning to think like a programmer, structuring your code logically, and understanding the philosophy behind the language that powers AI.</p>
+  </section>
+
+  <!-- FUNDAMENTALS -->
+  <section id="basics">
+    <div class="section-label">Building Blocks</div>
+    <h2 class="section-title">Variables, Data Types, and Control Flow</h2>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🧮 Variables and Basic Data Types</div>
+      <div class="concept-body">
+        <p>A variable is a named container that holds a value. You create a variable by assigning a value to it using the equals sign. Python automatically determines what type of data the variable holds based on the value you assign. This is called dynamic typing—you don't need to declare the type upfront, Python figures it out for you.</p>
+        <p>Understanding data types is crucial. The main primitive types are integers (whole numbers), floats (decimal numbers), strings (text), and booleans (True or False). Each type has different properties and operations you can perform. An integer plus an integer gives an integer. A string plus a string concatenates them (joins them together). A string plus an integer causes an error because it's undefined.</p>
+      </div>
+
+      <div class="teaching-box">
+        Think of variables as labeled boxes. The label is the variable name. Inside the box is the value. When you change the value, you're putting something new in the box, but the label stays the same. The type of the box's contents is determined by what you put in—put an integer in, it's an integer box. Put a string in, it's a string box.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Creating variables and checking types</span>
+name = <span class="code-string">"Alice"</span>          <span class="code-comment"># String - text</span>
+age = <span class="code-number">25</span>                 <span class="code-comment"># Integer - whole number</span>
+height = <span class="code-number">5.8</span>             <span class="code-comment"># Float - decimal number</span>
+is_student = <span class="code-keyword">True</span>        <span class="code-comment"># Boolean - True or False</span>
+
+<span class="code-comment"># Python tells you the type automatically</span>
+<span class="code-function">print</span>(<span class="code-function">type</span>(name))      <span class="code-comment"># Output: &lt;class 'str'&gt;</span>
+<span class="code-function">print</span>(<span class="code-function">type</span>(age))       <span class="code-comment"># Output: &lt;class 'int'&gt;</span>
+
+<span class="code-comment"># Variables can be reassigned to different values</span>
+age = age + 1          <span class="code-comment"># Alice has a birthday! Now age = 26</span>
+name = <span class="code-string">"Alice Smith"</span>   <span class="code-comment"># She got married, name changed</span>
+
+<span class="code-comment"># Type errors happen when operations don't make sense</span>
+result = name + age    <span class="code-comment"># ERROR! Can't add string to number</span>
+result = name + <span class="code-string">" is "</span> + <span class="code-function">str</span>(age)  <span class="code-comment"># CORRECT: converts age to string first</span>
+      </div>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--green);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Every single Python program starts with variables storing data. Neural network weights are stored in variables. Dataset rows are stored as variables. Every machine learning model works by manipulating variables that hold data and parameters.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">Understanding types prevents bugs. When you forget that a variable is a string instead of a number, you'll write code that crashes. Understanding what values can do (what operations are valid) helps you write correct code the first time.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--warm);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">Constantly. Every line of code involves variables. Understanding their types and what operations are valid is foundational. Debugging often involves understanding why a variable has the wrong type or unexpected value.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🔄 Control Flow: Making Decisions and Loops</div>
+      <div class="concept-body">
+        <p>Control flow statements let your program make decisions (if/else) and repeat actions (for/while loops). An if statement checks a condition and runs code only if the condition is true. An else clause provides code to run if the condition is false. These let your program behave differently based on the data or circumstances.</p>
+        <p>Loops repeat code multiple times. A for loop iterates over items in a sequence (like a list or range of numbers), executing code for each item. A while loop repeats code as long as a condition is true. Without loops, you'd need to write repetitive code manually. With loops, you write the action once and it applies to all items.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Think of if/else like decision trees.</strong> You ask a question (is x greater than 5?). If yes, go down one branch. If no, go down another. This branching lets code make intelligent choices. For loops are like a recipe instruction saying "for each ingredient, add it to the bowl." You don't list "add first ingredient, add second ingredient, add third ingredient"—you write it once and let the loop handle repetition.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># If/else statements make decisions</span>
+age = <span class="code-number">25</span>
+
+<span class="code-keyword">if</span> age < <span class="code-number">18</span>:
+    <span class="code-function">print</span>(<span class="code-string">"You're underage"</span>)
+<span class="code-keyword">elif</span> age < <span class="code-number">65</span>:
+    <span class="code-function">print</span>(<span class="code-string">"You're an adult"</span>)
+<span class="code-keyword">else</span>:
+    <span class="code-function">print</span>(<span class="code-string">"You're retired"</span>)
+
+<span class="code-comment"># For loops iterate over sequences</span>
+numbers = [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">4</span>, <span class="code-number">5</span>]  <span class="code-comment"># A list</span>
+
+<span class="code-keyword">for</span> num <span class="code-keyword">in</span> numbers:
+    <span class="code-function">print</span>(num * <span class="code-number">2</span>)  <span class="code-comment"># Prints 2, 4, 6, 8, 10</span>
+
+<span class="code-comment"># While loops repeat until condition is false</span>
+count = <span class="code-number">0</span>
+<span class="code-keyword">while</span> count < <span class="code-number">3</span>:
+    <span class="code-function">print</span>(<span class="code-string">f"Count is {count}"</span>)
+    count = count + <span class="code-number">1</span>  <span class="code-comment"># Must eventually make condition false!</span>
+
+<span class="code-comment"># Range creates a sequence of numbers efficiently</span>
+<span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">5</span>):  <span class="code-comment"># i will be 0, 1, 2, 3, 4</span>
+    <span class="code-function">print</span>(i)
+      </div>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Processing batches of data requires loops. Neural network training loops over batches. Data preprocessing loops through records. Model evaluation loops through test examples. Virtually every ML pipeline uses loops for batch processing.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--hot);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">Loops let you process any amount of data with the same code. Without loops, you'd need different code for 100 samples vs 1000 samples. With loops, the same code scales. This is essential for machine learning where you often don't know data size in advance.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--accent);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">Every data processing task uses loops. Training neural networks uses nested loops (outer loop over epochs, inner loop over batches). Evaluating models loops through test examples. Loops are everywhere in ML code.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- FUNCTIONS -->
+  <section id="functions">
+    <div class="section-label">Reusability and Modularity</div>
+    <h2 class="section-title">Functions, Scope, and Code Organization</h2>
+
+    <div class="concept-card" style="--card-accent: var(--accent);">
+      <div class="concept-title">🔧 Functions: Packaging Code for Reuse</div>
+      <div class="concept-body">
+        <p>A function is a reusable block of code that performs a specific task. You define a function once, then call it as many times as you need with different inputs. Functions take parameters (inputs) and return values (outputs). This is how you avoid writing the same code repeatedly and how you break large programs into manageable pieces.</p>
+        <p>Good functions have clear purposes. A function that does one thing well is easier to understand, test, and debug than a function that does many things. When you find yourself copying and pasting code, that's a signal you should write a function instead. Functions also make code more readable because you can give them meaningful names that describe what they do.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Think of functions like recipes.</strong> A recipe is instructions for making something. You follow the recipe (call the function) with your ingredients (parameters) and get a result (return value). Once you have a recipe, you don't need to learn to make the dish every time—you follow the recipe. Functions work the same way for code.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Define a function with def keyword</span>
+<span class="code-keyword">def</span> <span class="code-function">greet</span>(name):
+    <span class="code-comment"># This code runs when function is called</span>
+    message = <span class="code-string">f"Hello, {name}!"</span>
+    <span class="code-keyword">return</span> message  <span class="code-comment"># Send result back to caller</span>
+
+<span class="code-comment"># Call the function with an argument</span>
+result = <span class="code-function">greet</span>(<span class="code-string">"Alice"</span>)  <span class="code-comment"># result is "Hello, Alice!"</span>
+<span class="code-function">print</span>(result)
+
+<span class="code-comment"># Function that does a calculation</span>
+<span class="code-keyword">def</span> <span class="code-function">add</span>(a, b):
+    <span class="code-comment"># Multiple parameters</span>
+    return a + b
+
+result = <span class="code-function">add</span>(<span class="code-number">3</span>, <span class="code-number">5</span>)  <span class="code-comment"># result is 8</span>
+
+<span class="code-comment"># Functions can have default parameters</span>
+<span class="code-keyword">def</span> <span class="code-function">greet_friendly</span>(name, greeting=<span class="code-string">"Hi"</span>):
+    <span class="code-keyword">return</span> <span class="code-string">f"{greeting}, {name}!"</span>
+
+<span class="code-function">greet_friendly</span>(<span class="code-string">"Bob"</span>)          <span class="code-comment"># Uses default: "Hi, Bob!"</span>
+<span class="code-function">greet_friendly</span>(<span class="code-string">"Bob"</span>, <span class="code-string">"Hello"</span>)   <span class="code-comment"># Overrides: "Hello, Bob!"</span>
+      </div>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--accent);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Every machine learning pipeline is built from functions. Data loading functions, preprocessing functions, model training functions, evaluation functions. Neural network layers are functions. NumPy and Pandas operations are functions. ML development is almost entirely function-based.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--green);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">Functions prevent code duplication. They make code testable—you can test each function independently. They make code readable because meaningful function names explain what code does. They enable collaboration because different people can work on different functions.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--warm);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">Any time you need to repeat an action, write a function. Any time code gets hard to understand, break it into functions. Any time you want to test code, use functions. Good function design is what separates hacks from professional code.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">🔍 Scope: Variable Visibility</div>
+      <div class="concept-body">
+        <p>Scope determines where a variable exists and can be accessed. A variable defined inside a function only exists within that function—it's called local scope. A variable defined at the top level of your program exists everywhere—it's global scope. Understanding scope prevents bugs where you think you're changing a variable but you're actually creating a new one, or where you accidentally overwrite a variable you needed elsewhere.</p>
+        <p>This seems small, but scope bugs can be maddening. You change a variable in a function, expecting it to affect the program, but it doesn't because you created a local version instead of modifying the global one. Best practice is to minimize global variables and pass what functions need as parameters. This makes code more predictable and easier to understand.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Global variable (defined outside functions)</span>
+counter = <span class="code-number">0</span>
+
+<span class="code-keyword">def</span> <span class="code-function">increment</span>():
+    <span class="code-comment"># This creates a LOCAL variable, not changing global!</span>
+    counter = counter + <span class="code-number">1</span>  <span class="code-comment"># ERROR without 'global' keyword</span>
+    <span class="code-keyword">return</span> counter
+
+<span class="code-comment"># Better approach: pass and return values</span>
+<span class="code-keyword">def</span> <span class="code-function">increment_better</span>(value):
+    <span class="code-comment"># No global variable needed</span>
+    <span class="code-keyword">return</span> value + <span class="code-number">1</span>
+
+counter = <span class="code-number">0</span>
+counter = <span class="code-function">increment_better</span>(counter)  <span class="code-comment"># Explicitly pass and receive</span>
+
+<span class="code-comment"># Nested scope: functions inside functions</span>
+<span class="code-keyword">def</span> <span class="code-function">outer</span>():
+    x = <span class="code-number">1</span>  <span class="code-comment"># x exists in outer's scope</span>
+    
+    <span class="code-keyword">def</span> <span class="code-function">inner</span>():
+        <span class="code-comment"># inner can ACCESS x from outer</span>
+        <span class="code-function">print</span>(x)  <span class="code-comment"># Prints 1</span>
+    
+    <span class="code-function">inner</span>()
+      </code-block>
+
+      <div class="teaching-box">
+        <strong>Scope is about encapsulation:</strong> what data does each function need to do its job? Pass that data in as parameters. Return what the function produces. This makes the function's requirements explicit and prevents hidden dependencies. It's how you write code that others can understand and use.
+      </div>
+    </div>
+
+  </section>
+
+  <!-- OBJECT ORIENTED PROGRAMMING -->
+  <section id="oop">
+    <div class="section-label">Organizing Complex Programs</div>
+    <h2 class="section-title">Object-Oriented Programming: Classes and Inheritance</h2>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">🏗️ Classes: Templates for Objects</div>
+      <div class="concept-body">
+        <p>A class is a blueprint for creating objects. Think of it like a template. The class defines what properties (attributes) objects of that type have and what actions (methods) they can perform. When you create an object from a class, you're creating an instance with specific values for those properties. For example, the class "Dog" might define that all dogs have a name, an age, and a breed, and that they can bark, sit, and fetch. When you create a specific dog—Fido, age 5, Golden Retriever—you're creating an instance of the Dog class.</p>
+        <p>Classes let you bundle data and the code that operates on that data together. This is called encapsulation. Instead of having loose data and functions scattered everywhere, you organize them logically. This makes code more organized, reusable, and less prone to bugs. In machine learning, models are classes—they have weights (data) and a forward pass method (code that uses the data).</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Classes are real-world abstractions.</strong> A class models a concept from the real world (dogs, cars, bank accounts, neural networks). Each instance is a specific version. A Dog class lets you create many different dogs, each with their own name and age. A NeuralNetwork class lets you create many different networks, each with their own weights.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Define a class with 'class' keyword</span>
+<span class="code-keyword">class</span> Dog:
+    <span class="code-comment"># __init__ runs when creating a new instance (constructor)</span>
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(<span class="code-keyword">self</span>, name, age):
+        <span class="code-comment"># 'self' represents the instance being created</span>
+        <span class="code-keyword">self</span>.name = name     <span class="code-comment"># Instance attribute</span>
+        <span class="code-keyword">self</span>.age = age       <span class="code-comment"># Instance attribute</span>
+    
+    <span class="code-comment"># Methods: functions inside the class</span>
+    <span class="code-keyword">def</span> <span class="code-function">bark</span>(<span class="code-keyword">self</span>):
+        <span class="code-keyword">return</span> <span class="code-string">f"{self.name} says Woof!"</span>
+    
+    <span class="code-keyword">def</span> <span class="code-function">get_older</span>(<span class="code-keyword">self</span>):
+        <span class="code-keyword">self</span>.age = <span class="code-keyword">self</span>.age + <span class="code-number">1</span>
+
+<span class="code-comment"># Create instances (objects) from the class</span>
+fido = Dog(<span class="code-string">"Fido"</span>, <span class="code-number">5</span>)           <span class="code-comment"># New Dog instance</span>
+bella = Dog(<span class="code-string">"Bella"</span>, <span class="code-number">3</span>)           <span class="code-comment"># Another Dog instance</span>
+
+<span class="code-comment"># Access properties and methods</span>
+<span class="code-function">print</span>(fido.name)         <span class="code-comment"># "Fido"</span>
+<span class="code-function">print</span>(fido.<span class="code-function">bark</span>())        <span class="code-comment"># "Fido says Woof!"</span>
+fido.<span class="code-function">get_older</span>()        <span class="code-comment"># fido is now 6</span>
+
+<span class="code-comment"># Each instance is separate</span>
+<span class="code-function">print</span>(fido.age)         <span class="code-comment"># 6</span>
+<span class="code-function">print</span>(bella.age)        <span class="code-comment"># 3 (unchanged)</span>
+      </div>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--hot);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Every machine learning framework uses classes. PyTorch models inherit from nn.Module. Scikit-learn classifiers inherit from BaseEstimator. Datasets are class-based. Models, layers, optimizers, all use OOP. Professional ML code is object-oriented.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">Classes model real concepts (like models or datasets) naturally. They bundle related data and methods, making code organized and logical. They enable reuse—you write a class once and use it many times. They scale—you can have thousands of instances from one class.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--green);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">When code gets complex enough that organization matters. When you have many instances of similar things. When using ML frameworks (which are built on classes). Understanding classes is essential for using PyTorch or Scikit-learn effectively.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🔗 Inheritance: Reusing Class Definitions</div>
+      <div class="concept-body">
+        <p>Inheritance lets you create a new class based on an existing class, inheriting all its properties and methods. The original class is the parent (or superclass), and the new class is the child (or subclass). The child class can add new properties and methods, or override existing ones. This avoids code duplication—if you have similar classes, you can extract commonalities into a parent class.</p>
+        <p>In machine learning, inheritance is everywhere. All models inherit from a base Model class. All datasets inherit from a base Dataset class. This lets the framework treat different models uniformly (they all have a training method) while letting each model implement its specifics differently (a CNN trains differently from an RNN, but they inherit the same interface).</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Parent class defines common behavior</span>
+<span class="code-keyword">class</span> Animal:
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(<span class="code-keyword">self</span>, name):
+        <span class="code-keyword">self</span>.name = name
+    
+    <span class="code-keyword">def</span> <span class="code-function">speak</span>(<span class="code-keyword">self</span>):
+        <span class="code-keyword">return</span> <span class="code-string">"Some sound"</span>
+
+<span class="code-comment"># Child class inherits from parent</span>
+<span class="code-keyword">class</span> Dog(Animal):
+    <span class="code-comment"># Inherits __init__ from Animal</span>
+    
+    <span class="code-comment"># Override speak method</span>
+    <span class="code-keyword">def</span> <span class="code-function">speak</span>(<span class="code-keyword">self</span>):
+        <span class="code-keyword">return</span> <span class="code-string">"Woof!"</span>
+
+<span class="code-keyword">class</span> Cat(Animal):
+    <span class="code-keyword">def</span> <span class="code-function">speak</span>(<span class="code-keyword">self</span>):
+        <span class="code-keyword">return</span> <span class="code-string">"Meow!"</span>
+
+<span class="code-comment"># Both Dog and Cat have name and speak</span>
+fido = Dog(<span class="code-string">"Fido"</span>)
+fluffy = Cat(<span class="code-string">"Fluffy"</span>)
+
+<span class="code-function">print</span>(fido.name)       <span class="code-comment"># "Fido" - inherited</span>
+<span class="code-function">print</span>(fido.<span class="code-function">speak</span>())     <span class="code-comment"># "Woof!" - overridden</span>
+<span class="code-function">print</span>(fluffy.<span class="code-function">speak</span>())    <span class="code-comment"># "Meow!" - overridden</span>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Inheritance models "is-a" relationships.</strong> A Dog is an Animal. A Cat is an Animal. They share common properties (name) and actions (speak) but implement them differently. Inheritance captures this relationship, avoiding code duplication while allowing specialization.
+      </div>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">PyTorch models inherit from nn.Module. Scikit-learn classifiers inherit from BaseEstimator and ClassifierMixin. Custom models inherit from base classes. When you write a neural network, you're creating a class that inherits from nn.Module.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--green);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">Inheritance prevents code duplication. Common functionality lives in parent classes. Children specialize by overriding methods. This scales—you can have many specialized classes sharing common code, making the system easier to maintain.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--accent);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">When using ML frameworks (inheritance is built in). When designing large systems with many related classes. When you want to extend existing classes without modifying them. When you want to ensure different implementations of the same interface.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ADVANCED TOPICS -->
+  <section id="advanced">
+    <div class="section-label">Professional Practices</div>
+    <h2 class="section-title">Advanced Python: Functional Programming, Comprehensions, and Testing</h2>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">📝 List Comprehensions and Generators</div>
+      <div class="concept-body">
+        <p>List comprehensions provide a concise, readable way to create new lists by filtering or transforming existing ones. Instead of writing a for loop that builds a list, you write a single expression. They're faster and more Pythonic (idiomatic Python). Generators are similar but create values on-the-fly instead of storing them all in memory. This is crucial for processing large datasets—you don't load everything into memory at once.</p>
+        <p>In machine learning, you constantly process datasets. Loading a million images into memory at once would crash your computer. Generators let you load and process them one at a time, or in small batches. This is how DataLoader classes work in PyTorch—they're generators that yield batches.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># List comprehension: create a new list from an existing one</span>
+numbers = [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>, <span class="code-number">4</span>, <span class="code-number">5</span>]
+
+<span class="code-comment"># Square each number</span>
+squares = [x**<span class="code-number">2</span> <span class="code-keyword">for</span> x <span class="code-keyword">in</span> numbers]
+<span class="code-comment"># Result: [1, 4, 9, 16, 25]</span>
+
+<span class="code-comment"># Filter and transform: keep even numbers and square them</span>
+even_squares = [x**<span class="code-number">2</span> <span class="code-keyword">for</span> x <span class="code-keyword">in</span> numbers <span class="code-keyword">if</span> x % <span class="code-number">2</span> == <span class="code-number">0</span>]
+<span class="code-comment"># Result: [4, 16]</span>
+
+<span class="code-comment"># Generator: creates values on demand, not all at once</span>
+<span class="code-keyword">def</span> <span class="code-function">count_up_to</span>(n):
+    i = <span class="code-number">0</span>
+    <span class="code-keyword">while</span> i < n:
+        <span class="code-keyword">yield</span> i  <span class="code-comment"># Pause here, produce value</span>
+        i += <span class="code-number">1</span>
+
+<span class="code-comment"># Values produced one at a time, not stored in memory</span>
+<span class="code-keyword">for</span> number <span class="code-keyword">in</span> <span class="code-function">count_up_to</span>(<span class="code-number">1000000</span>):
+    <span class="code-function">print</span>(number)  <span class="code-comment"># Processes one number at a time</span>
+      </div>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--warm);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Processing datasets in machine learning requires generators. PyTorch's DataLoader uses generators internally. Preprocessing large files uses generators. Any time you process data larger than memory, generators are essential. Data scientists use comprehensions constantly for quick data transformations.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--hot);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">Comprehensions are concise and readable. They're faster than equivalent loops. Generators save memory—crucial for large-scale machine learning. Without generators, training on billion-image datasets would be impossible. These aren't fancy features—they're essential for practical ML work.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">Using comprehensions daily for quick transformations. Generators when processing large datasets. Understanding both is essential for writing efficient Python, especially in ML where data processing is constant.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--accent);">
+      <div class="concept-title">🧪 Error Handling and Testing</div>
+      <div class="concept-body">
+        <p>Programs fail. Networks go down. Files don't exist. Divisions by zero happen. Error handling (try/except) lets you anticipate these problems and handle them gracefully instead of crashing. You wrap risky code in try, and if an error occurs, you handle it in except. This is how professional code works—it expects things to go wrong and has plans for it.</p>
+        <p>Testing ensures your code works before it breaks production. Unit tests check that individual functions work correctly. Integration tests check that components work together. Without tests, you deploy changes hoping they work, and they often don't. In machine learning, testing is critical—a small bug in preprocessing could silently corrupt your entire model. Tests catch these bugs.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Error handling with try/except</span>
+<span class="code-keyword">try</span>:
+    <span class="code-comment"># Risky code that might fail</span>
+    number = <span class="code-function">int</span>(<span class="code-string">"not a number"</span>)
+<span class="code-keyword">except</span> ValueError:
+    <span class="code-comment"># Handle the error gracefully</span>
+    <span class="code-function">print</span>(<span class="code-string">"That's not a valid number!"</span>)
+
+<span class="code-comment"># Testing with assertions</span>
+<span class="code-keyword">def</span> <span class="code-function">add</span>(a, b):
+    <span class="code-keyword">return</span> a + b
+
+<span class="code-comment"># Test that the function works correctly</span>
+<span class="code-keyword">assert</span> <span class="code-function">add</span>(<span class="code-number">2</span>, <span class="code-number">3</span>) == <span class="code-number">5</span>  <span class="code-comment"># Passes</span>
+<span class="code-keyword">assert</span> <span class="code-function">add</span>(<span class="code-number">2</span>, <span class="code-number">3</span>) == <span class="code-number">6</span>  <span class="code-comment"># Fails! Raises AssertionError</span>
+
+<span class="code-comment"># Testing with unittest framework</span>
+<span class="code-keyword">import</span> unittest
+
+<span class="code-keyword">class</span> TestAdd(unittest.TestCase):
+    <span class="code-keyword">def</span> <span class="code-function">test_addition</span>(<span class="code-keyword">self</span>):
+        <span class="code-keyword">self</span>.<span class="code-function">assertEqual</span>(<span class="code-function">add</span>(<span class="code-number">2</span>, <span class="code-number">3</span>), <span class="code-number">5</span>)
+    
+    <span class="code-keyword">def</span> <span class="code-function">test_negative</span>(<span class="code-keyword">self</span>):
+        <span class="code-keyword">self</span>.<span class="code-function">assertEqual</span>(<span class="code-function">add</span>(-<span class="code-number">2</span>, <span class="code-number">3</span>), <span class="code-number">1</span>)
+      </div>
+
+      <div class="teaching-box">
+        <strong>Think of tests as documentation and insurance.</strong> They document how your code should behave. They're insurance against breaking things later. When you change code, tests tell you if you broke anything. In machine learning, tests catch preprocessing bugs before they corrupt your model. They're not optional—they're essential for professional code.
+      </div>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--accent);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Professional ML codebases have test suites. PyTorch and TensorFlow are extensively tested. When deploying models, you test on held-out data (that's testing). Error handling is everywhere—loading data, preprocessing, training. Robust systems handle errors gracefully.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--green);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">Errors will happen. Code that handles them gracefully is professional. Testing catches bugs before they reach users. Without testing, you ship bugs. With testing, you catch them early. This matters even more in ML where bugs can silently produce wrong results.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--warm);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">Error handling always—any code that might fail should handle failures. Testing for anything important—especially preprocessing and model code. Testing is how you move from hacky scripts to professional systems.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">📦 Modules, Packages, and Imports</div>
+      <div class="concept-body">
+        <p>As programs grow, you organize code into modules (single .py files) and packages (directories of modules). You use the import statement to use code from other files or libraries. This is how you leverage the Python ecosystem—you don't write everything from scratch, you import libraries that others have written. NumPy, Pandas, PyTorch, Scikit-learn—all are libraries you import.</p>
+        <p>Understanding imports is crucial because every machine learning program starts with imports. You import frameworks, you import datasets, you import utilities. Bad import practices lead to confusion and circular dependencies. Good practices make code clean and maintainable.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Import entire module</span>
+<span class="code-keyword">import</span> math
+result = math.sqrt(<span class="code-number">16</span>)  <span class="code-comment"># Use module.function syntax</span>
+
+<span class="code-comment"># Import specific items from module</span>
+<span class="code-keyword">from</span> math <span class="code-keyword">import</span> sqrt, pi
+result = <span class="code-function">sqrt</span>(<span class="code-number">16</span>)  <span class="code-comment"># Use directly</span>
+
+<span class="code-comment"># Alias to shorter name</span>
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+array = np.array([<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">3</span>])
+
+<span class="code-comment"># Standard ML imports</span>
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+<span class="code-keyword">import</span> pandas <span class="code-keyword">as</span> pd
+<span class="code-keyword">import</span> torch
+<span class="code-keyword">from</span> sklearn.<span class="code-function">model_selection</span> <span class="code-keyword">import</span> train_test_split
+<span class="code-keyword">from</span> sklearn.<span class="code-function">preprocessing</span> <span class="code-keyword">import</span> StandardScaler
+      </div>
+    </div>
+
+  </section>
+
+  <!-- APPLICATIONS -->
+  <section>
+    <div class="section-label">Real World Impact</div>
+    <h2 class="section-title">How Python Powers Machine Learning Development</h2>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-title">Data Loading and Exploration</div>
+        <div class="timeline-desc">Your ML project starts by loading and exploring data. You use Pandas to load CSVs and explore structure. You use NumPy for numerical operations. You use functions to encapsulate loading logic. Good data loading code is reusable across projects.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-title">Preprocessing and Feature Engineering</div>
+        <div class="timeline-desc">Data cleaning and preparation happens through functions and classes. Loops process each row. Comprehensions create transformed features. Classes organize preprocessing pipelines. Properly structured preprocessing code is maintainable and testable.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-title">Model Definition</div>
+        <div class="timeline-desc">In PyTorch, you define models as classes inheriting from nn.Module. Methods define the network structure. The forward method executes the forward pass. Classes let PyTorch handle parameters automatically.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-title">Training Loop</div>
+        <div class="timeline-desc">Training uses nested loops—outer loop over epochs, inner loop over batches. Each batch processed through the model. Loss computed and backpropagated. Parameters updated. Generators let you process large datasets efficiently.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-title">Evaluation and Testing</div>
+        <div class="timeline-desc">After training, you evaluate on test data. Functions encapsulate evaluation logic. Tests verify your code works. Error handling manages edge cases. Professional systems have comprehensive test suites.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-title">Deployment and Monitoring</div>
+        <div class="timeline-desc">Classes package models for serving. Error handling manages production failures. Logging tracks what happens. Good Python practices enable reliable deployment.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-title">Reproducibility and Collaboration</div>
+        <div class="timeline-desc">Well-structured code is reproducible—others can understand and run it. Functions document behavior. Tests verify correctness. Version control (Git) tracks changes. These practices enable team collaboration.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-title">Maintenance and Iteration</div>
+        <div class="timeline-desc">As projects evolve, good code structure matters. Modules are easy to modify independently. Tests catch regressions. Functions are reusable. Classes are extensible through inheritance. Poor structure makes maintenance painful.</div>
+      </div>
+    </div>
+
+  </section>
+
+</div>
+
+<!-- Footer -->
+<footer>
+  <p class="footer-text">Python Programming — Building the Future of Machine Learning</p>
+</footer>
+
+</body>
+</html>
