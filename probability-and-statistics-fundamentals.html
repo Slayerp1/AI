@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Probability and Statistics Fundamentals — Reasoning Under Uncertainty</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=Clash+Display:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #04040a;
+  --accent: #7b2fff;
+  --hot: #ff2d78;
+  --cool: #00e5ff;
+  --warm: #ffb800;
+  --green: #00ff9d;
+  --text: #e0e0f0;
+  --muted: #4a4a6a;
+  --card: #0a0a14;
+  --border: rgba(255,255,255,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+/* Starfield bg */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0,229,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+/* NAV */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,4,10,0.9);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-right: auto; letter-spacing: 2px; }
+.nav-pill {
+  font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(123,47,255,0.4);
+  color: rgba(123,47,255,0.8); text-decoration: none; transition: all 0.2s;
+}
+.nav-pill:hover, .nav-pill.active { background: rgba(123,47,255,0.15); border-color: var(--accent); color: #fff; }
+
+/* HERO */
+.hero { padding: 90px 0 50px; }
+.hero-eyebrow {
+  font-family: 'Syne Mono', monospace; font-size: 11px; letter-spacing: 4px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(123,47,255,0.3); }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 100px);
+  line-height: 0.92; margin-bottom: 28px;
+  color: #fff;
+}
+
+.hero-desc { max-width: 750px; font-size: 16px; color: rgba(210,210,240,0.72); line-height: 1.8; margin-bottom: 40px; }
+
+/* SECTION */
+section { padding: 70px 0; border-top: 1px solid var(--border); }
+.section-label { font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 64px); line-height: 1; margin-bottom: 40px; color: #fff; }
+
+/* CONCEPT CARD */
+.concept-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 36px;
+  margin-bottom: 32px;
+  border-left: 4px solid var(--card-accent, var(--accent));
+  transition: all 0.3s;
+}
+
+.concept-card:hover {
+  border-color: var(--card-accent, var(--accent));
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  transform: translateY(-2px);
+}
+
+.concept-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--card-accent, var(--accent));
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.concept-body {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.9;
+  margin-bottom: 28px;
+}
+
+.concept-body p {
+  margin-bottom: 18px;
+}
+
+.concept-body strong {
+  color: #fff;
+}
+
+.example-box {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 24px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--cool);
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.insight-box {
+  background: rgba(123,47,255,0.1);
+  border-left: 4px solid var(--accent);
+  padding: 20px;
+  border-radius: 10px;
+  margin: 20px 0;
+  font-size: 14px;
+  color: rgba(210,210,240,0.9);
+  line-height: 1.8;
+}
+
+/* IMPACT BOX - WHERE/WHY/WHEN */
+.impact-box {
+  background: linear-gradient(135deg, rgba(123,47,255,0.15) 0%, rgba(0,229,255,0.08) 100%);
+  border: 1px solid rgba(123,47,255,0.3);
+  border-radius: 14px;
+  padding: 32px;
+  margin-top: 32px;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.impact-item {
+  padding: 24px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  border-left: 4px solid var(--impact-color, var(--accent));
+}
+
+.impact-item-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--impact-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.impact-item-content {
+  font-size: 13px;
+  color: rgba(200,200,220,0.88);
+  line-height: 1.8;
+}
+
+/* DISTRIBUTION VISUAL */
+.distribution-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin: 28px 0;
+}
+
+.distribution-card {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.dist-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 16px;
+  color: var(--cool);
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+
+.dist-description {
+  font-size: 13px;
+  color: rgba(200,200,220,0.85);
+  line-height: 1.8;
+  margin-bottom: 12px;
+}
+
+.dist-formula {
+  background: rgba(0,0,0,0.5);
+  padding: 12px;
+  border-radius: 6px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--warm);
+  border-left: 2px solid var(--warm);
+}
+
+/* CONCEPT CONNECTOR */
+.concept-connector {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 28px 0;
+  border-left: 3px solid var(--warm);
+}
+
+.connector-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--warm);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.connector-content {
+  font-size: 14px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.8;
+}
+
+/* COMPARISON TABLE */
+.comparison-table {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 28px 0;
+}
+
+.table-header {
+  background: rgba(123,47,255,0.15);
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  color: var(--cool);
+}
+
+.table-row {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.table-row:nth-child(even) {
+  background: rgba(0,0,0,0.1);
+}
+
+/* TIMELINE */
+.timeline {
+  position: relative;
+  padding: 40px 0;
+}
+
+.timeline-item {
+  padding: 28px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 24px;
+  margin-left: 40px;
+  position: relative;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -32px;
+  top: 32px;
+  width: 16px;
+  height: 16px;
+  background: var(--accent);
+  border-radius: 50%;
+  border: 3px solid var(--bg);
+}
+
+.timeline-item::after {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: 48px;
+  width: 2px;
+  height: 44px;
+  background: rgba(123,47,255,0.3);
+}
+
+.timeline-item:last-child::after {
+  display: none;
+}
+
+.timeline-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  color: var(--cool);
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+}
+
+.timeline-desc {
+  font-size: 14px;
+  color: rgba(200,200,220,0.85);
+  line-height: 1.8;
+}
+
+/* FOOTER */
+footer {
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .hero { padding: 60px 0 40px; }
+  section { padding: 50px 0; }
+  .impact-grid { grid-template-columns: 1fr; }
+  .distribution-container { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">PROBABILITY & STATISTICS</div>
+  <a href="#fundamentals" class="nav-pill">Fundamentals</a>
+  <a href="#distributions" class="nav-pill">Distributions</a>
+  <a href="#bayes" class="nav-pill">Bayesian</a>
+  <a href="#inference" class="nav-pill">Inference</a>
+</nav>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">Reasoning Under Uncertainty</div>
+    <h1>Probability and Statistics</h1>
+    <p class="hero-desc">The real world is uncertain. Data is noisy. Measurements are imperfect. Probability and statistics are the mathematical frameworks for reasoning about uncertainty and extracting meaning from data. In machine learning, you cannot escape these concepts. Every model makes probabilistic predictions. Every algorithm uses statistical reasoning. Understanding probability is understanding how to make decisions when you don't have perfect information—which is always.</p>
+  </section>
+
+  <!-- FUNDAMENTALS -->
+  <section id="fundamentals">
+    <div class="section-label">The Ground Floor</div>
+    <h2 class="section-title">Probability Fundamentals</h2>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🎲 What is Probability?</div>
+      <div class="concept-body">
+        <p>Probability is a number between zero and one that represents how likely something is to happen. Zero means impossible. One means certain. Everything in between represents varying degrees of likelihood. When you flip a fair coin, the probability of heads is 0.5—equally likely as tails. When you roll a die, the probability of any specific number is 1/6 because there are six equally likely outcomes.</p>
+        <p>There are actually two main interpretations of probability. The frequentist interpretation says probability is what happens in the long run—if you flip a coin infinitely many times, you'll get heads exactly half the time. The Bayesian interpretation says probability represents your degree of belief about something. Both are useful, and they agree on basic mathematics even though they represent different philosophies.</p>
+      </div>
+
+      <div class="insight-box">
+        Think of probability as a tool for quantifying uncertainty. Before you roll a die, you don't know what will come up. Probability gives you a mathematical language to discuss this uncertainty. It doesn't predict the future—it characterizes how unknowable something is based on what you know about the system.
+      </div>
+
+      <div class="example-box">
+Basic Probability Rules:
+
+All probabilities: 0 ≤ P(event) ≤ 1
+Certain event: P(certain) = 1
+Impossible event: P(impossible) = 0
+Complementary event: P(A) + P(not A) = 1
+
+Example: Drawing from a deck
+P(red card) = 26/52 = 0.5
+P(not red card) = P(black card) = 26/52 = 0.5
+Sum = 1.0 ✓
+
+For independent events (one doesn't affect the other):
+P(A and B) = P(A) × P(B)
+
+Example: Two coin flips
+P(heads on first) = 0.5
+P(heads on second) = 0.5
+P(both heads) = 0.5 × 0.5 = 0.25
+      </div>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--green);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Foundation for all probabilistic reasoning. Neural networks output probabilities for predictions. Bayesian methods assign probabilities to hypotheses. Uncertainty quantification relies on these fundamentals. Every machine learning model makes probabilistic claims.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">Probability is the language of uncertainty. It lets you reason mathematically about unknown outcomes. Without it, you have no way to discuss how confident you should be in predictions or how likely different scenarios are. It transforms uncertainty into mathematics.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--warm);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">Constantly in machine learning. Every loss function, every prediction, every uncertainty interval uses probability. Understanding probability is prerequisite for understanding why machine learning works at all. Fundamental to every other concept in this section.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🔗 Conditional Probability and Independence</div>
+      <div class="concept-body">
+        <p>Conditional probability answers a crucial question: how does knowing one thing change the probability of another? P(A given B) is the probability of A occurring if we already know B is true. This is often very different from the unconditional probability. For example, the probability someone has a disease is different from the probability they have the disease given they tested positive. The test result changes what we know.</p>
+        <p>Independence is when knowing one thing tells you nothing about another. If events A and B are independent, then P(A given B) equals P(A)—learning about B doesn't change your belief about A. For example, coin flips are independent—knowing the first flip was heads tells you nothing about the second flip's probability.</p>
+      </div>
+
+      <div class="insight-box">
+        Conditional probability is how you update beliefs. It's the mechanism by which new information changes what you think is likely. In machine learning, you're constantly using conditional probabilities. When you classify an image, you're computing the probability of each class given the pixel values you observe. That "given" is conditional probability.
+      </div>
+
+      <div class="example-box">
+Conditional Probability Definition:
+P(A | B) = P(A and B) / P(B)
+
+Medical Test Example:
+Let D = disease, T = positive test
+P(D) = 0.01  (1% of population has disease)
+P(T | D) = 0.95  (95% of sick people test positive)
+P(T | not D) = 0.05  (5% of healthy people test positive)
+
+If someone tests positive, what's P(disease | positive test)?
+P(T) = P(T|D)×P(D) + P(T|not D)×P(not D)
+     = 0.95×0.01 + 0.05×0.99
+     = 0.0095 + 0.0495 = 0.059
+
+P(D | T) = P(T|D)×P(D) / P(T)
+         = (0.95 × 0.01) / 0.059
+         ≈ 0.161
+
+Surprising! Despite positive test, only ~16% probability of disease.
+This is because disease is rare, so false positives outnumber true positives.
+      </div>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Bayesian reasoning uses conditional probability fundamentally. Naive Bayes classifier assumes conditional independence. Markov chains use conditional transitions. Classification is conditional probability P(class | input). Any model that reasons given observations uses this.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--hot);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">It's how you reason in the real world. You don't just know base rates—you condition on what you've observed. A positive medical test changes the probability you're sick. An unusual image changes the probability it's an anomaly. Conditional probability is belief updating.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--accent);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">Whenever you use Bayesian methods, train classifiers, or make predictions given data. Every neural network prediction is technically conditional probability of output given inputs. Understanding conditional probability is understanding what machine learning actually computes.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- DISTRIBUTIONS -->
+  <section id="distributions">
+    <div class="section-label">Common Patterns</div>
+    <h2 class="section-title">Probability Distributions</h2>
+
+    <div class="concept-card" style="--card-accent: var(--accent);">
+      <div class="concept-title">📊 Understanding Distributions</div>
+      <div class="concept-body">
+        <p>A probability distribution describes all possible outcomes of a random process and how likely each is. Instead of listing individual probabilities, you describe the entire distribution with a formula or function. Some distributions are discrete (outcomes are countable: integers, categories). Some are continuous (outcomes are real numbers). Understanding the shape of a distribution tells you what to expect.</p>
+        <p>Different processes naturally produce different distributions. When you average many independent random things, you get a normal distribution (bell curve). When you count occurrences of rare events, you get a Poisson distribution. When each outcome is equally likely, you get a uniform distribution. Recognizing which distribution applies to your problem is crucial for modeling correctly.</p>
+      </div>
+
+      <div class="distribution-container">
+        <div class="distribution-card">
+          <div class="dist-title">📐 Uniform Distribution</div>
+          <div class="dist-description">Every outcome is equally likely. Rolling a fair die gives uniform distribution over 1-6. Drawing a random number between 0 and 1 gives continuous uniform distribution. Simplest case but rarely matches real data.</div>
+          <div class="dist-formula">P(x) = 1/(b-a) for a ≤ x ≤ b</div>
+        </div>
+
+        <div class="distribution-card">
+          <div class="dist-title">🔔 Normal (Gaussian) Distribution</div>
+          <div class="dist-description">Bell-shaped curve, symmetric around mean. Most natural for many phenomena: heights, test scores, measurement errors. Central limit theorem explains why this appears everywhere. Defined by mean μ and standard deviation σ.</div>
+          <div class="dist-formula">P(x) ∝ exp(-(x-μ)²/2σ²)</div>
+        </div>
+
+        <div class="distribution-card">
+          <div class="dist-title">🎯 Binomial Distribution</div>
+          <div class="dist-description">Number of successes in fixed number of independent trials. Flipping coin 10 times and counting heads. Each trial has same success probability p. Discrete outcomes from 0 to n trials.</div>
+          <div class="dist-formula">P(k successes) = C(n,k) × p^k × (1-p)^(n-k)</div>
+        </div>
+
+        <div class="distribution-card">
+          <div class="dist-title">⚡ Poisson Distribution</div>
+          <div class="dist-description">Number of rare events in fixed time or space. Emails arriving per hour, typos per page, mutations per generation. Describes count data. Defined by single parameter λ (average rate).</div>
+          <div class="dist-formula">P(k events) = (λ^k × e^-λ) / k!</div>
+        </div>
+      </div>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--accent);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Normal distribution in most regression models and loss functions. Binomial in classification (success/failure, heads/tails analogies). Poisson for count data like text modeling. Understanding which distribution applies helps you model correctly.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--green);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">Real-world data doesn't appear randomly—it follows patterns. Recognizing distributions tells you what to expect and how to handle data appropriately. Building the right model requires understanding what distribution your data follows.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--warm);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">When choosing models (Gaussian assumption for linear regression, categorical for classification). When understanding neural network outputs (they estimate conditional distributions). When implementing Bayesian methods. Foundational for statistical modeling.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- BAYES -->
+  <section id="bayes">
+    <div class="section-label">Belief Updating</div>
+    <h2 class="section-title">Bayes' Theorem and Bayesian Reasoning</h2>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">🧠 The Most Important Formula in Probability</div>
+      <div class="concept-body">
+        <p>Bayes' theorem is a mathematical formula for updating beliefs when you get new evidence. You start with a prior belief about something (what you thought before new data). You observe data. Using Bayes' theorem, you compute a posterior belief (what you think after seeing the data). The theorem tells you exactly how much to update your belief based on how much the new evidence supports different hypotheses.</p>
+        <p>The formula looks deceptively simple: P(H|E) = P(E|H) × P(H) / P(E). But its implications are profound. It formalizes how rational agents should update beliefs. It's used in medical diagnosis (updating probability of disease given test results), spam filtering (updating probability a message is spam given its contents), and machine learning (updating belief about parameters given data).</p>
+      </div>
+
+      <div class="insight-box">
+        Bayes' theorem is how you combine what you already knew with new information. You don't just naively trust new data—you weight it by how much you already believed and how likely the data would be under different hypotheses. This is how rational people learn, and Bayes' theorem makes it mathematical and precise.
+      </div>
+
+      <div class="example-box">
+Bayes' Theorem:
+P(H | E) = P(E | H) × P(H) / P(E)
+
+Where:
+P(H | E) = posterior: probability of hypothesis given evidence
+P(E | H) = likelihood: probability of evidence if hypothesis true
+P(H)     = prior: probability of hypothesis before evidence
+P(E)     = evidence: total probability of observing evidence
+
+Medical Diagnosis Example (continued from conditional probability):
+H = patient has disease
+E = positive test
+
+Prior: P(disease) = 0.01
+Likelihood: P(positive | disease) = 0.95
+Evidence: P(positive) = 0.059
+
+Posterior: P(disease | positive) = 0.95 × 0.01 / 0.059 ≈ 0.161
+
+Interpretation: Even with positive test, only 16% sure you have disease
+because disease is rare. The test isn't the only evidence—the prior is strong.
+      </div>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--hot);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Bayesian inference and posterior inference in all Bayesian methods. Naive Bayes classifier uses this to assign class probabilities. Bayesian neural networks model uncertainty. Recommender systems use Bayesian reasoning. Medical diagnosis, spam filtering, all probabilistic reasoning.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">It formalizes how to learn from evidence without throwing away what you already know. Prior knowledge combined with data gives better predictions than data alone. This is why transfer learning works—you start with knowledge learned on similar problems. Bayes' theorem is the math behind that intuition.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--warm);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">Whenever you want to incorporate prior knowledge with data. When reasoning about medical diagnoses, spam detection, or any classification. When understanding Bayesian machine learning approaches. Essential for any system that learns and reasons with uncertainty.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- EXPECTATION AND VARIANCE -->
+  <section>
+    <div class="section-label">Summarizing Distributions</div>
+    <h2 class="section-title">Expectation, Variance, and Relationships</h2>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">📈 Expectation: The Average</div>
+      <div class="concept-body">
+        <p>The expectation (or expected value) of a random variable is what you expect to get on average if you repeat the process many times. For a fair die, the expectation is 3.5—the average of 1, 2, 3, 4, 5, 6. For a coin, heads has expectation 0 if we call it failure, or 1 if we call it success. Expectation is the mathematical version of "average" for random processes.</p>
+        <p>Expectation is linear, meaning the expectation of a sum equals the sum of expectations. This property makes expectation powerful for calculating what you expect to get in complex situations. It's also the foundation of many machine learning techniques that optimize average performance across data.</p>
+      </div>
+
+      <div class="example-box">
+Expected Value (Expectation):
+E[X] = Σ x × P(x) for discrete variables
+
+Fair die:
+E[die roll] = 1×(1/6) + 2×(1/6) + 3×(1/6) 
+            + 4×(1/6) + 5×(1/6) + 6×(1/6)
+            = 21/6 = 3.5
+
+This is the average value over many rolls.
+
+Betting Example:
+Win $10 with probability 0.2
+Lose $5 with probability 0.8
+E[winnings] = 10×0.2 + (-5)×0.8 = 2 - 4 = -$2
+You expect to lose $2 per bet on average.
+      </div>
+
+      <div class="concept-card" style="--card-accent: var(--warm);">
+        <div class="concept-title">📊 Variance: The Spread</div>
+        <div class="concept-body">
+          <p>Variance measures how spread out a distribution is. A low variance distribution clusters tightly around the mean. A high variance distribution is spread widely. Two distributions can have the same mean but very different variances. Variance is calculated as the average squared deviation from the mean: Var(X) = E[(X - E[X])²]. We square deviations so negative and positive deviations don't cancel out.</p>
+          <p>Standard deviation is the square root of variance. Because it's in the same units as the data (variance is in squared units), standard deviation is more interpretable. For a normal distribution, about 68% of the data falls within one standard deviation of the mean, and 95% within two standard deviations.</p>
+        </div>
+
+        <div class="example-box">
+Variance and Standard Deviation:
+Var(X) = E[(X - μ)²]
+SD(X) = √Var(X) = σ
+
+Two random distributions with same mean (5):
+Distribution A: always outputs 5
+  Variance = 0 (no variation)
+  Standard deviation = 0
+
+Distribution B: outputs 0 or 10 with equal probability
+  Mean = 5 (same as A!)
+  Variance = (0-5)²×0.5 + (10-5)²×0.5 = 25
+  Standard deviation = 5 (much more spread)
+
+Same mean, very different distributions!
+Variance tells you how unpredictable the outcome is.
+        </div>
+
+        <div class="impact-box">
+          <div class="impact-grid">
+            <div class="impact-item" style="--impact-color: var(--warm);">
+              <div class="impact-item-title">🎯 Where It's Used</div>
+              <div class="impact-item-content">Neural networks optimize expected loss (mean squared error, cross-entropy). Batch normalization uses variance of batch. Regularization controls variance of weights. Uncertainty in predictions involves variance. Risk assessment uses variance to quantify uncertainty magnitude.</div>
+            </div>
+            <div class="impact-item" style="--impact-color: var(--cool);">
+              <div class="impact-item-title">💡 Why It Matters</div>
+              <div class="impact-item-content">Two models with same average performance can have very different reliability. One might be consistently good, another wildly variable. Variance measures how predictable and reliable your model is. Lower variance predictions are more trustworthy.</div>
+            </div>
+            <div class="impact-item" style="--impact-color: var(--accent);">
+              <div class="impact-item-title">⏱️ When You Need It</div>
+              <div class="impact-item-content">When analyzing model performance and stability. When understanding overfitting vs underfitting (relates to variance). When quantifying uncertainty in predictions. When choosing between models with tradeoffs between bias and variance.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🔗 Covariance and Correlation</div>
+      <div class="concept-body">
+        <p>Covariance measures whether two variables move together. If when X increases, Y tends to increase, they have positive covariance. If when X increases, Y tends to decrease, they have negative covariance. If X and Y are independent, covariance is zero. Covariance is in squared units, making it hard to interpret absolute values.</p>
+        <p>Correlation is covariance normalized to a -1 to 1 scale. A correlation of 1 means perfect positive relationship (when X increases, Y increases proportionally). A correlation of -1 means perfect negative relationship. A correlation of 0 means no linear relationship. Correlation is scale-independent and easier to interpret than covariance.</p>
+      </div>
+
+      <div class="example-box">
+Covariance: Cov(X,Y) = E[(X - E[X]) × (Y - E[Y])]
+
+Correlation: ρ = Cov(X,Y) / (SD(X) × SD(Y))
+
+Ranges: -1 ≤ ρ ≤ 1
+
+Example: Height and Weight
+Positive correlation (~0.7): taller people tend to weigh more
+Not perfect (ρ ≠ 1): height doesn't determine weight exactly
+Example: Temperature and Ice Cream Sales
+Positive correlation (~0.8): hot days, more ice cream sold
+Example: Temperature and Heater Usage
+Negative correlation (~-0.9): hot days, fewer heaters used
+
+Interpretation:
+ρ = 1.0: perfect positive relationship
+ρ = 0.7: strong positive relationship
+ρ = 0.3: weak positive relationship
+ρ = 0.0: no linear relationship
+ρ = -0.7: strong negative relationship
+      </example-box>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Feature analysis and understanding relationships between variables. Covariance matrices in PCA and multivariate analysis. Understanding multicollinearity in regression. Feature engineering based on correlations. Identifying redundant features that move together.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--green);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">Correlation shows which features contain redundant information. High correlation means you can probably drop one without losing information. Understanding feature relationships helps you build better models and understand data structure.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--warm);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">During exploratory data analysis to understand your data. When selecting features (drop correlated ones). When diagnosing multicollinearity problems in regression. When interpreting relationships in data. Standard practice in data science workflow.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- STATISTICAL INFERENCE -->
+  <section id="inference">
+    <div class="section-label">Drawing Conclusions From Data</div>
+    <h2 class="section-title">Statistical Testing and Inference</h2>
+
+    <div class="concept-card" style="--card-accent: var(--accent);">
+      <div class="concept-title">🎯 Hypothesis Testing and P-Values</div>
+      <div class="concept-body">
+        <p>Hypothesis testing is a structured way to decide whether evidence supports a claim. You start with a null hypothesis (usually "nothing interesting is happening" or "two groups are the same"). You collect data. You ask: how likely is this data if the null hypothesis were true? If it's very unlikely, you reject the null hypothesis and conclude something interesting is happening. If it's reasonably likely, you don't reject the null hypothesis.</p>
+        <p>The p-value is the probability of observing your data (or more extreme data) if the null hypothesis were true. A small p-value (typically less than 0.05) means your data would be very surprising if the null hypothesis were true, so you reject it. A large p-value means your data is unsurprising under the null hypothesis, so you don't have evidence to reject it. Important caveat: a non-significant result doesn't prove the null hypothesis—it just means you don't have evidence against it.</p>
+      </div>
+
+      <div class="insight-box">
+        P-values are often misinterpreted. A p-value of 0.05 does not mean there's a 5% chance the result is due to chance. It means if the null hypothesis were true, you'd see this extreme data 5% of the time. This is a subtle but important difference. The p-value is asking: "How compatible is my data with a world where nothing interesting is happening?"
+      </div>
+
+      <div class="example-box">
+Hypothesis Test Example: Coin Fairness
+
+Null hypothesis: Coin is fair (P(heads) = 0.5)
+Alternative: Coin is biased (P(heads) ≠ 0.5)
+
+Flip coin 100 times, get 65 heads.
+
+Question: How likely is 65+ heads if coin truly fair?
+If fair: P(heads) = 0.5, so expect 50 heads
+65 heads is 15 more than expected
+
+Computing p-value (using binomial distribution):
+P(65 or more heads in 100 flips | fair coin) ≈ 0.002
+
+Interpretation: Only 0.2% chance of this result if fair.
+This is very unlikely, so p < 0.05.
+Conclusion: Reject null hypothesis. Evidence coin is biased.
+
+Important: This doesn't prove bias with certainty.
+Just that bias is more likely than the biased result by chance alone.
+      </div>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--accent);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">A/B testing in product development (is new version better than old?). Medical trials (does drug work better than placebo?). Machine learning model comparison (is model A significantly better than B?). Feature importance testing (does removing feature hurt performance?). Any claim backed by data needs hypothesis testing.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--hot);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">Prevents false positives from lucky noise. If you look at enough random data, you'll find patterns by chance alone. Hypothesis testing protects against this by requiring evidence strong enough that it would be unlikely under the null. It's how science validates claims objectively.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">Whenever you make a claim based on data. Before launching new features or models. When comparing approaches. When publishing results. Understanding p-values and hypothesis testing is critical for evaluating machine learning claims.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">📊 Confidence Intervals</div>
+      <div class="concept-body">
+        <p>A confidence interval gives a range of values likely to contain a true parameter. Instead of saying "the mean is 5.3" (a point estimate that's almost certainly wrong), you say "the mean is between 5.0 and 5.6 with 95% confidence." This range reflects uncertainty in your estimate. The range accounts for randomness in sampling—if you repeated the study many times, about 95% of the intervals computed would contain the true mean.</p>
+        <p>Confidence level (typically 95%) determines how much you're willing to be wrong. Higher confidence (99%) gives wider intervals. Lower confidence (90%) gives narrower intervals. There's a tradeoff between precision and certainty. The interval's width depends on variability in data and sample size—more data and less variability give narrower intervals.</p>
+      </div>
+
+      <div class="example-box">
+Confidence Interval for Mean:
+
+From sample of 100 people:
+Sample mean height = 172 cm
+Standard error = 2 cm
+
+95% Confidence Interval:
+Lower = 172 - 1.96×2 = 168.08 cm
+Upper = 172 + 1.96×2 = 175.92 cm
+Interval: [168.08, 175.92]
+
+Interpretation: We're 95% confident the true
+population mean height is between 168.08 and 175.92 cm.
+
+If we repeated this study 100 times:
+About 95 of the intervals would contain the true mean.
+About 5 would miss it (by unlucky chance).
+
+Larger sample → narrower interval (more precision)
+Higher confidence → wider interval (more certainty)
+      </example-box>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--warm);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Reporting model performance (accuracy with confidence interval). Uncertainty quantification in predictions. Estimating effects in experiments. Risk assessment and confidence bounds. Whenever you estimate something from data, confidence intervals quantify your uncertainty.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--accent);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">Point estimates are almost always wrong. Confidence intervals quantify how wrong they might be. This honest accounting of uncertainty is more useful than pretending you know more than you do. It forces you to think about reliability of your estimates.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">When reporting results and making claims based on data. When deciding if findings are practically meaningful. When allocating resources based on estimates. Essential for transparent, honest communication of results.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ADVANCED TOPICS -->
+  <section>
+    <div class="section-label">Advanced Concepts</div>
+    <h2 class="section-title">Maximum Likelihood, Information Theory, and Beyond</h2>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">🎯 Maximum Likelihood Estimation</div>
+      <div class="concept-body">
+        <p>Maximum likelihood estimation is a principled way to estimate unknown parameters from data. You assume your data comes from some distribution with unknown parameters (like the mean and variance of a normal distribution). You write down the likelihood—how probable the observed data would be for different parameter values. Then you find the parameter values that maximize this likelihood. These are the most likely parameters given your data.</p>
+        <p>Maximum likelihood is used everywhere in machine learning. Neural networks optimize the likelihood of training data (though they call it minimizing negative log-likelihood). Logistic regression maximizes the likelihood of observed class labels. Gaussian mixture models maximize likelihood of data. It's a unified framework that connects many algorithms.</p>
+      </div>
+
+      <div class="example-box">
+Maximum Likelihood for Normal Distribution:
+
+Data: [1.2, 1.8, 2.1, 1.9]
+
+Assume data from Normal(μ, σ) with unknown μ and σ.
+
+Likelihood of observing this data:
+L(μ, σ) = ∏ P(xᵢ | μ, σ)
+         = product of probability density at each point
+
+Maximum Likelihood Estimator:
+μ̂ = mean of data = 1.75
+σ̂ = standard deviation = 0.36
+
+These parameters maximize likelihood of observed data.
+If different μ and σ, data would be less probable.
+      </example-box>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--hot);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Neural networks minimize negative log-likelihood (equivalent to maximizing likelihood). Logistic regression directly maximizes likelihood. EM algorithm uses likelihood optimization. Hidden Markov models use likelihood. This is the foundation of most machine learning approaches.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--green);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">It provides a principled objective for learning. Instead of arbitrary loss functions, you're finding the distribution most likely to have generated your data. This connects learning to probability theory, making learning mathematically principled.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">Understanding why neural networks use their loss functions. Understanding logistic regression and classification models. Designing new probabilistic models. Theoretical understanding of machine learning algorithms.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">📡 Information Theory Basics</div>
+      <div class="concept-body">
+        <p>Information theory quantifies information and uncertainty. Entropy measures how much uncertainty is in a distribution. If something is certain (probability 1), entropy is zero—no surprise when it happens. If something is uniformly random, entropy is maximum—maximum surprise. Entropy measures "average surprise" or uncertainty in a system.</p>
+        <p>Kullback-Leibler divergence (KL divergence) measures how different two probability distributions are. If two distributions are identical, KL divergence is zero. The farther apart they are, the larger the KL divergence. Cross-entropy combines entropy and KL divergence. Many machine learning loss functions are cross-entropy or related information-theoretic quantities.</p>
+      </div>
+
+      <div class="example-box">
+Entropy Measures Uncertainty:
+
+Fair coin (50% heads, 50% tails):
+H = -0.5 log(0.5) - 0.5 log(0.5) ≈ 1 bit
+Maximum uncertainty
+
+Biased coin (90% heads, 10% tails):
+H = -0.9 log(0.9) - 0.1 log(0.1) ≈ 0.47 bits
+Less uncertainty (headed coin usually comes up heads)
+
+Certain (100% heads, 0% tails):
+H = -1.0 log(1.0) - 0.0 log(0.0) = 0 bits
+Zero uncertainty
+
+Cross-Entropy Loss for Classification:
+Loss = -Σ P(true class = c) × log(P(predicted class = c))
+
+When prediction is correct and confident:
+True label = 1, prediction = 0.95 → loss ≈ 0.05 (good)
+
+When prediction is wrong or uncertain:
+True label = 1, prediction = 0.05 → loss ≈ 3.0 (bad)
+      </example-box>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Cross-entropy loss in neural network classification. KL divergence in variational autoencoders and understanding model differences. Entropy for feature selection and decision trees. Information gain in decision tree splitting. Mutual information for feature relevance.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--warm);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">Information theory connects machine learning to information and communication theory. It shows that prediction is really about compressing information. The best prediction is the one that compresses data most efficiently. This explains why learning works.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--accent);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">Understanding classification loss functions. Designing new objectives for learning. Understanding information bottlenecks in networks. Theoretical understanding of why certain training objectives work. Advanced model development.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🔗 Markov Chains and Stochastic Processes</div>
+      <div class="concept-body">
+        <p>A Markov chain is a sequence of random events where the next state depends only on the current state, not history. This "memorylessness" property makes Markov chains mathematically tractable. Despite simplicity, they model many real processes: web page transitions, weather patterns, animal population dynamics. The Markov property—that future depends only on present, not past—is often reasonable as an approximation.</p>
+        <p>Stochastic processes generalize Markov chains to continuous time or more complex dependencies. Hidden Markov models add unobserved states. Temporal models in machine learning often use Markov assumptions. Recurrent neural networks implicitly assume Markovian structure (next hidden state depends mainly on current input and current hidden state).</p>
+      </div>
+
+      <div class="example-box">
+Simple Markov Chain: Weather Model
+
+States: Sunny, Rainy
+Transition probabilities:
+  P(Sunny tomorrow | Sunny today) = 0.8
+  P(Rainy tomorrow | Sunny today) = 0.2
+  P(Sunny tomorrow | Rainy today) = 0.6
+  P(Rainy tomorrow | Rainy today) = 0.4
+
+If today is Sunny:
+  Probability sunny in 1 day = 0.8
+  Probability sunny in 2 days = 0.8×0.8 + 0.2×0.6 = 0.76
+  Probability sunny in 3 days = ... (matrix multiplication)
+
+Long-run (steady state):
+After many days, probability of sunny ≈ 0.75 regardless of start
+
+Markov Property: Tomorrow's weather depends only on today,
+not on whether it was sunny for the last week.
+This simplifies calculations tremendously.
+      </example-box>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--green);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Language modeling with n-gram models (next word depends on previous n). Hidden Markov models for speech and sequence modeling. Recurrent neural networks implicitly use Markovian assumptions. Page ranking algorithms use Markov chains on web graphs. Temporal modeling and sequence prediction.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--accent);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">Markov assumption simplifies sequence modeling tremendously. Without it, you'd need to track entire history. With it, you only track current state. This tradeoff between simplicity and expressiveness is often worth it. RNNs partially address this by maintaining hidden state that summarizes history.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">Building sequence models and language models. Understanding how RNNs and sequence models work. Designing systems that model temporal dependencies. Understanding limitations of Markovian assumptions. Building probabilistic models of time-series data.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- APPLICATIONS -->
+  <section>
+    <div class="section-label">Real World Impact</div>
+    <h2 class="section-title">How Probability and Statistics Power Machine Learning</h2>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-title">Data as Random Samples</div>
+        <div class="timeline-desc">Your training data is assumed to be a random sample from some true distribution. Machine learning works by using the sample to estimate the true distribution. Statistics tells you how much data you need and how much uncertainty remains in your estimates.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-title">Probabilistic Predictions</div>
+        <div class="timeline-desc">Neural networks output probabilities of different classes, not just binary predictions. These probabilities reflect the model's uncertainty. High probability of class A means the model is confident. Lower probability means less confident. This connects predictions to probability directly.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-title">Maximum Likelihood Learning</div>
+        <div class="timeline-desc">When you minimize cross-entropy loss or mean squared error, you're maximizing the likelihood of the training data. This connects optimization to probability theory. Your loss function embodies probabilistic assumptions about data distribution.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-title">Regularization as Prior Beliefs</div>
+        <div class="timeline-desc">Regularization (L1, L2, dropout) encodes prior beliefs about good solutions. Small weights are preferred, sparse solutions are preferred. In Bayesian language, regularization is the prior distribution over parameters.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-title">Uncertainty Quantification</div>
+        <div class="timeline-desc">Modern systems don't just predict—they quantify uncertainty. Confidence intervals around predictions, uncertainty in regression. This honesty about uncertainty is crucial for deployed systems. Statistics provides tools for this.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-title">Hypothesis Testing for Claims</div>
+        <div class="timeline-desc">A/B testing uses hypothesis testing. "Is model A better than B?" requires statistical significance testing, not just mean performance difference. P-values prevent false claims from lucky noise.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-title">Bayesian Methods</div>
+        <div class="timeline-desc">Bayesian neural networks, Bayesian optimization, Bayesian model selection. These methods combine data with prior knowledge using Bayes' theorem. They provide principled uncertainty estimates unlike point predictions.</div>
+      </div>
+
+      <div class="timeline-item">
+        <div class="timeline-title">Generalization and Overfitting</div>
+        <div class="timeline-desc">Overfitting is learning the training distribution too well, including its noise. Understanding generalization requires understanding sampling, bias-variance tradeoff, and statistical learning theory. This theory explains why regularization and early stopping work.</div>
+      </div>
+    </div>
+
+  </section>
+
+</div>
+
+<!-- Footer -->
+<footer>
+  <p class="footer-text">Probability and Statistics — The Foundation of Data-Driven Decision Making</p>
+</footer>
+
+</body>
+</html>
