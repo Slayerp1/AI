@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classification Models — Building Systems That Categorize</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #04040a;
+  --accent: #7b2fff;
+  --hot: #ff2d78;
+  --cool: #00e5ff;
+  --warm: #ffb800;
+  --green: #00ff9d;
+  --text: #e0e0f0;
+  --muted: #4a4a6a;
+  --card: #0a0a14;
+  --border: rgba(255,255,255,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0,229,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,4,10,0.9);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-right: auto; letter-spacing: 2px; }
+.nav-pill {
+  font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(123,47,255,0.4);
+  color: rgba(123,47,255,0.8); text-decoration: none; transition: all 0.2s;
+}
+.nav-pill:hover { background: rgba(123,47,255,0.15); border-color: var(--accent); color: #fff; }
+
+.hero { padding: 90px 0 50px; }
+.hero-eyebrow {
+  font-family: 'Syne Mono', monospace; font-size: 11px; letter-spacing: 4px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(123,47,255,0.3); }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 100px);
+  line-height: 0.92; margin-bottom: 28px;
+  color: #fff;
+}
+
+.hero-desc { max-width: 750px; font-size: 16px; color: rgba(210,210,240,0.72); line-height: 1.8; margin-bottom: 40px; }
+
+section { padding: 70px 0; border-top: 1px solid var(--border); }
+.section-label { font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 64px); line-height: 1; margin-bottom: 40px; color: #fff; }
+
+.concept-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 36px;
+  border-left: 4px solid var(--card-accent, var(--accent));
+  transition: all 0.3s;
+}
+
+.concept-card:hover {
+  border-color: var(--card-accent, var(--accent));
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  transform: translateY(-2px);
+}
+
+.concept-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--card-accent, var(--accent));
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.concept-body {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.9;
+  margin-bottom: 28px;
+}
+
+.concept-body p {
+  margin-bottom: 18px;
+}
+
+.concept-body strong {
+  color: #fff;
+}
+
+.code-block {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 28px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #fff;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.code-comment { color: #5c7a8a; }
+.code-keyword { color: var(--accent); }
+.code-string { color: var(--green); }
+.code-number { color: var(--warm); }
+.code-function { color: var(--cool); }
+
+.teaching-box {
+  background: rgba(123,47,255,0.1);
+  border-left: 4px solid var(--accent);
+  padding: 24px;
+  border-radius: 10px;
+  margin: 28px 0;
+  font-size: 15px;
+  color: rgba(210,210,240,0.9);
+  line-height: 1.8;
+}
+
+.teaching-box strong {
+  color: #fff;
+}
+
+.impact-box {
+  background: linear-gradient(135deg, rgba(123,47,255,0.15) 0%, rgba(0,229,255,0.08) 100%);
+  border: 1px solid rgba(123,47,255,0.3);
+  border-radius: 14px;
+  padding: 32px;
+  margin-top: 32px;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.impact-item {
+  padding: 24px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  border-left: 4px solid var(--impact-color, var(--accent));
+}
+
+.impact-item-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--impact-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.impact-item-content {
+  font-size: 13px;
+  color: rgba(200,200,220,0.88);
+  line-height: 1.8;
+}
+
+.insight-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 28px 0;
+  border-left: 4px solid var(--insight-color, var(--accent));
+}
+
+.insight-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--insight-color, var(--accent));
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.insight-content {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.8;
+}
+
+footer {
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 60px 0 40px; }
+  section { padding: 50px 0; }
+  .impact-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">CLASSIFICATION MODELS</div>
+  <a href="#foundational" class="nav-pill">Foundational</a>
+  <a href="#treebased" class="nav-pill">Tree-Based</a>
+  <a href="#ensemble" class="nav-pill">Ensemble</a>
+  <a href="#advanced" class="nav-pill">Advanced</a>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-eyebrow">Learning to Categorize Data</div>
+    <h1>Classification Models: Building Systems That Decide</h1>
+    <p class="hero-desc">Classification is one of the most important problems in machine learning because the world often presents us with decisions: is this email spam or legitimate? Is this customer likely to churn or stay? Does this medical test indicate disease or normal? Machine learning classification algorithms learn from examples of these decisions and generalize to make correct decisions on new data. The journey from simple logistic regression through complex ensemble methods represents an evolution in how we approach the challenge of learning decision boundaries. Logistic regression makes linear decisions. Decision trees create axis-aligned boundaries. Random forests combine many trees to smooth out imperfect decisions. Gradient boosting builds trees sequentially, each correcting mistakes of previous ones. Neural networks learn nonlinear transformations of input space. Each approach encodes different assumptions about what decision boundaries look like and how they should be learned. Understanding these algorithms means understanding not just the mechanics of how they work but the fundamental assumptions they make about data and learning. This section teaches you to recognize what type of decision boundary your data likely has, select the appropriate algorithm, and interpret results meaningfully. You'll learn not to treat classification algorithms as interchangeable black boxes but to understand when each excels and where each struggles.</p>
+  </section>
+
+  <section id="foundational">
+    <div class="section-label">Starting with Interpretability</div>
+    <h2 class="section-title">Foundational Classification: Logistic Regression and Linear Boundaries</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">📊 Logistic Regression: Linear Classification</div>
+      <div class="concept-body">
+        <p>Logistic regression might seem like a regression algorithm based on its name, but it's actually a classification algorithm that uses regression as an intermediate step. The core idea is elegant: you learn a linear function of the features, then apply a sigmoid function that squashes the output into the range zero to one, which you interpret as a probability of belonging to class one. For a binary classification problem, this probability is your prediction. If the probability exceeds a threshold like zero point five, you predict class one. Otherwise, you predict class zero.</p>
+
+        <p>The mathematics behind logistic regression is powerful because it connects to probability theory. The sigmoid function has a clear probabilistic interpretation: the model outputs the probability that an observation belongs to class one. This allows you to not just make binary predictions but to understand confidence in those predictions. A probability of zero point nine means you're quite confident the example is positive. A probability of zero point fifty-one means you're barely confident. This probabilistic output is invaluable when the cost of false positives and false negatives differs significantly. A false positive in disease diagnosis might lead to unnecessary treatment. A false negative might mean missing a treatable disease. Understanding the probability lets you adjust the decision threshold to match the costs of different errors.</p>
+
+        <p>The learning process for logistic regression involves finding weights that maximize the likelihood of the training data—that is, weights such that the model assigns high probability to actual positive examples and low probability to actual negative examples. This is equivalent to minimizing cross-entropy loss, a function that heavily penalizes confident wrong predictions while being forgiving of uncertain wrong predictions. The optimization is typically done with gradient descent or related methods, iteratively adjusting weights to improve fit.</p>
+
+        <p>Logistic regression is powerful because it combines simplicity with interpretability. Each feature has a learned coefficient that tells you how much that feature contributes to the probability of class one, holding other features constant. This interpretability is crucial in many domains where you need to explain decisions. A loan officer needs to know why an application was denied. A doctor needs to know what clinical factors drove a diagnosis. Logistic regression provides this transparency while remaining mathematically sound and computationally efficient. It should be your starting point for classification problems, especially when interpretability matters.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding logistic regression as probability modeling.</strong> Imagine you're trying to predict whether a student will pass an exam based on their study hours. With linear regression, you'd predict a number directly—maybe twenty study hours means ninety percent chance of passing. But ninety percent is already a probability, so predicting it directly doesn't make sense if you could predict one hundred and fifty percent. Logistic regression fixes this by first computing a linear function of hours studied, then squashing it through a sigmoid to get a valid probability between zero and one. The sigmoid ensures that more study time always increases probability (monotonically) while keeping probability bounded between zero and one. This is the fundamental insight: regression for the unbounded score, sigmoid for the probability interpretation.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Logistic regression for binary classification</span>
+<span class="code-keyword">from</span> sklearn.linear_model <span class="code-keyword">import</span> LogisticRegression
+<span class="code-keyword">from</span> sklearn.metrics <span class="code-keyword">import</span> classification_report, roc_auc_score
+
+<span class="code-comment"># Binary classification: predict spam (1) or not spam (0)</span>
+X_train = ...  <span class="code-comment"># Email features</span>
+y_train = ...  <span class="code-comment"># Binary labels: 0 or 1</span>
+X_test = ...
+y_test = ...
+
+<span class="code-comment"># Logistic regression: learns linear decision boundary</span>
+<span class="code-comment"># Then applies sigmoid to convert to probability</span>
+model = LogisticRegression(max_iter=<span class="code-number">1000</span>)
+model.fit(X_train, y_train)
+
+<span class="code-comment"># Get probability predictions (before thresholding)</span>
+y_proba = model.predict_proba(X_test)[:, <span class="code-number">1</span>]  <span class="code-comment"># Probability of class 1</span>
+
+<span class="code-comment"># Get binary predictions (applying 0.5 threshold)</span>
+y_pred = model.predict(X_test)
+
+<span class="code-comment"># Examine learned weights (interpretation)</span>
+feature_names = [<span class="code-string">'word_frequency'</span>, <span class="code-string">'caps_ratio'</span>, <span class="code-string">'links'</span>]
+<span class="code-keyword">for</span> name, coef <span class="code-keyword">in</span> <span class="code-function">zip</span>(feature_names, model.coef_[<span class="code-number">0</span>]):
+    <span class="code-function">print</span>(<span class="code-string">f"{name}: {coef:.3f}"</span>)
+<span class="code-comment"># Positive coefficient means this feature increases spam probability</span>
+
+<span class="code-comment"># Evaluate with appropriate metrics</span>
+<span class="code-function">print</span>(classification_report(y_test, y_pred))
+roc_auc = roc_auc_score(y_test, y_proba)
+<span class="code-function">print</span>(<span class="code-string">f"ROC AUC: {roc_auc:.3f}"</span>)
+      </code-block>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Binary classification problems where interpretability matters. Medical diagnosis, credit approval, churn prediction, fraud detection. Any domain where explaining the decision is as important as making it correctly.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--green);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">Logistic regression provides probability estimates, not just hard decisions. The learned weights tell you exactly how features contribute to classification. The model is simple, fast, and fundamentally interpretable. It's an excellent baseline to establish before moving to more complex classifiers.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--hot);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">Always start with logistic regression for binary classification. Establish this baseline, understand why it works or doesn't, then move to more complex approaches only if needed. This disciplined approach prevents overcomplication and ensures you understand your data's decision boundary.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="treebased">
+    <div class="section-label">Learning Complex Boundaries</div>
+    <h2 class="section-title">Tree-Based Classification: Decision Trees, Forests, and Boosting</h2>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">🌳 Decision Trees: Interpretable Hierarchical Learning</div>
+      <div class="concept-body">
+        <p>Decision trees represent one of the most interpretable approaches to classification. The algorithm works by recursively splitting data based on features, creating a hierarchy of decisions that partition input space into regions, each assigned to a class. At each node in the tree, the algorithm asks a question about a feature: "Is square footage greater than two thousand?" If yes, go down the right branch. If no, go down the left branch. By following the path from root to leaf, you make a classification decision. The beauty is that this process is completely transparent—you can visualize the tree and understand exactly why a particular example received a particular classification.</p>
+
+        <p>The learning process involves selecting splits that maximize information gain or minimize impurity. Imagine you have mixed data with some positive and some negative examples. A split that separates positive examples to one side and negative to the other is pure and valuable. A split that creates two mixed buckets is impure and not helpful. The algorithm searches for splits that maximize the reduction in impurity, greedily building the tree from root to leaves. This greedy approach doesn't guarantee a globally optimal tree, but it works well in practice and runs efficiently.</p>
+
+        <p>A critical issue with decision trees is overfitting. Without constraints, a tree can grow indefinitely, eventually creating a leaf for each training example. This memorizes the training data perfectly while failing catastrophically on new data. Preventing overfitting requires controlling tree depth, minimum samples per leaf, or pruning the tree after growing. Cross-validation helps find the right tree size that balances fitting training data with generalizing to unseen data. This is where the bias-variance tradeoff becomes visible: shallow trees underfit by making overly simple decisions, deep trees overfit by memorizing training details.</p>
+
+        <p>Decision trees excel at capturing complex nonlinear relationships and requiring minimal data preprocessing. They handle categorical features naturally without needing encoding. They're scale-invariant—the units of features don't matter. They're interpretable to humans in a way neural networks never will be. The downside is they tend to overfit, have high variance (small changes in data produce very different trees), and individually don't match the performance of ensemble methods. However, they form the foundation for powerful ensemble methods that overcome these limitations.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding decision trees as recursive partitioning.</strong> Imagine classifying mushrooms as edible or poisonous. You might ask: "Is the cap convex?" If yes, you're more likely to have an edible mushroom. But some poisonous ones also have convex caps. So you ask a follow-up question: "Is there a ring on the stem?" If yes and the cap is convex, you're even more confident it's edible. You continue asking questions, each time refining your confidence. A decision tree automates this questioning process, finding the best sequence of yes-or-no questions about features that most efficiently separate classes. The tree's structure mirrors how a human expert might categorize: start with the most discriminative question, then ask follow-up questions that further refine the categorization.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Decision tree classification</span>
+<span class="code-keyword">from</span> sklearn.tree <span class="code-keyword">import</span> DecisionTreeClassifier
+<span class="code-keyword">import</span> matplotlib.pyplot <span class="code-keyword">as</span> plt
+
+<span class="code-comment"># Binary classification</span>
+X_train = ...
+y_train = ...
+X_test = ...
+y_test = ...
+
+<span class="code-comment"># Decision tree with depth constraint (prevents overfitting)</span>
+tree_model = DecisionTreeClassifier(max_depth=<span class="code-number">5</span>, min_samples_leaf=<span class="code-number">10</span>)
+tree_model.fit(X_train, y_train)
+
+<span class="code-comment"># Tree is interpretable: you can see the splits</span>
+<span class="code-comment"># Visualize to understand decision boundaries</span>
+<span class="code-keyword">from</span> sklearn <span class="code-keyword">import</span> tree
+plt.figure(figsize=(<span class="code-number">20</span>, <span class="code-number">10</span>))
+tree.plot_tree(tree_model, feature_names=feature_names, class_names=class_names)
+<span class="code-comment"># This shows exactly what questions tree asks and in what order</span>
+
+<span class="code-comment"># Feature importance: which features are most useful?</span>
+feature_importance = tree_model.feature_importances_
+<span class="code-keyword">for</span> name, importance <span class="code-keyword">in</span> <span class="code-function">zip</span>(feature_names, feature_importance):
+    <span class="code-function">print</span>(<span class="code-string">f"{name}: {importance:.3f}"</span>)
+
+<span class="code-comment"># Evaluate</span>
+train_score = tree_model.score(X_train, y_train)
+test_score = tree_model.score(X_test, y_test)
+<span class="code-function">print</span>(<span class="code-string">f"Train: {train_score:.3f}, Test: {test_score:.3f}"</span>)
+<span class="code-comment"># If train >> test: tree is overfitting, increase max_depth constraint</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🌲 Random Forests: Ensemble Strength Through Diversity</div>
+      <div class="concept-body">
+        <p>Random forests overcome the limitations of individual decision trees through an ensemble approach. Instead of training one tree, you train many diverse trees, each on a random subset of data and features. The key insight is that by averaging predictions from many imperfect learners, you get a much better overall prediction. Each tree overfits in different ways to different data subsets, and when you average, these overfitting errors largely cancel out while the signal is preserved and amplified.</p>
+
+        <p>The diversity in random forests comes from two sources. Bootstrap sampling means each tree trains on a different random sample of the data drawn with replacement. Some examples are used multiple times, others not at all. Feature subsampling means each tree only considers a random subset of features when deciding splits. This randomness is essential. If all trees learned on the same data and features, they'd make correlated errors and averaging wouldn't help. The randomness makes trees decorrelated.</p>
+
+        <p>Random forests don't require the careful hyperparameter tuning that individual trees do. They're much less prone to overfitting. You can often use relatively deep trees without worrying about overfitting as much because averaging many deep trees tends to work well. The algorithm works with categorical features without requiring encoding. It provides feature importances, showing which features the ensemble considers most useful for classification. These properties combine to make random forests a go-to algorithm for many practical problems.</p>
+
+        <p>The main downside of random forests is loss of interpretability. While individual trees are interpretable, the ensemble of hundreds of trees is a black box. You can see feature importances but not understand how the ensemble decides. Additionally, random forests don't perform well with very imbalanced data without special handling. But for many problems, random forests represent an excellent balance: not as complex as neural networks, not as simple as logistic regression, with robust performance across diverse problem types.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding random forests as wisdom of crowds.</strong> Imagine asking one expert for advice. They might be knowledgeable but have blind spots or biases. Now imagine asking one hundred experts with diverse backgrounds and information sources. They'll disagree on details but largely converge on important points. By taking their median opinion, you get something more reliable than any individual expert. Random forests work this way: each tree is trained on different data and different features, so it has different strengths and weaknesses. By taking the majority vote of many diverse trees, you get something more reliable than any single tree. The diversity that makes individual trees imperfect is exactly what makes the ensemble powerful.
+      </teaching-box>
+
+      <div class="code-block">
+<span class="code-comment"># Random forests classification</span>
+<span class="code-keyword">from</span> sklearn.ensemble <span class="code-keyword">import</span> RandomForestClassifier
+
+<span class="code-comment"># Random forest trains many diverse trees</span>
+rf_model = RandomForestClassifier(
+    n_estimators=<span class="code-number">100</span>,  <span class="code-comment"># Number of trees</span>
+    max_depth=<span class="code-number">10</span>,  <span class="code-comment"># Trees are relatively deep</span>
+    min_samples_split=<span class="code-number">2</span>,  <span class="code-comment"># Allow aggressive splitting (averaging prevents overfitting)</span>
+    n_jobs=-<span class="code-number">1</span>  <span class="code-comment"># Use all CPU cores</span>
+)
+rf_model.fit(X_train, y_train)
+
+<span class="code-comment"># Feature importance: aggregated across all trees</span>
+feature_importance = rf_model.feature_importances_
+<span class="code-keyword">for</span> name, importance <span class="code-keyword">in</span> <span class="code-function">zip</span>(feature_names, feature_importance):
+    <span class="code-function">print</span>(<span class="code-string">f"{name}: {importance:.3f}"</span>)
+
+<span class="code-comment"># Evaluate</span>
+from sklearn.metrics <span class="code-keyword">import</span> roc_auc_score
+test_pred_proba = rf_model.predict_proba(X_test)[:, <span class="code-number">1</span>]
+roc_auc = roc_auc_score(y_test, test_pred_proba)
+<span class="code-function">print</span>(<span class="code-string">f"ROC AUC: {roc_auc:.3f}"</span>)
+
+<span class="code-comment"># Out-of-bag scoring: evaluate without separate test set</span>
+<span class="code-comment"># Each tree is trained on bootstrap sample, tested on held-out examples</span>
+oob_score = rf_model.oob_score_
+<span class="code-function">print</span>(<span class="code-string">f"Out-of-bag score: {oob_score:.3f}"</span>)
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">⚡ Gradient Boosting: Sequential Error Correction</div>
+      <div class="concept-body">
+        <p>Gradient boosting represents a different ensemble approach from random forests. Instead of training many independent trees and averaging, gradient boosting trains trees sequentially where each new tree focuses on correcting the mistakes made by previous trees. Imagine you're learning to play chess. First, you learn basic tactics. You play many games and notice you make specific mistakes. Then you focus on learning to avoid those mistakes. Then you play again and identify new mistakes. You continue iteratively refining. Gradient boosting works similarly: each tree corrects the residual errors of the ensemble so far.</p>
+
+        <p>The mathematics involves computing gradients of the loss function with respect to predictions and fitting the new tree to predict these residuals. As you add trees, each focused on the mistakes of previous ones, the ensemble error decreases. The learning rate controls how much you trust each new tree's correction. A low learning rate means you make small incremental corrections, which tends to generalize better but requires more trees. A high learning rate means you make aggressive corrections, which is faster but riskier. This is another hyperparameter that requires tuning.</p>
+
+        <p>Several implementations exist: XGBoost, LightGBM, and CatBoost are the most popular modern versions. XGBoost introduced regularization terms into gradient boosting to control overfitting. LightGBM uses leaf-wise tree growth for faster training and better performance. CatBoost explicitly handles categorical features without requiring encoding. Despite implementation differences, they share the core principle: build trees sequentially where each corrects previous errors.</p>
+
+        <p>Gradient boosting often achieves the best predictive performance of any individual algorithm on tabular data. The sequential approach combined with regularization creates models that generalize remarkably well. The downside is that hyperparameter tuning matters more than with random forests. Learning rate, number of trees, tree depth, and regularization parameters all affect performance. Too aggressive training produces overfitting. Too conservative produces underfitting. Finding the right settings requires careful validation.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding gradient boosting as correction through iteration.</strong> Imagine a student taking a practice test. They score seventy percent. The teacher identifies mistakes and the student studies those topics. They retake the test and score eighty percent. The teacher identifies new mistakes. The student studies again and scores eighty-five percent. Each iteration focuses on remaining mistakes. Gradient boosting works this way: the first tree makes predictions with some error. The second tree predicts the error the first tree made. The third tree predicts the error the first two made. By stacking these error-correcting models, you build towards a final accurate prediction. Each tree is relatively weak individually but focuses on a different aspect, and together they're powerful.
+      </teaching-box>
+
+      <div class="code-block">
+<span class="code-comment"># Gradient boosting classification with XGBoost</span>
+<span class="code-keyword">import</span> xgboost <span class="code-keyword">as</span> xgb
+<span class="code-keyword">from</span> sklearn.metrics <span class="code-keyword">import</span> roc_auc_score
+
+<span class="code-comment"># XGBoost for binary classification</span>
+xgb_model = xgb.XGBClassifier(
+    n_estimators=<span class="code-number">100</span>,  <span class="code-comment"># Number of boosting rounds</span>
+    learning_rate=<span class="code-number">0.1</span>,  <span class="code-comment"># Shrinkage: how much to trust each tree's correction</span>
+    max_depth=<span class="code-number">5</span>,  <span class="code-comment"># Tree complexity</span>
+    subsample=<span class="code-number">0.8</span>,  <span class="code-comment"># Use 80% of data for each tree</span>
+    colsample_bytree=<span class="code-number">0.8</span>,  <span class="code-comment"># Use 80% of features for each tree</span>
+    reg_alpha=<span class="code-number">0.1</span>,  <span class="code-comment"># L1 regularization on weights</span>
+    reg_lambda=<span class="code-number">1.0</span>  <span class="code-comment"># L2 regularization on weights</span>
+)
+xgb_model.fit(X_train, y_train)
+
+<span class="code-comment"># Evaluate</span>
+test_pred_proba = xgb_model.predict_proba(X_test)[:, <span class="code-number">1</span>]
+roc_auc = roc_auc_score(y_test, test_pred_proba)
+<span class="code-function">print</span>(<span class="code-string">f"ROC AUC: {roc_auc:.3f}"</span>)
+
+<span class="code-comment"># Feature importance</span>
+feature_importance = xgb_model.feature_importances_
+<span class="code-keyword">for</span> name, importance <span class="code-keyword">in</span> <span class="code-function">zip</span>(feature_names, feature_importance):
+    <span class="code-function">print</span>(<span class="code-string">f"{name}: {importance:.3f}"</span>)
+
+<span class="code-comment"># Early stopping: stop training when validation error stops improving</span>
+<span class="code-comment"># This prevents overfitting to the training set</span>
+xgb_early = xgb.XGBClassifier(n_estimators=<span class="code-number">500</span>, learning_rate=<span class="code-number">0.05</span>)
+xgb_early.fit(
+    X_train, y_train,
+    eval_set=[(X_val, y_val)],
+    early_stopping_rounds=<span class="code-number">10</span>
+)
+<span class="code-comment"># Stopped when validation error didn't improve for 10 rounds</span>
+      </code-block>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--warm);">
+            <div class="impact-item-title">🎯 Where It's Used</div>
+            <div class="impact-item-content">Decision trees for interpretable classification. Random forests for robust general-purpose classification with good performance. Gradient boosting for maximum predictive power when performance matters most. Competition winners on tabular data almost always use gradient boosting.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">💡 Why It Matters</div>
+            <div class="impact-item-content">Tree-based methods handle categorical features naturally, are robust to outliers, and don't require extensive preprocessing. Random forests provide good performance with minimal tuning. Gradient boosting achieves state-of-the-art results on tabular data. Together, they form a powerful toolkit for practical classification.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--green);">
+            <div class="impact-item-title">⏱️ When You Need It</div>
+            <div class="impact-item-content">For interpretability, use decision trees. For balanced performance and simplicity, use random forests. For maximum accuracy, use gradient boosting with careful tuning. Your choice depends on what matters most in your problem: interpretability, performance, or speed.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="ensemble">
+    <div class="section-label">Combining Strengths</div>
+    <h2 class="section-title">Ensemble Methods: Voting, Stacking, and Blending</h2>
+
+    <div class="concept-card" style="--card-accent: var(--accent);">
+      <div class="concept-title">🗳️ Ensemble Methods: Combining Diverse Models</div>
+      <div class="concept-body">
+        <p>Beyond averaging predictions from similar models like random forests, you can combine predictions from fundamentally different algorithms. A voting classifier trains multiple different models—logistic regression, decision tree, support vector machine—then uses majority vote to decide the final class. The intuition is that different algorithms make different assumptions about data, so they'll make different mistakes. By combining them, you average out the mistakes while preserving correct predictions.</p>
+
+        <p>Voting can be hard voting where each classifier votes for a class and the majority wins, or soft voting where each classifier gives probability estimates and you average the probabilities. Soft voting is generally better because it uses more information from each classifier. A confident prediction from one classifier carries more weight than an uncertain one. This probabilistic approach provides more nuance than simple majority voting.</p>
+
+        <p>Stacking goes further by using a meta-learner. You split training data into multiple folds. For each fold, you train base classifiers on the other folds and make predictions on the held-out fold. These predictions from base classifiers become features for a meta-learner that learns to best combine them. The meta-learner sees what each base classifier is good at and learns to weight their opinions appropriately. Stacking often achieves better performance than voting because the meta-learner optimizes the combination rather than using fixed voting rules.</p>
+
+        <p>Blending is a simpler variant of stacking. You split training data into two parts. Base classifiers train on the first part and make predictions on the second part. These predictions become features for a meta-learner trained on the second part. Blending is faster than stacking because you train each base classifier once instead of multiple times, but it uses less data for training base classifiers. In practice, stacking usually performs better if you have enough data.</p>
+
+        <p>The key to successful ensembling is diversity. Combining many copies of the same algorithm helps little. Combining logistic regression, decision trees, and support vector machines helps a lot because they make different assumptions. This is why ensembling different algorithms works better than ensembling the same algorithm many times. The algorithms should be good individually (better than random) but make different errors. When combined, the good predictions reinforce while the bad ones cancel.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding ensemble methods as combining expert opinions.</strong> Imagine needing to make an important decision. You could consult one expert, but they might be biased or have blind spots. You could consult an economist, a historian, and a psychologist. They might disagree on details but probably converge on important points. By synthesizing their diverse perspectives, you make a better decision than relying on any single expert. Ensemble methods work this way: different algorithms bring different perspectives based on their assumptions. Logistic regression assumes linear boundaries. Trees assume hierarchical splits. SVMs assume margin maximization. By combining these diverse perspectives, you often make better decisions than any single approach.
+      </teaching-box>
+
+      <div class="code-block">
+<span class="code-comment"># Ensemble methods: voting, stacking, and blending</span>
+<span class="code-keyword">from</span> sklearn.ensemble <span class="code-keyword">import</span> VotingClassifier
+<span class="code-keyword">from</span> sklearn.linear_model <span class="code-keyword">import</span> LogisticRegression
+<span class="code-keyword">from</span> sklearn.tree <span class="code-keyword">import</span> DecisionTreeClassifier
+<span class="code-keyword">from</span> sklearn.svm <span class="code-keyword">import</span> SVC
+
+<span class="code-comment"># Create diverse base classifiers</span>
+lr = LogisticRegression(max_iter=<span class="code-number">1000</span>)
+dt = DecisionTreeClassifier(max_depth=<span class="code-number">5</span>)
+svm = SVC(probability=<span class="code-keyword">True</span>)  <span class="code-comment"># Need probability=True for soft voting</span>
+
+<span class="code-comment"># Voting classifier: combines predictions</span>
+voting_model = VotingClassifier(
+    estimators=[(<span class="code-string">'lr'</span>, lr), (<span class="code-string">'dt'</span>, dt), (<span class="code-string">'svm'</span>, svm)],
+    voting=<span class="code-string">'soft'</span>  <span class="code-comment"># Use probability averaging instead of hard voting</span>
+)
+voting_model.fit(X_train, y_train)
+
+<span class="code-comment"># Evaluate voting ensemble</span>
+voting_score = voting_model.score(X_test, y_test)
+<span class="code-function">print</span>(<span class="code-string">f"Voting classifier: {voting_score:.3f}"</span>)
+
+<span class="code-comment"># Stacking: meta-learner combines base classifier predictions</span>
+<span class="code-keyword">from</span> sklearn.ensemble <span class="code-keyword">import</span> StackingClassifier
+
+<span class="code-comment"># Base learners</span>
+base_learners = [
+    (<span class="code-string">'lr'</span>, LogisticRegression(max_iter=<span class="code-number">1000</span>)),
+    (<span class="code-string">'dt'</span>, DecisionTreeClassifier(max_depth=<span class="code-number">5</span>)),
+    (<span class="code-string">'svm'</span>, SVC(probability=<span class="code-keyword">True</span>))
+]
+
+<span class="code-comment"># Meta-learner: learns to combine base learner predictions</span>
+meta_learner = LogisticRegression()
+
+<span class="code-comment"># Stacking classifier</span>
+stacking_model = StackingClassifier(
+    estimators=base_learners,
+    final_estimator=meta_learner,
+    cv=<span class="code-number">5</span>  <span class="code-comment"># 5-fold cross-validation for meta-feature generation</span>
+)
+stacking_model.fit(X_train, y_train)
+
+<span class="code-comment"># Evaluate stacking ensemble</span>
+stacking_score = stacking_model.score(X_test, y_test)
+<span class="code-function">print</span>(<span class="code-string">f"Stacking classifier: {stacking_score:.3f}"</span>)
+
+<span class="code-comment"># Blending: simpler variant of stacking</span>
+<span class="code-comment"># Split training data into two parts</span>
+<span class="code-keyword">from</span> sklearn.model_selection <span class="code-keyword">import</span> train_test_split
+
+X_blend_train, X_blend_val, y_blend_train, y_blend_val = train_test_split(
+    X_train, y_train, test_size=<span class="code-number">0.3</span>
+)
+
+<span class="code-comment"># Train base classifiers on blend_train</span>
+lr.fit(X_blend_train, y_blend_train)
+dt.fit(X_blend_train, y_blend_train)
+svm.fit(X_blend_train, y_blend_train)
+
+<span class="code-comment"># Get predictions on blend_val for meta-learner</span>
+meta_features_train = np.column_stack([
+    lr.predict_proba(X_blend_val)[:, <span class="code-number">1</span>],
+    dt.predict_proba(X_blend_val)[:, <span class="code-number">1</span>],
+    svm.predict_proba(X_blend_val)[:, <span class="code-number">1</span>]
+])
+
+<span class="code-comment"># Train meta-learner on base classifier predictions</span>
+meta_learner.fit(meta_features_train, y_blend_val)
+
+<span class="code-comment"># For test predictions, get base classifier predictions on test</span>
+meta_features_test = np.column_stack([
+    lr.predict_proba(X_test)[:, <span class="code-number">1</span>],
+    dt.predict_proba(X_test)[:, <span class="code-number">1</span>],
+    svm.predict_proba(X_test)[:, <span class="code-number">1</span>]
+])
+
+<span class="code-comment"># Meta-learner makes final predictions</span>
+blend_pred_proba = meta_learner.predict_proba(meta_features_test)[:, <span class="code-number">1</span>]
+      </code-block>
+    </div>
+
+  </section>
+
+  <section id="advanced">
+    <div class="section-label">Beyond Tree-Based Methods</div>
+    <h2 class="section-title">Support Vector Machines, Naive Bayes, KNN, and Neural Networks</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">📍 Support Vector Machines: Maximum Margin Classifiers</div>
+      <div class="concept-body">
+        <p>Support vector machines learn decision boundaries by finding the hyperplane that maximizes the margin—the distance between the hyperplane and the closest data points. The intuition is that a boundary with a large margin is more robust and generalizes better than one that barely separates classes. For linearly separable data, SVMs find the linear boundary with the largest margin. For non-separable data, SVMs allow some misclassifications but penalize them, balancing margin maximization with training accuracy. This is fundamentally different from logistic regression which fits a probabilistic model, or trees which build hierarchical boundaries.</p>
+
+        <p>The mathematical formulation involves optimizing weights such that you maximize margin while minimizing classification error. The algorithm learns to focus on support vectors—the critical data points near the boundary that determine the decision boundary. Points far from the boundary are ignored, making SVMs robust to outliers unlike some other algorithms. Adding a regularization parameter C controls the tradeoff between margin and training accuracy, with smaller C favoring larger margins and larger C fitting training data more closely.</p>
+
+        <p>SVMs can handle nonlinear problems through kernel methods, using kernels like polynomial or RBF to implicitly work in transformed feature spaces. The kernel trick makes this computationally tractable despite working in high dimensions. However, SVMs have limitations: they work best with continuous features and require scaling. They don't provide probability estimates natively, though they can be calibrated. They don't handle categorical features well. For large datasets, training can be slow.</p>
+
+        <p>Support vector machines are particularly strong for high-dimensional problems with many features and relatively few samples. They're robust to feature scaling variations and work well with specialized kernels for specific problem structures. However, for typical tabular data with many samples, random forests and gradient boosting usually outperform SVMs. For image data, neural networks are superior. SVMs occupy a middle ground: powerful for specific problem types but not a universal first choice.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Support vector machine classification</span>
+<span class="code-keyword">from</span> sklearn.svm <span class="code-keyword">import</span> SVC
+<span class="code-keyword">from</span> sklearn.preprocessing <span class="code-keyword">import</span> StandardScaler
+
+<span class="code-comment"># SVMs are scale-sensitive: standardize features first</span>
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+<span class="code-comment"># SVM with RBF kernel (can handle nonlinear boundaries)</span>
+svm_model = SVC(
+    kernel=<span class="code-string">'rbf'</span>,  <span class="code-comment"># Radial basis function kernel</span>
+    C=<span class="code-number">1.0</span>,  <span class="code-comment"># Regularization: smaller C = larger margin, more tolerance for errors</span>
+    gamma=<span class="code-string">'scale'</span>  <span class="code-comment"># Kernel parameter: larger gamma = more local influence</span>
+)
+svm_model.fit(X_train_scaled, y_train)
+
+<span class="code-comment"># Evaluate</span>
+test_score = svm_model.score(X_test_scaled, y_test)
+<span class="code-function">print</span>(<span class="code-string">f"SVM accuracy: {test_score:.3f}"</span>)
+
+<span class="code-comment"># Get probability estimates (not native, but calibration provides them)</span>
+<span class="code-keyword">from</span> sklearn.calibration <span class="code-keyword">import</span> CalibratedClassifierCV
+
+svm_calibrated = CalibratedClassifierCV(SVC(kernel=<span class="code-string">'rbf'</span>))
+svm_calibrated.fit(X_train_scaled, y_train)
+proba = svm_calibrated.predict_proba(X_test_scaled)
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🎲 Naive Bayes: Probabilistic Classification</div>
+      <div class="concept-body">
+        <p>Naive Bayes approaches classification through probability theory. The algorithm learns P(class|features) by using Bayes' theorem to invert P(features|class). It makes a strong assumption—features are conditionally independent given the class—which is naive and rarely true in practice, hence the name. Despite this unrealistic assumption, Naive Bayes often works surprisingly well because independence isn't necessary for good classification, only for the algorithm's learned model. When all features are completely independent, which is rare, the algorithm works perfectly. When features are somewhat independent, it still works well. Only when features are heavily dependent does the independence assumption seriously mislead.</p>
+
+        <p>There are variants for different data types. Gaussian Naive Bayes assumes continuous features follow a normal distribution and estimates mean and variance per class. Multinomial Naive Bayes works with counts and is common for text classification where features are word counts. Bernoulli Naive Bayes works with binary features. The choice depends on your data type and how features are naturally represented.</p>
+
+        <p>Naive Bayes is computationally very efficient, training and prediction both running in linear time. It handles high-dimensional data well because it doesn't attempt to model feature interactions. It works with small sample sizes and provides probability estimates naturally. The main downside is that the independence assumption creates a systematic bias: the learned probabilities are often unrealistic even if classifications are good. The model is less flexible than more sophisticated alternatives.</p>
+
+        <p>Naive Bayes excels for text classification, spam filtering, and sentiment analysis where features represent word frequencies. It's simple to understand and implement, and often serves as a good baseline to beat. For tabular data with many features, it usually loses to random forests or gradient boosting, but it's worth trying because sometimes the independence assumption actually helps by reducing overfitting.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Naive Bayes classification</span>
+<span class="code-keyword">from</span> sklearn.naive_bayes <span class="code-keyword">import</span> GaussianNB, MultinomialNB
+
+<span class="code-comment"># Gaussian Naive Bayes for continuous features</span>
+gnb_model = GaussianNB()
+gnb_model.fit(X_train, y_train)
+gnb_score = gnb_model.score(X_test, y_test)
+<span class="code-function">print</span>(<span class="code-string">f"Gaussian NB: {gnb_score:.3f}"</span>)
+
+<span class="code-comment"># Get probability estimates (Naive Bayes provides these naturally)</span>
+gnb_proba = gnb_model.predict_proba(X_test)
+
+<span class="code-comment"># Multinomial Naive Bayes for count data (text classification)</span>
+<span class="code-comment"># Features would typically be word counts from text vectorization</span>
+mnb_model = MultinomialNB(alpha=<span class="code-number">1.0</span>)  <span class="code-comment"># Laplace smoothing</span>
+<span class="code-comment"># mnb_model.fit(X_train_counts, y_train)</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">👥 K-Nearest Neighbors: Instance-Based Learning</div>
+      <div class="concept-body">
+        <p>K-nearest neighbors (KNN) takes a fundamentally different approach to classification: it doesn't explicitly learn a model. Instead, it memorizes the training data and makes predictions based on the K closest training examples. To classify a new point, you find its K nearest neighbors and take their majority vote. The algorithm is lazy in that it defers learning until prediction time. This makes training instant but prediction slow. The decision boundary is implicitly defined by Voronoi cells in the feature space, creating complex nonlinear boundaries without explicitly modeling them.</p>
+
+        <p>The choice of K is critical. Small K like K=1 means each point is classified like its single nearest neighbor, creating very complex boundaries and tending to overfit. Large K like K=50 means you take a majority vote among more neighbors, creating smoother boundaries and underfitting. K must be tuned through cross-validation. Additionally, distance metric matters. Euclidean distance works for most continuous data, but Manhattan distance or specialized metrics might work better for specific problem types. Features must be scaled because unscaled high-variance features dominate the distance calculation.</p>
+
+        <p>KNN works surprisingly well with minimal assumptions about data. It doesn't assume any particular decision boundary shape. It naturally handles multi-class problems and can provide probability estimates by counting how many neighbors belong to each class. The main downsides are computational cost at prediction time, poor scaling to high dimensions (curse of dimensionality), and the need for careful data preprocessing and distance metric selection.</p>
+
+        <p>KNN is useful as a baseline and for specific problems like recommendation systems. It often works decently but rarely achieves state-of-the-art performance. For tabular data, tree-based methods usually dominate. For image or text data, deep learning is superior. But for quick implementation without much tuning, KNN provides a respectable baseline that's easy to understand and adjust.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># K-nearest neighbors classification</span>
+<span class="code-keyword">from</span> sklearn.neighbors <span class="code-keyword">import</span> KNeighborsClassifier
+<span class="code-keyword">from</span> sklearn.preprocessing <span class="code-keyword">import</span> StandardScaler
+<span class="code-keyword">from</span> sklearn.model_selection <span class="code-keyword">import</span> GridSearchCV
+
+<span class="code-comment"># KNN is scale-sensitive: features need standardization</span>
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+<span class="code-comment"># Find optimal K through cross-validation</span>
+knn_model = KNeighborsClassifier(n_neighbors=<span class="code-number">5</span>)
+
+<span class="code-comment"># Grid search for best K</span>
+param_grid = {<span class="code-string">'n_neighbors'</span>: [<span class="code-number">3</span>, <span class="code-number">5</span>, <span class="code-number">7</span>, <span class="code-number">9</span>, <span class="code-number">11</span>, <span class="code-number">15</span>]}
+grid_search = GridSearchCV(knn_model, param_grid, cv=<span class="code-number">5</span>)
+grid_search.fit(X_train_scaled, y_train)
+
+<span class="code-function">print</span>(<span class="code-string">f"Best K: {grid_search.best_params_['n_neighbors']}"</span>)
+
+<span class="code-comment"># Evaluate with best K</span>
+best_knn = grid_search.best_estimator_
+test_score = best_knn.score(X_test_scaled, y_test)
+<span class="code-function">print</span>(<span class="code-string">f"KNN accuracy: {test_score:.3f}"</span>)
+
+<span class="code-comment"># Get probability estimates from KNN</span>
+<span class="code-comment"># Probability is based on proportion of neighbors in each class</span>
+knn_proba = best_knn.predict_proba(X_test_scaled)
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">🧠 Neural Networks: Learning Nonlinear Transformations</div>
+      <div class="concept-body">
+        <p>Neural networks represent a fundamentally different approach to classification. Rather than learning a decision boundary directly, neural networks learn a sequence of transformations of the input features. Each layer transforms its input through learned weights and nonlinear activation functions. The final layer outputs probabilities for each class. By composing many layers, neural networks can learn incredibly complex nonlinear decision boundaries that other algorithms cannot easily represent.</p>
+
+        <p>The depth and width of the network determine its expressiveness. Wide networks with many neurons per layer can approximate any function. Deep networks with many layers can learn hierarchical representations where early layers capture simple patterns and later layers combine them into complex concepts. However, depth and width both increase computational cost and overfitting risk. Finding the right balance requires experimentation.</p>
+
+        <p>Training neural networks involves backpropagation, an efficient way to compute gradients through the entire network. These gradients guide stochastic gradient descent to update weights. The learning rate controls how much weights change per update. Too high a learning rate and training diverges. Too low and training is slow. Mini-batch size affects gradient estimates and training dynamics. The number of epochs determines how many times you iterate through the training data. Regularization through dropout or weight decay prevents overfitting. These hyperparameters are critical and require tuning.</p>
+
+        <p>Neural networks excel at learning from images, text, and other unstructured data. For image classification, convolutional networks leverage spatial structure. For text, recurrent networks capture sequential patterns. For tabular data, simple fully-connected networks often underperform gradient boosting unless the data is very large or has complex nonlinear patterns. The power of neural networks comes with complexity: more hyperparameters to tune, longer training times, and need for more data.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Neural network classification with scikit-learn</span>
+<span class="code-keyword">from</span> sklearn.neural_network <span class="code-keyword">import</span> MLPClassifier
+<span class="code-keyword">from</span> sklearn.preprocessing <span class="code-keyword">import</span> StandardScaler
+
+<span class="code-comment"># Neural networks need feature scaling</span>
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+<span class="code-comment"># Fully connected neural network</span>
+<span class="code-comment"># hidden_layer_sizes: number of neurons in each hidden layer</span>
+nn_model = MLPClassifier(
+    hidden_layer_sizes=(<span class="code-number">128</span>, <span class="code-number">64</span>, <span class="code-number">32</span>),  <span class="code-comment"># Three hidden layers</span>
+    activation=<span class="code-string">'relu'</span>,  <span class="code-comment"># ReLU activation: max(0, x)</span>
+    solver=<span class="code-string">'adam'</span>,  <span class="code-comment"># Adam optimizer (adaptive learning rates)</span>
+    learning_rate_init=<span class="code-number">0.001</span>,  <span class="code-comment"># Initial learning rate</span>
+    max_iter=<span class="code-number">500</span>,  <span class="code-comment"># Maximum training epochs</span>
+    batch_size=<span class="code-number">32</span>,  <span class="code-comment"># Mini-batch size for SGD</span>
+    alpha=<span class="code-number">0.0001</span>,  <span class="code-comment"># L2 regularization strength</span>
+    early_stopping=<span class="code-keyword">True</span>,  <span class="code-comment"># Stop if validation score stops improving</span>
+    validation_fraction=<span class="code-number">0.1</span>  <span class="code-comment"># Use 10% of training data for validation</span>
+)
+nn_model.fit(X_train_scaled, y_train)
+
+<span class="code-comment"># Evaluate</span>
+test_score = nn_model.score(X_test_scaled, y_test)
+<span class="code-function">print</span>(<span class="code-string">f"Neural network accuracy: {test_score:.3f}"</span>)
+
+<span class="code-comment"># Get probability estimates</span>
+nn_proba = nn_model.predict_proba(X_test_scaled)
+
+<span class="code-comment"># Training history: how loss changed over iterations</span>
+<span class="code-function">print</span>(<span class="code-string">f"Final training loss: {nn_model.loss_:.4f}"</span>)
+      </code-block>
+    </div>
+
+  </section>
+
+  <section>
+    <div class="section-label">Choosing the Right Classifier</div>
+    <h2 class="section-title">A Framework for Intelligent Algorithm Selection</h2>
+
+    <div class="insight-box" style="--insight-color: var(--cool);">
+      <div class="insight-title">Start with Logistic Regression for Interpretability</div>
+      <div class="insight-content">When interpretability matters and data is roughly linearly separable, logistic regression is your go-to. The learned weights tell you exactly how features contribute. The probability outputs help you understand confidence in predictions. The model trains in milliseconds. It's a perfect baseline to establish before moving to more complex classifiers. Many problems that seem to need complex models actually solve well with logistic regression after feature engineering.</div>
+    </div>
+
+    <div class="insight-box" style="--insight-color: var(--green);">
+      <div class="insight-title">Use Random Forests for General-Purpose Tabular Classification</div>
+      <div class="insight-content">When you have tabular data without clear structure and need good performance without extensive tuning, random forests are your first choice after logistic regression. They handle categorical features naturally, are robust to outliers and scaling, rarely overfit dramatically, and provide feature importances. You can usually train them with minimal hyperparameter tuning and get good results. They represent an excellent balance of performance, robustness, and simplicity.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--warm);">
+      <div class="insight-title">Use Gradient Boosting When Maximum Performance Matters</div>
+      <div class="insight-content">When you need the best possible predictive performance and have time for hyperparameter tuning, gradient boosting with XGBoost, LightGBM, or CatBoost is the clear winner on tabular data. These algorithms consistently achieve state-of-the-art results in competitions and industry applications. The tradeoff is more hyperparameter tuning, longer training times, and less interpretability. But when accuracy is paramount, gradient boosting delivers.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--hot);">
+      <div class="insight-title">Use Ensemble Methods to Combine Strengths</div>
+      <div class="insight-content">Voting and stacking let you combine diverse algorithms to leverage their strengths. Use voting when you want simple combination of independent models. Use stacking when you want to learn optimal combination weights. Ensembling often achieves better performance than any single algorithm, though at the cost of training and predicting multiple models. The key is diversity: combining different algorithm types that make different assumptions and thus different mistakes.</div>
+    </insight-box>
+
+  </section>
+
+</div>
+
+<footer>
+  <p class="footer-text">Classification Models — Building Systems That Decide Well</p>
+</footer>
+
+</body>
+</html>
