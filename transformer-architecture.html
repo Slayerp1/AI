@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transformer Architecture — The Foundation of Modern Deep Learning</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #04040a;
+  --accent: #7b2fff;
+  --hot: #ff2d78;
+  --cool: #00e5ff;
+  --warm: #ffb800;
+  --green: #00ff9d;
+  --text: #e0e0f0;
+  --muted: #4a4a6a;
+  --card: #0a0a14;
+  --border: rgba(255,255,255,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0,229,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,4,10,0.9);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-right: auto; letter-spacing: 2px; }
+.nav-pill {
+  font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(123,47,255,0.4);
+  color: rgba(123,47,255,0.8); text-decoration: none; transition: all 0.2s;
+}
+.nav-pill:hover { background: rgba(123,47,255,0.15); border-color: var(--accent); color: #fff; }
+
+.hero { padding: 90px 0 50px; }
+.hero-eyebrow {
+  font-family: 'Syne Mono', monospace; font-size: 11px; letter-spacing: 4px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(123,47,255,0.3); }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 100px);
+  line-height: 0.92; margin-bottom: 28px;
+  color: #fff;
+}
+
+.hero-desc { max-width: 750px; font-size: 16px; color: rgba(210,210,240,0.72); line-height: 1.8; margin-bottom: 40px; }
+
+section { padding: 70px 0; border-top: 1px solid var(--border); }
+.section-label { font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 64px); line-height: 1; margin-bottom: 40px; color: #fff; }
+
+.concept-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 36px;
+  border-left: 4px solid var(--card-accent, var(--accent));
+  transition: all 0.3s;
+}
+
+.concept-card:hover {
+  border-color: var(--card-accent, var(--accent));
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  transform: translateY(-2px);
+}
+
+.concept-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--card-accent, var(--accent));
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.concept-body {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.9;
+  margin-bottom: 28px;
+}
+
+.concept-body p {
+  margin-bottom: 18px;
+}
+
+.concept-body strong {
+  color: #fff;
+}
+
+.code-block {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 28px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #fff;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.code-comment { color: #5c7a8a; }
+.code-keyword { color: var(--accent); }
+.code-string { color: var(--green); }
+.code-number { color: var(--warm); }
+.code-function { color: var(--cool); }
+
+.teaching-box {
+  background: rgba(123,47,255,0.1);
+  border-left: 4px solid var(--accent);
+  padding: 24px;
+  border-radius: 10px;
+  margin: 28px 0;
+  font-size: 15px;
+  color: rgba(210,210,240,0.9);
+  line-height: 1.8;
+}
+
+.teaching-box strong {
+  color: #fff;
+}
+
+.impact-box {
+  background: linear-gradient(135deg, rgba(123,47,255,0.15) 0%, rgba(0,229,255,0.08) 100%);
+  border: 1px solid rgba(123,47,255,0.3);
+  border-radius: 14px;
+  padding: 32px;
+  margin-top: 32px;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.impact-item {
+  padding: 24px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  border-left: 4px solid var(--impact-color, var(--accent));
+}
+
+.impact-item-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--impact-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.impact-item-content {
+  font-size: 13px;
+  color: rgba(200,200,220,0.88);
+  line-height: 1.8;
+}
+
+.insight-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 28px 0;
+  border-left: 4px solid var(--insight-color, var(--accent));
+}
+
+.insight-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--insight-color, var(--accent));
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.insight-content {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.8;
+}
+
+footer {
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 60px 0 40px; }
+  section { padding: 50px 0; }
+  .impact-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">TRANSFORMER ARCHITECTURE</div>
+  <a href="#foundations" class="nav-pill">Foundations</a>
+  <a href="#architecture" class="nav-pill">Architecture</a>
+  <a href="#variants" class="nav-pill">Variants</a>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-eyebrow">The Architecture That Changed Everything</div>
+    <h1>Transformer Architecture: Building Blocks of Modern AI</h1>
+    <p class="hero-desc">The Transformer architecture represents one of the most important breakthroughs in deep learning. Before Transformers, recurrent neural networks dominated sequence processing. They were inherently sequential, making parallelization difficult and limiting the length of sequences you could practically process. Transformers changed everything by replacing recurrence with attention mechanisms. This simple but profound shift enabled parallel processing of all sequence positions simultaneously, allowing training on longer sequences and vastly larger datasets. The computational efficiency gains enabled training increasingly large models. These larger models, trained on massive amounts of data, discovered remarkable abilities. Models trained simply to predict the next token in text learned to understand language deeply, solve novel problems, follow instructions, and even perform reasoning. This surprising emergence of capabilities from scale and data became the foundation for the foundation models that power modern AI. Understanding Transformer architecture deeply requires more than memorizing the structure. You must understand how each component contributes to the whole. Why do we need layer normalization? Why are residual connections important? How do positional encodings enable the model to understand order? Why do different variants make specific architectural choices? This section teaches you the Transformer architecture from first principles, building understanding of why each component exists and how variants adapt the core design for specific tasks and constraints. By the end, you'll understand not just how Transformers work but why they became the dominant architecture in modern deep learning and how their design principles extend to solving diverse problems.</p>
+  </section>
+
+  <section id="foundations">
+    <div class="section-label">Understanding the Core Architecture</div>
+    <h2 class="section-title">Transformer Fundamentals: Structure and Components</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🏗️ The Transformer Architecture: An Overview</div>
+      <div class="concept-body">
+        <p>The Transformer architecture consists of an encoder and decoder, each composed of stacked layers. The encoder processes the input sequence, building rich representations. The decoder generates the output sequence one element at a time, using information from the encoder. But here's what makes this different from previous sequence-to-sequence models: the encoder processes all input tokens in parallel. There's no sequential dependency from one position to the next. Each position can attend directly to every other position through multi-head self-attention. This parallelization is transformative because it enables efficient training on modern hardware like GPUs and TPUs that excel at parallel computation.</p>
+
+        <p>Within each encoder and decoder layer, you find several key components. Multi-head self-attention allows positions to attend to each other and combine relevant information. Feed-forward networks apply nonlinear transformations to representations. Layer normalization stabilizes training by normalizing activations. Residual connections enable information to flow directly forward, bypassing layers and helping gradients flow backward during training. Each of these components serves a specific purpose, and understanding their roles helps you understand why the architecture works.</p>
+
+        <p>The decoder has an additional component: cross-attention. While the encoder performs self-attention within the encoder input, the decoder performs cross-attention between the decoder input and the encoder output. The decoder queries ask "what information from the encoder is relevant for generating the next output token?" The encoder outputs provide the keys and values. This cross-attention connection between encoder and decoder is what enables the decoder to ground its generation in the encoder's understanding of the input.</p>
+
+        <p>Let me emphasize an important architectural point: the encoder is bidirectional, meaning each position can attend to all other positions, both before and after it. The decoder is unidirectional (or causal), meaning each position can only attend to previous positions, not future ones. This difference is crucial. During inference, the decoder hasn't generated future positions yet, so it can't attend to them. The causal mask enforces this constraint even during training, ensuring the model trains in a way that's compatible with how it will be used at inference time.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Think about the encoder-decoder structure like a translation pipeline. The encoder reads the entire source language sentence, understanding all the words and their relationships simultaneously. It can look at the whole sentence freely, just as you can reread a sentence to understand it fully. The decoder generates the target language sentence one word at a time, using its understanding of the source (encoder output) and what it has generated so far (previous decoder tokens). The decoder can't look ahead at words it hasn't generated yet, just as when you're speaking, you can't use words you haven't said yet to inform what you're about to say. This architectural asymmetry makes practical sense for language generation tasks.</p>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">🔄 Residual Connections and Layer Normalization: Training Stability</div>
+      <div class="concept-body">
+        <p>Deep neural networks face a fundamental training challenge: gradients flowing backward through many layers can become vanishingly small or explosively large, making training unstable or impossible. Residual connections address this by creating shortcut paths that allow information and gradients to flow directly forward and backward without passing through all the layers in between. Rather than computing output as f(input), you compute output as input plus f(input). This addition creates a direct path that preserves the input signal. If the learned function f is small, the output is mostly the input. If the learned function is large, the output is the input plus significant transformation. This flexibility enables learning both when you want to transform the input significantly and when you want to mostly preserve it.</p>
+
+        <p>The mathematical benefit is that gradients can flow backward through the addition operation unchanged. If gradient of one is flowing back through the residual connection, it reaches the previous layer with magnitude one, not scaled by any weight matrix. This preserves gradient magnitude through many layers, preventing the vanishing gradient problem. This is why residual connections were transformative for training very deep networks. Before residual connections, training networks with more than a few dozen layers was extremely difficult. After residual connections, networks with hundreds or thousands of layers became trainable.</p>
+
+        <p>Layer normalization stabilizes training by normalizing the distribution of activations. At each layer, activations are normalized to have mean zero and unit variance. This prevents activations from growing unboundedly or becoming extremely small. The intuition is that layer statistics become more predictable and stable, allowing subsequent layers to operate in a consistent input distribution. Combined with residual connections, layer normalization enables training very deep models with many layers. The normalized distributions ensure that each layer operates on stable inputs, preventing the internal covariate shift problem where activation distributions shift during training.</p>
+
+        <p>An interesting detail is that in Transformers, layer normalization is typically applied before the multi-head attention and feed-forward operations (pre-norm), not after (post-norm). Pre-norm enables better gradient flow because you normalize inputs before transforming them, creating more stable gradients. This seemingly small architectural detail significantly impacts training stability, demonstrating how careful design of each component contributes to the overall system working well.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Imagine you're building a very tall building. If you stack stories sequentially, each floor must support the weight of all floors above it. The bottom floors experience enormous stress. A better design uses internal support structures that distribute weight, allowing information to flow through multiple paths. Residual connections are like these support structures. They enable information to flow forward through multiple paths: the main path through the layers and the shortcut path directly forward. This redundancy in pathways enables much deeper structures. Layer normalization is like maintaining consistent building codes for each floor, ensuring each floor receives inputs in a predictable format. This consistency enables each floor to be designed and built independently, knowing its inputs will be in a specific range.</p>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🧠 Feed-Forward Networks and Their Role</div>
+      <div class="concept-body">
+        <p>Each Transformer layer contains not just multi-head attention but also a feed-forward network. This feed-forward component is a small neural network that applies two linear transformations separated by a nonlinear activation (typically ReLU or GELU). It processes each position independently, applying the same transformation to each token's representation. The feed-forward network is where much of the model's parameters reside. While attention mechanisms are responsible for relating different positions, feed-forward networks are responsible for nonlinear transformations and feature interactions within each position's representation.</p>
+
+        <p>The feed-forward network is typically bottlenecked. The input dimension might be five hundred, the hidden dimension might be two thousand (expanded), then output dimension is back to five hundred. This expansion provides more representational capacity for the nonlinear transformation. A common pattern is to expand to four times the input dimension. This expansion-contraction pattern is reminiscent of an hourglass: the representation flows through a narrow input dimension, expands to a wider space where complex transformations happen, then contracts back to the original dimension. This design has proven effective in practice.</p>
+
+        <p>An interesting question is why both multi-head attention and feed-forward networks are necessary. Why not just one? The answer is that they serve complementary roles. Multi-head attention relates different positions, allowing information to flow between tokens. The feed-forward network operates within each position, allowing nonlinear feature engineering on each token's representation. Together, they enable the model to both connect information across the sequence and transform that information within each position. This combination has become the standard building block in Transformer-based models across diverse applications.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="architecture">
+    <div class="section-label">Understanding Architectural Details</div>
+    <h2 class="section-title">Deep Dive: Complete Transformer Block Design</h2>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">📊 Scaling Laws and Model Capacity</div>
+      <div class="concept-body">
+        <p>An important discovery in modern deep learning is that Transformer model performance follows predictable scaling laws. As you increase model size (more parameters), training data, or compute, performance improves in a predictable mathematical pattern. This isn't obvious! You might expect performance improvements to plateau quickly or behave unpredictably. Instead, performance scales as a power law, meaning doubling compute roughly gives square root of two improvement in loss. These scaling laws hold across many orders of magnitude, from small models with millions of parameters to large models with billions or trillions. This predictability enables planning how much compute is needed to achieve desired performance levels.</p>
+
+        <p>Understanding scaling laws has practical implications. It tells you that if you have fixed compute, you must balance model size and training steps. Very large models trained for few steps might underperform moderately sized models trained longer. The scaling laws suggest an optimal allocation of compute between model size and training steps. Additionally, the predictability of scaling enables extrapolation. If you observe performance at a few model sizes, you can estimate how much larger a model would need to be to achieve a target performance level.</p>
+
+        <p>The mechanisms underlying scaling laws are still not fully understood, but they seem to relate to the complexity of the task being learned. Larger models can capture more subtle patterns. More training data provides more examples of these patterns. More compute allows longer training to converge to better solutions. The combination of these factors seems to create the observed scaling behavior. This discovery has been transformative because it suggests that continued scaling will lead to continued improvements, motivating the development of increasingly large models.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding Transformer components and their interactions</span>
+
+<span class="code-keyword">class</span> <span class="code-function">TransformerBlock</span>:
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(<span class="code-keyword">self</span>, hidden_dim, num_heads, ff_dim):
+        <span class="code-comment"># Multi-head self-attention layer</span>
+        <span class="code-keyword">self</span>.attention = MultiHeadAttention(hidden_dim, num_heads)
+        <span class="code-comment"># Layer normalization (pre-norm)</span>
+        <span class="code-keyword">self</span>.norm1 = LayerNorm(hidden_dim)
+        
+        <span class="code-comment"># Feed-forward network: expands then contracts</span>
+        <span class="code-keyword">self</span>.fc1 = Linear(hidden_dim, ff_dim)  <span class="code-comment"># Expansion</span>
+        <span class="code-keyword">self</span>.activation = GELU()  <span class="code-comment"># Nonlinearity</span>
+        <span class="code-keyword">self</span>.fc2 = Linear(ff_dim, hidden_dim)  <span class="code-comment"># Contraction</span>
+        <span class="code-keyword">self</span>.norm2 = LayerNorm(hidden_dim)
+    
+    <span class="code-keyword">def</span> <span class="code-function">forward</span>(<span class="code-keyword">self</span>, X):
+        <span class="code-comment"># X shape: (batch, seq_len, hidden_dim)</span>
+        
+        <span class="code-comment"># First sub-layer: self-attention with residual connection</span>
+        <span class="code-comment"># Pre-norm: normalize before applying attention</span>
+        X_norm = <span class="code-keyword">self</span>.norm1(X)
+        <span class="code-comment"># Apply attention</span>
+        attention_out = <span class="code-keyword">self</span>.attention(X_norm)
+        <span class="code-comment"># Add residual connection: input passes through unchanged path</span>
+        X = X + attention_out
+        
+        <span class="code-comment"># Second sub-layer: feed-forward with residual connection</span>
+        <span class="code-comment"># Pre-norm: normalize before feed-forward</span>
+        X_norm = <span class="code-keyword">self</span>.norm2(X)
+        <span class="code-comment"># Expand, apply nonlinearity, contract</span>
+        ff_out = <span class="code-keyword">self</span>.fc2(<span class="code-keyword">self</span>.activation(<span class="code-keyword">self</span>.fc1(X_norm)))
+        <span class="code-comment"># Add residual connection</span>
+        X = X + ff_out
+        
+        <span class="code-keyword">return</span> X
+
+<span class="code-comment"># Key architectural insights:</span>
+<span class="code-comment"># 1. Residual connections enable deep stacking (100+ layers)</span>
+<span class="code-comment"># 2. Layer normalization stabilizes training</span>
+<span class="code-comment"># 3. Attention handles position relationships</span>
+<span class="code-comment"># 4. Feed-forward does nonlinear feature engineering</span>
+<span class="code-comment"># 5. Together these enable powerful sequence modeling</span>
+      </code-block>
+    </div>
+
+  </section>
+
+  <section id="variants">
+    <div class="section-label">The Transformer Family</div>
+    <h2 class="section-title">Transformer Variants: Adapting the Core Design</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🔵 BERT and Bidirectional Understanding</div>
+      <div class="concept-body">
+        <p>BERT represents a major shift in thinking about pre-training. Rather than training a full encoder-decoder model, BERT trains just an encoder. More importantly, BERT introduced the masked language modeling objective. Rather than predicting the next token (unidirectional), BERT randomly masks tokens and trains the model to predict masked tokens using bidirectional context. This means when predicting a masked token, the model can attend to tokens both before and after it, not just before. This bidirectionality provides richer context for understanding.</p>
+
+        <p>The key innovation is that bidirectional context is more informative than unidirectional. When predicting a masked word in the middle of a sentence, you can use context from both directions. When predicting the next token for language generation, you can only use previous context. For understanding tasks like classification or question answering, bidirectional context is strictly more informative. BERT exploited this by training on bidirectional masked prediction, creating a model that understands language deeply. When fine-tuned on downstream tasks, this deep understanding transfers, enabling strong performance with minimal task-specific training.</p>
+
+        <p>BERT's success spawned many variants, each exploring different design choices. RoBERTa improved on BERT through better pre-training, more data, and longer training. ELECTRA trained by replacing tokens with plausible alternatives rather than just masking, making the task more challenging. ALBERT reduced parameters through factorization, enabling training larger models with less memory. DistilBERT compressed BERT through knowledge distillation, creating a faster model with similar performance. These variants show how researchers have explored the design space around BERT's core innovation of masked language modeling.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Imagine learning a language by reading books with random words masked out. Your goal is to guess the masked words using context from the entire sentence, not just what came before. This is harder than just predicting the next word because the masked word could be anything that fits the context. But this harder task forces deeper understanding. You must understand grammar, semantics, and world knowledge to predict masked words accurately. BERT's masked language modeling objective provides this kind of challenging, contextual learning signal. This leads to representations that capture language understanding deeply, enabling transfer to other tasks.</p>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">🎬 GPT and Autoregressive Generation</div>
+      <div class="concept-body">
+        <p>While BERT uses a bidirectional encoder, GPT takes a different approach. GPT is an autoregressive decoder-only model trained to predict the next token given previous tokens. There's no encoder, and the model is strictly unidirectional. The architectural simplicity is appealing: a single stack of Transformer blocks with causal masking. This unidirectionality exactly matches how language generation works. You generate one token at a time, using previous tokens to predict the next. Training the model to do exactly this prepares it perfectly for generation tasks.</p>
+
+        <p>GPT discovered something remarkable: scaling up this simple model on massive amounts of unlabeled text data led to impressive general capabilities. Models trained only to predict the next token learned to perform diverse tasks: translation, question answering, summarization, and even reasoning. These capabilities emerged from scale and data without explicit training for these tasks. This emergence of capabilities from scaling became a defining characteristic of large language models. Subsequent versions of GPT became increasingly large, demonstrating that this scaling trend continues.</p>
+
+        <p>The comparison between BERT and GPT illustrates different design philosophies. BERT optimizes for understanding through bidirectional masking. GPT optimizes for generation through autoregressive prediction. Both proved successful, creating different types of useful models. BERT-style models excel at classification and understanding tasks. GPT-style models excel at generation. The architectural differences reflect the different tasks they're optimized for, yet both use Transformer blocks as their foundation.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Think of GPT like learning to write by completing sentences. Someone gives you the beginning of a sentence, and you predict what comes next, then next, then next. You're not given context from the future of the sentence; you only use what came before. This matches exactly how writing works. You write one word, then use what you've written so far to decide what word comes next. Training in this way prepares you perfectly for writing. The remarkable discovery is that scaling this simple objective to massive data creates something far more capable than just predicting the next token. The model somehow learns to reason, understand, and solve problems.</p>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🔀 T5 and Text-to-Text Framing</div>
+      <div class="concept-body">
+        <p>T5 introduced the insight that many NLP tasks can be unified under a text-to-text framework. Rather than having different models for classification, translation, summarization, and question answering, T5 uses the same encoder-decoder Transformer for all tasks. The difference is in the input format. For classification, input is text plus task prefix, output is the class label. For translation, input is source text with "translate to target_language" prefix, output is the translation. For summarization, input is the document, output is the summary. By unifying the input-output format, T5 shows that a single architecture can handle diverse tasks.</p>
+
+        <p>This unified approach has pedagogical value. It demonstrates that different NLP tasks aren't fundamentally different problems requiring different architectures. They're all sequence-to-sequence transformations. A single encoder-decoder can learn to perform all of them. This unification simplifies the landscape of NLP methods and enables transfer learning across tasks. Improvements to the underlying Transformer architecture benefit all tasks automatically.</p>
+
+        <p>T5 also systematically explored architectural choices like attention type and model scale. By conducting careful ablations, T5 provided insights into what matters in Transformer design. This kind of systematic exploration helps the field understand not just that something works, but why it works and what trades exist. T5's unified framework and thorough ablations made it influential in advancing understanding of how to design and use Transformers effectively.</p>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">⚡ Advanced Variants: Efficiency and Innovation</div>
+      <div class="concept-body">
+        <p>As Transformers become larger and more widely deployed, efficiency becomes crucial. Transformer-XL introduced segment-level recurrence, enabling the model to attend to information from previous segments. This enables modeling longer sequences by processing them in segments while maintaining context across segments. XLNet combined autoregressive and autoencoding approaches, using a permutation language modeling objective that enables bidirectional context while maintaining autoregressive structure. DeBERTa improved on BERT through disentangled attention that separates content and position in attention computation, enabling more expressive attention.</p>
+
+        <p>These advanced variants represent the frontier of Transformer research, exploring how to improve efficiency, expressiveness, and performance. They demonstrate that the field is far from exhausting the design space of Transformer architectures. Each variant contributes new insights about what works and why. The diversity of variants shows that there isn't one perfect Transformer design, but rather a landscape of design choices suited to different constraints and goals.</p>
+
+        <p>The progression from the original Transformer through variants to modern models shows how architecture research progresses. Initial designs establish a foundation. Variants explore specific improvements. Successful variants become the new foundation. Scale and data enable new capabilities. This iterative refinement and scaling continues to drive progress in deep learning.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section>
+    <div class="section-label">Understanding Impact and Future</div>
+    <h2 class="section-title">Transformers: Why They Dominate Modern Deep Learning</h2>
+
+    <div class="insight-box" style="--insight-color: var(--cool);">
+      <div class="insight-title">Transformers Enable Scaling That Leads to Emergent Capabilities</div>
+      <div class="insight-content">The scaling laws of Transformers mean that larger models with more training generally perform better. This predictability has motivated training increasingly large models. These large models, trained on massive datasets, exhibit capabilities that smaller models lack. They can follow complex instructions, perform reasoning, and solve problems they were never explicitly trained for. This emergence of capabilities from scale represents a fundamental shift in how we think about machine learning. Rather than carefully designing systems for specific tasks, we can train large general-purpose models that adapt to diverse tasks. This approach has proven remarkably effective across domains from language to code to mathematics to reasoning.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--green);">
+      <div class="insight-title">Architectural Simplicity Enables Broad Applicability</div>
+      <div class="insight-content">The core Transformer blocks are domain-agnostic. The same architecture that processes language processes code, mathematics, images, audio, and multimodal data. This universality comes from the simplicity and generality of the components. Multi-head attention can relate any type of sequence elements. Feed-forward networks can perform nonlinear transformations on any representations. Layer normalization and residual connections enable training deep networks regardless of what the layers are processing. This architectural portability has enabled Transformers to become the dominant architecture across machine learning, from vision to speech to graphs.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--warm);">
+      <div class="insight-title">Understanding Architecture Explains Modern AI Capabilities</div>
+      <div class="insight-content">The Transformer architecture isn't just one option among many. It's become the foundation for nearly all large-scale deep learning. Understanding how Transformers work at a deep level provides understanding of why modern AI systems behave the way they do. Why can large language models perform tasks they weren't explicitly trained for? Because they're Transformers trained at scale on diverse data, and the architecture enables discovering and leveraging patterns across domains. Why can these models be adapted to new tasks with minimal training? Because the pre-trained representations capture language understanding that transfers to new domains. Understanding the architecture provides understanding of the capabilities and limitations of modern AI systems.</div>
+    </insight-box>
+
+  </section>
+
+</div>
+
+<footer>
+  <p class="footer-text">Transformer Architecture — The Foundation of Modern AI Systems</p>
+</footer>
+
+</body>
+</html>
