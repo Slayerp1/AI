@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Convolutional Neural Networks — Vision through Spatial Patterns</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #04040a;
+  --accent: #7b2fff;
+  --hot: #ff2d78;
+  --cool: #00e5ff;
+  --warm: #ffb800;
+  --green: #00ff9d;
+  --text: #e0e0f0;
+  --muted: #4a4a6a;
+  --card: #0a0a14;
+  --border: rgba(255,255,255,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0,229,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,4,10,0.9);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-right: auto; letter-spacing: 2px; }
+.nav-pill {
+  font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(123,47,255,0.4);
+  color: rgba(123,47,255,0.8); text-decoration: none; transition: all 0.2s;
+}
+.nav-pill:hover { background: rgba(123,47,255,0.15); border-color: var(--accent); color: #fff; }
+
+.hero { padding: 90px 0 50px; }
+.hero-eyebrow {
+  font-family: 'Syne Mono', monospace; font-size: 11px; letter-spacing: 4px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(123,47,255,0.3); }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 100px);
+  line-height: 0.92; margin-bottom: 28px;
+  color: #fff;
+}
+
+.hero-desc { max-width: 750px; font-size: 16px; color: rgba(210,210,240,0.72); line-height: 1.8; margin-bottom: 40px; }
+
+section { padding: 70px 0; border-top: 1px solid var(--border); }
+.section-label { font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 64px); line-height: 1; margin-bottom: 40px; color: #fff; }
+
+.concept-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 36px;
+  border-left: 4px solid var(--card-accent, var(--accent));
+  transition: all 0.3s;
+}
+
+.concept-card:hover {
+  border-color: var(--card-accent, var(--accent));
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  transform: translateY(-2px);
+}
+
+.concept-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--card-accent, var(--accent));
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.concept-body {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.9;
+  margin-bottom: 28px;
+}
+
+.concept-body p {
+  margin-bottom: 18px;
+}
+
+.concept-body strong {
+  color: #fff;
+}
+
+.code-block {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 28px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #fff;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.code-comment { color: #5c7a8a; }
+.code-keyword { color: var(--accent); }
+.code-string { color: var(--green); }
+.code-number { color: var(--warm); }
+.code-function { color: var(--cool); }
+
+.teaching-box {
+  background: rgba(123,47,255,0.1);
+  border-left: 4px solid var(--accent);
+  padding: 24px;
+  border-radius: 10px;
+  margin: 28px 0;
+  font-size: 15px;
+  color: rgba(210,210,240,0.9);
+  line-height: 1.8;
+}
+
+.teaching-box strong {
+  color: #fff;
+}
+
+.impact-box {
+  background: linear-gradient(135deg, rgba(123,47,255,0.15) 0%, rgba(0,229,255,0.08) 100%);
+  border: 1px solid rgba(123,47,255,0.3);
+  border-radius: 14px;
+  padding: 32px;
+  margin-top: 32px;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.impact-item {
+  padding: 24px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  border-left: 4px solid var(--impact-color, var(--accent));
+}
+
+.impact-item-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--impact-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.impact-item-content {
+  font-size: 13px;
+  color: rgba(200,200,220,0.88);
+  line-height: 1.8;
+}
+
+.insight-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 28px 0;
+  border-left: 4px solid var(--insight-color, var(--accent));
+}
+
+.insight-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--insight-color, var(--accent));
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.insight-content {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.8;
+}
+
+footer {
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 60px 0 40px; }
+  section { padding: 50px 0; }
+  .impact-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">CONVOLUTIONAL NEURAL NETWORKS</div>
+  <a href="#foundations" class="nav-pill">Foundations</a>
+  <a href="#operations" class="nav-pill">Operations</a>
+  <a href="#architectures" class="nav-pill">Architectures</a>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-eyebrow">Learning to See Through Spatial Patterns</div>
+    <h1>Convolutional Neural Networks: Processing Images and Spatial Data</h1>
+    <p class="hero-desc">Most of what we consider artificial intelligence in the world today processes images and visual information using convolutional neural networks. When you take a photograph with your phone and it automatically categorizes the scene, you're using CNNs. When a self-driving car identifies pedestrians and traffic signs, it's using CNNs. When social media platforms detect faces for tagging, they're using CNNs. These networks work differently from the fully connected neural networks you've learned about so far. Rather than treating images as flat vectors of pixels, CNNs leverage the spatial structure inherent in images. They use filters that detect local patterns like edges, corners, and textures. They use pooling to capture the essence of features without requiring precise spatial information. They use architectures specifically designed to process images hierarchically, learning simple patterns at early layers and complex concepts at deeper layers. Understanding CNNs requires understanding how the convolution operation fundamentally differs from fully connected operations. It requires understanding how to build deeper networks without suffering gradient problems. It requires understanding the evolution of architectures from simple pioneering networks through modern efficient designs. This section teaches you all of this, starting with the mathematical foundations of convolution and building up through the major architectural innovations that made CNNs so powerful. You'll understand not just how CNNs work, but why they're specifically suited to image processing and spatial reasoning.</p>
+  </section>
+
+  <section id="foundations">
+    <div class="section-label">Understanding Spatial Processing</div>
+    <h2 class="section-title">Core CNN Concepts: The Convolution Operation and Feature Detection</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🔍 The Convolution Operation: Detecting Local Patterns</div>
+      <div class="concept-body">
+        <p>The convolution operation is the foundation of CNNs, and understanding it deeply is crucial. Rather than multiplying all inputs by weights in a fully connected manner, convolution uses small filters that slide across the input, computing dot products at each position. A filter is a small matrix of weights, typically three by three, five by five, or seven by seven for images. The filter slides across the input image, and at each position, you compute the dot product between the filter and the local patch of the image. This produces a single number representing how well that local patch matches the filter.</p>
+
+        <p>Let me make this concrete with an example. Imagine an image that's eight by eight pixels and a filter that's three by three. You place the filter at the top-left corner of the image, compute the dot product between the three by three filter and the corresponding three by three patch of the image, and this gives you one output value. Then you slide the filter one pixel to the right, compute the dot product again, getting another output value. You continue sliding right until you reach the right edge of the image, then move down one row and slide left to right again. You continue until you've covered the entire image. If you slide the filter one pixel at a time, you'll produce a six by six output feature map from the eight by eight input. The dimension reduction happens because you can only place the three by three filter in positions where it fits entirely within the image.</p>
+
+        <p>Why is this useful? Because filters can be learned to detect meaningful visual features. A network might learn that one filter detects vertical edges, another detects horizontal edges, another detects corners, and so on. By convolving an image with these filters, the network extracts a feature map showing where these features occur in the image. Unlike fully connected layers that treat all pixel relationships equally, convolution leverages local spatial relationships. Pixels nearby each other are more likely to be related than pixels far apart. Edges don't care about absolute pixel position but about relative position within small neighborhoods. Convolution efficiently captures this locality.</p>
+
+        <p>The convolution operation is computationally efficient because each filter is shared across the entire image. Rather than learning millions of weights for a fully connected layer, you learn only the few weights in the filter. This weight sharing enables learning from limited data and provides translation invariance: the same filter detects a feature whether it appears in the top-left or bottom-right of the image. This is powerful precisely because natural images have this property. An edge detection filter works the same way regardless of where edges appear in the image.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding convolution as sliding pattern matching.</strong> Imagine a photo of a face and you want to find where the nose is. Rather than looking at the entire face at once, you look at small patches. You have a mental template of what a nose looks like. You slide this template across the image patch by patch. At each position, you evaluate how well the patch matches your nose template. Positions with high match scores tell you where noses are likely located. Convolution works exactly this way. The filter is the template. Sliding it across the image and computing dot products measures how well each patch matches the filter. The resulting feature map shows where the pattern that the filter detects appears in the image. By learning filters through training, the network discovers what patterns are useful for the prediction task.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding the convolution operation: sliding filter, local matching</span>
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+
+<span class="code-keyword">def</span> <span class="code-function">convolution_2d</span>(image, kernel, stride=<span class="code-number">1</span>, padding=<span class="code-number">0</span>):
+    <span class="code-comment"># Add padding to image if specified</span>
+    <span class="code-keyword">if</span> padding > <span class="code-number">0</span>:
+        image = np.pad(image, ((padding, padding), (padding, padding)), mode=<span class="code-string">'constant'</span>)
+    
+    image_h, image_w = image.shape
+    kernel_h, kernel_w = kernel.shape
+    
+    <span class="code-comment"># Compute output dimensions</span>
+    <span class="code-comment"># How many positions can we place the kernel?</span>
+    output_h = (image_h - kernel_h) // stride + <span class="code-number">1</span>
+    output_w = (image_w - kernel_w) // stride + <span class="code-number">1</span>
+    
+    <span class="code-comment"># Initialize output feature map</span>
+    output = np.zeros((output_h, output_w))
+    
+    <span class="code-comment"># Slide kernel across image</span>
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">0</span>, image_h - kernel_h + <span class="code-number">1</span>, stride):
+        <span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">0</span>, image_w - kernel_w + <span class="code-number">1</span>, stride):
+            <span class="code-comment"># Extract patch at current position</span>
+            patch = image[i:i+kernel_h, j:j+kernel_w]
+            
+            <span class="code-comment"># Compute dot product (element-wise multiply and sum)</span>
+            <span class="code-comment"># This is the convolution operation at this position</span>
+            output_i = i // stride
+            output_j = j // stride
+            output[output_i, output_j] = np.sum(patch * kernel)
+    
+    <span class="code-keyword">return</span> output
+
+<span class="code-comment"># The convolution operation is foundation of CNNs</span>
+<span class="code-comment"># It detects local patterns through learned filters</span>
+<span class="code-comment"># Weight sharing makes it efficient for image processing</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">📐 Understanding Padding, Stride, and Receptive Fields</div>
+      <div class="concept-body">
+        <p>Padding adds extra pixels around the image before convolution. Without padding, the output feature map is smaller than the input. A three by three filter on an eight by eight image produces a six by six output. With padding of one (adding one pixel of zeros around the eight by eight image to make it ten by ten), the output becomes eight by eight, preserving dimensions. Padding serves two purposes. First, it preserves spatial dimensions, which is useful when you want to stack many convolutional layers without shrinking the image. Second, it ensures that corner and edge pixels contribute equally to the output. Without padding, corner pixels are only seen by filters once (when the filter is at the corner), while central pixels are seen many times. Padding with zeros (zero-padding) is most common, though other padding strategies exist.</p>
+
+        <p>Stride is the step size when sliding the filter. With stride one, you move the filter one pixel at a time. With stride two, you move two pixels at a time, reducing the output size by half in each dimension. Stride is essentially a way to downsample without pooling. A stride of two and a three by three filter on an eight by eight image produces a three by three output (roughly half the dimension). Stride affects both computational cost and output resolution. Larger strides are faster because you compute fewer convolutions, but they also discard spatial information.</p>
+
+        <p>The receptive field is the size of the input region that affects a single output element. For a three by three convolution with stride one, the receptive field of the output is three by three. But if you stack two three by three convolutions, the receptive field becomes five by five because the second convolution sees a larger region through its connection to the first layer's outputs. Deeper networks have larger receptive fields, allowing neurons deep in the network to integrate information from large regions of the input. Understanding receptive field size is crucial for designing networks that can capture patterns at different scales.</p>
+
+        <p>These three concepts—padding, stride, and receptive field—fundamentally determine how a CNN processes spatial information. Padding preserves dimensions. Stride controls downsampling. Receptive field determines the spatial scale of each layer's perception. Together, they enable you to design networks that process images hierarchically, from fine local details to coarse global patterns.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Computing output dimensions and receptive fields</span>
+
+<span class="code-keyword">def</span> <span class="code-function">conv_output_shape</span>(input_size, kernel_size, stride=<span class="code-number">1</span>, padding=<span class="code-number">0</span>):
+    <span class="code-comment"># Formula for output size after convolution</span>
+    <span class="code-comment"># output_size = floor((input_size + 2*padding - kernel_size) / stride) + 1</span>
+    output_size = ((input_size + <span class="code-number">2</span> * padding - kernel_size) // stride) + <span class="code-number">1</span>
+    <span class="code-keyword">return</span> output_size
+
+<span class="code-keyword">def</span> <span class="code-function">receptive_field_calculation</span>(num_layers, kernel_size=<span class="code-number">3</span>, stride=<span class="code-number">1</span>):
+    <span class="code-comment"># Receptive field grows with depth</span>
+    <span class="code-comment"># Each layer adds (kernel_size - 1) to receptive field</span>
+    receptive_field = <span class="code-number">1</span>
+    current_stride = <span class="code-number">1</span>
+    
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(num_layers):
+        <span class="code-comment"># Each convolution adds to receptive field</span>
+        receptive_field += (kernel_size - <span class="code-number">1</span>) * current_stride
+        <span class="code-comment"># Stride accumulates: each layer's stride multiplies</span>
+        current_stride *= stride
+    
+    <span class="code-keyword">return</span> receptive_field
+
+<span class="code-comment"># Example: understanding spatial processing</span>
+<span class="code-comment"># Input: 224x224 image (typical for image classification)</span>
+<span class="code-comment"># Conv 3x3, padding=1, stride=1: output 224x224 (size preserved)</span>
+<span class="code-comment"># Conv 3x3, padding=1, stride=2: output 112x112 (size halved)</span>
+<span class="code-comment"># After 3 layers of 3x3 convolutions:</span>
+<span class="code-comment">#   receptive field = 1 + 2 + 2 + 2 = 7x7</span>
+<span class="code-comment">#   So each output pixel sees 7x7 region of input</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">📊 Pooling and Downsampling: Abstracting Information</div>
+      <div class="concept-body">
+        <p>Pooling operations reduce spatial dimensions by computing aggregate statistics over small regions. Max pooling takes the maximum value in a region. A two by two max pooling operation divides a feature map into non-overlapping two by two regions and outputs the maximum value from each region. This reduces the feature map size by half in each dimension. Average pooling computes the mean instead of the maximum. Stochastic pooling randomly selects values from regions based on a probability distribution.</p>
+
+        <p>Why is pooling useful? First, it reduces computation and memory by reducing feature map sizes. Second, it provides some translation invariance: small shifts in the input don't change the max pooling output if the maximum value remains within the pooling region. Third, it emphasizes the most important features within each region. If a region contains a strong edge detection response and some weak noise, max pooling captures the strong response and discards the noise. This is loosely analogous to how human vision focuses on salient features and ignores less important details.</p>
+
+        <p>Pooling also increases the receptive field effectively. After pooling, each neuron corresponds to a larger region of the input. A two by two pooling reduces the feature map size while each output neuron receives information from a larger input region. This enables building hierarchical representations where early layers capture fine details, middle layers capture intermediate patterns, and deeper layers capture coarse high-level concepts.</p>
+
+        <p>Upsampling and transposed convolution are the inverse operations. Upsampling expands feature maps by inserting zeros or interpolating values. Transposed convolution (also called deconvolution, though that term is misleading) essentially performs the reverse of regular convolution, expanding spatial dimensions while reducing channel dimensions. These operations are useful for tasks like semantic segmentation where you need to produce output with the same spatial resolution as the input.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Pooling operations: aggregating information over regions</span>
+
+<span class="code-keyword">def</span> <span class="code-function">max_pooling_2d</span>(feature_map, pool_size=<span class="code-number">2</span>, stride=<span class="code-number">2</span>):
+    <span class="code-comment"># Max pooling: take maximum value in each pool_size x pool_size region</span>
+    height, width = feature_map.shape
+    
+    <span class="code-comment"># Output dimensions after pooling</span>
+    output_h = (height - pool_size) // stride + <span class="code-number">1</span>
+    output_w = (width - pool_size) // stride + <span class="code-number">1</span>
+    output = np.zeros((output_h, output_w))
+    
+    <span class="code-comment"># Slide pooling window across feature map</span>
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">0</span>, height - pool_size + <span class="code-number">1</span>, stride):
+        <span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">0</span>, width - pool_size + <span class="code-number">1</span>, stride):
+            <span class="code-comment"># Extract region and compute maximum</span>
+            region = feature_map[i:i+pool_size, j:j+pool_size]
+            output[i//stride, j//stride] = np.max(region)
+    
+    <span class="code-keyword">return</span> output
+
+<span class="code-keyword">def</span> <span class="code-function">average_pooling_2d</span>(feature_map, pool_size=<span class="code-number">2</span>, stride=<span class="code-number">2</span>):
+    <span class="code-comment"># Average pooling: take mean value in each pool_size x pool_size region</span>
+    height, width = feature_map.shape
+    output_h = (height - pool_size) // stride + <span class="code-number">1</span>
+    output_w = (width - pool_size) // stride + <span class="code-number">1</span>
+    output = np.zeros((output_h, output_w))
+    
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">0</span>, height - pool_size + <span class="code-number">1</span>, stride):
+        <span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">0</span>, width - pool_size + <span class="code-number">1</span>, stride):
+            region = feature_map[i:i+pool_size, j:j+pool_size]
+            output[i//stride, j//stride] = np.mean(region)
+    
+    <span class="code-keyword">return</span> output
+
+<span class="code-comment"># Pooling reduces spatial dimensions while preserving important information</span>
+<span class="code-comment"># Max pooling emphasizes strongest features (edges, corners)</span>
+<span class="code-comment"># Average pooling provides smoother aggregation</span>
+      </code-block>
+    </div>
+
+    <div class="impact-box">
+      <div class="impact-grid">
+        <div class="impact-item" style="--impact-color: var(--cool);">
+          <div class="impact-item-title">🎯 Why CNNs Work for Images</div>
+          <div class="impact-item-content">CNNs exploit three fundamental properties of images. First, locality: nearby pixels are more related than distant pixels. Convolution captures this by processing local neighborhoods. Second, translation invariance: the same object looks the same whether it appears left or right in the image. Weight sharing ensures the same filter detects the same features regardless of location. Third, hierarchy: images have structure at multiple scales. Stacking convolutional layers with pooling enables capturing both fine details and coarse patterns.</div>
+        </div>
+        <div class="impact-item" style="--impact-color: var(--green);">
+          <div class="impact-item-title">💡 Designing Networks</div>
+          <div class="impact-item-content">To design CNNs effectively, think about the information flow. Early layers should have small receptive fields to capture fine details. Progressive pooling or striding reduces dimensions while increasing receptive field. Middle layers capture intermediate patterns. Deep layers capture high-level concepts. The number and size of filters at each layer determines capacity. Wider networks (more filters) increase capacity but risk overfitting. Deeper networks access larger receptive fields but are harder to train.</div>
+        </div>
+        <div class="impact-item" style="--impact-color: var(--hot);">
+          <div class="impact-item-title">⚠️ Implementation Details</div>
+          <div class="impact-item-content">Padding choices affect border pixels. Valid padding (no padding) shrinks dimensions but treats borders differently. Same padding preserves dimensions. Stride affects both computation and information loss. Stride 1 preserves all information but is computationally expensive. Stride 2+ reduces computation but loses spatial detail. Many modern networks use stride 1 convolutions followed by explicit pooling for finer control.</div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="operations">
+    <div class="section-label">Modern Variations and Efficiency</div>
+    <h2 class="section-title">Advanced CNN Operations: Grouped, Depthwise, and Efficient Convolutions</h2>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">🔗 Grouped and Depthwise Convolutions: Efficient Feature Processing</div>
+      <div class="concept-body">
+        <p>Standard convolution connects each output channel to all input channels. If your input has three channels (RGB) and you want thirty-two output channels, you need thirty-two filters of size three by three by three (three for depth, three by three for width and height). That's thousands of parameters per layer. Grouped convolution divides input channels into groups, and each group is processed separately. If you have three input channels and use three groups, each group has one input channel. Each group might produce a subset of output channels. This dramatically reduces parameters.</p>
+
+        <p>Depthwise separable convolution takes this further. It processes each input channel independently with its own filter (depthwise convolution), then uses one by one convolutions to combine information across channels (pointwise convolution). Rather than learning dense connections between all input and output channels, depthwise separable convolution learns only how to process each channel independently plus how to mix channels. This is far more efficient. For a three by three filter with three input channels and thirty-two output channels, standard convolution requires nine hundred and twenty-eight parameters (thirty-two filters times three by three times three). Depthwise separable requires only one hundred and seventeen parameters. This efficiency explains why depthwise separable convolutions are used extensively in mobile and efficient networks.</p>
+
+        <p>One by one convolutions are deceptively simple but powerful. They don't perform spatial convolution but instead compute weighted combinations across channels at each spatial position. They're useful for dimensionality reduction (reducing the number of channels) before expensive spatial convolutions, and for combining information across channels after spatial convolutions. Many modern networks use one by one convolutions extensively to control the flow of information through the network efficiently.</p>
+
+        <p>These efficient convolutions represent a philosophical shift in deep learning. Rather than simply making networks bigger and deeper, modern approaches focus on making networks more efficient. By using grouped convolutions, depthwise separable convolutions, and careful architecture design, networks can achieve remarkable performance with far fewer parameters and less computation. This is crucial for deploying networks on mobile devices, edge computers, and other resource-constrained environments.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Grouped and depthwise separable convolutions: efficient feature processing</span>
+
+<span class="code-keyword">def</span> <span class="code-function">grouped_convolution_flops</span>(
+    input_channels, output_channels, spatial_size, 
+    kernel_size, groups
+):
+    <span class="code-comment"># Calculate FLOPs (floating point operations) for grouped convolution</span>
+    channels_per_group = input_channels // groups
+    output_per_group = output_channels // groups
+    
+    <span class="code-comment"># Each group processes independently</span>
+    kernel_params_per_group = channels_per_group * kernel_size * kernel_size
+    output_elements_per_group = output_per_group * spatial_size * spatial_size
+    
+    total_flops = (
+        groups * 
+        kernel_params_per_group * 
+        output_elements_per_group
+    )
+    
+    <span class="code-keyword">return</span> total_flops
+
+<span class="code-keyword">def</span> <span class="code-function">depthwise_separable_flops</span>(
+    input_channels, output_channels, spatial_size, kernel_size
+):
+    <span class="code-comment"># Depthwise separable = depthwise + pointwise</span>
+    
+    <span class="code-comment"># Depthwise: kernel_size x kernel_size for each input channel</span>
+    depthwise_flops = (
+        input_channels * 
+        kernel_size * kernel_size * 
+        spatial_size * spatial_size
+    )
+    
+    <span class="code-comment"># Pointwise: 1x1 convolution to mix channels</span>
+    pointwise_flops = (
+        input_channels * 
+        output_channels * 
+        spatial_size * spatial_size
+    )
+    
+    total_flops = depthwise_flops + pointwise_flops
+    <span class="code-keyword">return</span> total_flops
+
+<span class="code-comment"># Grouped and depthwise separable convolutions reduce parameters dramatically</span>
+<span class="code-comment"># Enable efficient networks that run on mobile and edge devices</span>
+<span class="code-comment"># Modern networks like MobileNet rely heavily on these operations</span>
+      </code-block>
+    </div>
+
+  </section>
+
+  <section id="architectures">
+    <div class="section-label">Evolution of Successful Designs</div>
+    <h2 class="section-title">CNN Architectures: From LeNet to Modern Efficient Networks</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🏗️ Understanding Architecture Evolution: Learning From Design Principles</div>
+      <div class="concept-body">
+        <p>The evolution of CNN architectures is fascinating because it reveals how deep learning researchers have progressively discovered better ways to process images. Each major architecture introduced innovations that influenced all subsequent designs. LeNet, developed in the nineteen nineties, was the first successful CNN, using a simple stack of convolutional and pooling layers for handwritten digit recognition. While primitive by modern standards, LeNet established the core principle that stacking convolutional layers enables learning hierarchical representations.</p>
+
+        <p>AlexNet revolutionized deep learning in twenty twelve by winning an image classification competition dramatically outperforming traditional methods. It demonstrated that deep convolutional networks with sufficient data and computation could learn incredibly powerful visual representations. AlexNet was much deeper and wider than previous networks, using features like ReLU activation, dropout regularization, and GPU acceleration. The dramatic success of AlexNet sparked the deep learning revolution and showed that scaling up networks and data enabled remarkable performance.</p>
+
+        <p>VGGNet simplified AlexNet's architecture by using uniform three by three convolutions throughout, showing that network depth rather than large filters was key to performance. ResNet introduced residual connections that enabled training extremely deep networks by allowing gradients to flow directly backward through skip connections. This was transformative because it showed that training hundreds or even thousands of layer networks was possible with the right architectural innovations.</p>
+
+        <p>Inception (GoogLeNet) introduced the insight that using multiple filter sizes in parallel could be beneficial, allowing networks to capture patterns at multiple scales simultaneously. DenseNet showed that connecting layers densely (each layer receiving input from all previous layers) could improve gradient flow and feature reuse. EfficientNet demonstrated that thoughtfully scaling network depth, width, and input resolution together could achieve state-of-the-art performance with fewer parameters than previous approaches.</p>
+
+        <p>Alongside these advances, researchers developed architectures optimized for efficiency. MobileNet used depthwise separable convolutions to enable powerful networks that run on mobile devices. SqueezeNet used clever design choices like one by one convolutions and fire modules to compress networks dramatically. ShuffleNet introduced channel shuffling to improve information flow with grouped convolutions. These efficient architectures showed that the goal wasn't just maximum accuracy but optimal accuracy-to-efficiency tradeoff.</p>
+
+        <p>Understanding this evolution is valuable because it shows the principles that matter: depth enables hierarchical learning, residual connections solve gradient flow problems, efficient operations enable deployment, and thoughtful design can achieve more with less. Rather than memorizing every architecture, understanding these principles enables you to reason about new designs and adapt existing architectures to your specific constraints and problems.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding architecture design as solving specific problems.</strong> Each major CNN architecture was designed to solve particular challenges. AlexNet solved the problem of learning from large datasets by being deep and wide. VGGNet solved the problem of understanding what matters by showing uniform three by three filters work throughout. ResNet solved the problem of training very deep networks by enabling gradient flow. Inception solved the problem of capturing multi-scale patterns. DenseNet solved the problem of feature reuse and gradient flow. EfficientNet solved the problem of efficient scaling. MobileNet solved the problem of running on devices with limited compute. Rather than arbitrary design choices, each architecture represents a thoughtful solution to a specific problem. This problem-solving perspective helps you understand not just how networks work but why particular designs matter for particular constraints.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Core concepts across successful architectures</span>
+
+<span class="code-comment"># ResNet key insight: skip connections enable training very deep networks</span>
+<span class="code-keyword">class</span> <span class="code-function">ResidualBlock</span>:
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(<span class="code-keyword">self</span>, in_channels, out_channels):
+        <span class="code-keyword">self</span>.conv1 = Conv2d(in_channels, out_channels, kernel_size=<span class="code-number">3</span>)
+        <span class="code-keyword">self</span>.conv2 = Conv2d(out_channels, out_channels, kernel_size=<span class="code-number">3</span>)
+        <span class="code-comment"># Skip connection: add input to output</span>
+        <span class="code-keyword">self</span>.skip = Identity() <span class="code-keyword">if</span> in_channels == out_channels <span class="code-keyword">else</span> Conv2d(in_channels, out_channels, kernel_size=<span class="code-number">1</span>)
+    
+    <span class="code-keyword">def</span> <span class="code-function">forward</span>(<span class="code-keyword">self</span>, x):
+        <span class="code-comment"># Main path: x -> conv -> relu -> conv</span>
+        out = relu(self.conv1(x))
+        out = self.conv2(out)
+        <span class="code-comment"># Add skip connection: residual learning</span>
+        out = out + self.skip(x)
+        <span class="code-keyword">return</span> relu(out)
+
+<span class="code-comment"># DenseNet key insight: dense connections improve gradient flow and reuse</span>
+<span class="code-keyword">class</span> <span class="code-function">DenseBlock</span>:
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(<span class="code-keyword">self</span>, num_layers, growth_rate):
+        <span class="code-comment"># Each layer receives input from all previous layers</span>
+        <span class="code-keyword">self</span>.layers = []
+        <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(num_layers):
+            in_channels = i * growth_rate
+            <span class="code-keyword">self</span>.layers.append(Conv2d(in_channels, growth_rate, kernel_size=<span class="code-number">3</span>))
+    
+    <span class="code-keyword">def</span> <span class="code-function">forward</span>(<span class="code-keyword">self</span>, x):
+        outputs = [x]
+        <span class="code-comment"># Each layer sees all previous outputs</span>
+        <span class="code-keyword">for</span> layer <span class="code-keyword">in</span> <span class="code-keyword">self</span>.layers:
+            out = layer(torch.cat(outputs, dim=<span class="code-number">1</span>))
+            outputs.append(out)
+        <span class="code-keyword">return</span> torch.cat(outputs, dim=<span class="code-number">1</span>)
+
+<span class="code-comment"># MobileNet key insight: depthwise separable convolutions enable efficiency</span>
+<span class="code-keyword">class</span> <span class="code-function">MobileBlock</span>:
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(<span class="code-keyword">self</span>, in_channels, out_channels):
+        <span class="code-comment"># Depthwise: separate convolution per channel</span>
+        <span class="code-keyword">self</span>.depthwise = Conv2d(in_channels, in_channels, kernel_size=<span class="code-number">3</span>, groups=in_channels)
+        <span class="code-comment"># Pointwise: 1x1 convolution to mix channels</span>
+        <span class="code-keyword">self</span>.pointwise = Conv2d(in_channels, out_channels, kernel_size=<span class="code-number">1</span>)
+    
+    <span class="code-keyword">def</span> <span class="code-function">forward</span>(<span class="code-keyword">self</span>, x):
+        out = self.depthwise(x)
+        out = self.pointwise(out)
+        <span class="code-keyword">return</span> out
+
+<span class="code-comment"># Each architecture introduced innovations enabling better learning or efficiency</span>
+<span class="code-comment"># Understanding principles matters more than memorizing specific architectures</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">📊 Modern Architectures and Neural Architecture Search</div>
+      <div class="concept-body">
+        <p>The evolution from hand-designed architectures like ResNet and DenseNet to automatically searched architectures like NASNet represents a paradigm shift. Neural Architecture Search (NAS) treats architecture design as an optimization problem. Rather than humans manually designing architectures, algorithms automatically search over possible designs, evaluating their performance on the task and selecting the best ones. NASNet discovered architectures that surpass human-designed networks in accuracy while using fewer parameters.</p>
+
+        <p>NAS works by defining a search space (the types of operations available, how many layers, how to combine them), then using reinforcement learning, evolutionary algorithms, or other optimization methods to explore this space. The discovered architectures are often surprising, using combinations of operations that humans might not have considered. This demonstrates that good architecture design is complex, and algorithmic search can find better solutions than human intuition. However, NAS is computationally expensive, requiring thousands or millions of architecture evaluations.</p>
+
+        <p>Modern practical CNN design combines insights from both hand-designed and searched architectures. Efficient architectures like EfficientNet and MobileNetV3 achieved state-of-the-art results through careful manual design combined with limited automated search. The key principles remain: use efficient operations, enable gradient flow through skip connections, capture multi-scale patterns through variable receptive fields, and scale networks thoughtfully according to compute constraints.</p>
+
+        <p>An important insight is that no single architecture is best for all tasks. Image classification requires different properties than semantic segmentation, object detection, or medical imaging. Domain-specific architectures often outperform general-purpose networks. The modern approach is to understand general principles (depth, skip connections, efficiency), recognize task-specific requirements, and adapt existing architectures or design new ones accordingly. This principled approach is more valuable than memorizing the details of any specific architecture.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section>
+    <div class="section-label">Core Understanding of CNNs</div>
+    <h2 class="section-title">Why CNNs Revolutionized Computer Vision</h2>
+
+    <div class="insight-box" style="--insight-color: var(--cool);">
+      <div class="insight-title">Locality and Weight Sharing Enable Learning From Limited Data</div>
+      <div class="insight-content">Fully connected networks require enormous amounts of data because they learn completely independent weights for each position. A CNN with shared weights across the image requires far fewer parameters and learns faster from limited data. This was crucial for the deep learning revolution. Before CNNs, learning visual representations required hand-engineered features because learning without these constraints was infeasible. CNNs made learning visual features directly from data practical, enabling dramatic progress in computer vision.</div>
+    </div>
+
+    <div class="insight-box" style="--insight-color: var(--green);">
+      <div class="insight-title">Architectural Innovations Solve Fundamental Training Problems</div>
+      <div class="insight-content">Batch normalization solved internal covariate shift. Residual connections solved vanishing gradients in deep networks. Attention mechanisms solve the problem of knowing what to focus on. Each major innovation addressed a specific training problem, enabling deeper and more powerful networks. Rather than viewing these as disconnected tricks, recognizing them as solutions to fundamental problems enables understanding why they matter and when to apply them.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--warm);">
+      <div class="insight-title">Efficiency Matters As Much As Accuracy</div>
+      <div class="insight-content">State-of-the-art accuracy means little if the model is too slow or resource-intensive to deploy. Modern CNN research focuses heavily on the accuracy-to-efficiency tradeoff. Depthwise separable convolutions, grouped convolutions, neural architecture search optimizing for both accuracy and efficiency, and careful scaling strategies all reflect this shift. The practical reality of machine learning is that elegant theoretical solutions must be deployable. Understanding how to design efficient networks is as important as understanding how to achieve maximum accuracy.</div>
+    </insight-box>
+
+  </section>
+
+</div>
+
+<footer>
+  <p class="footer-text">Convolutional Neural Networks — The Foundation of Modern Computer Vision</p>
+</footer>
+
+</body>
+</html>
