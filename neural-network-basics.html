@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neural Network Basics — Building and Understanding Artificial Neural Networks</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #04040a;
+  --accent: #7b2fff;
+  --hot: #ff2d78;
+  --cool: #00e5ff;
+  --warm: #ffb800;
+  --green: #00ff9d;
+  --text: #e0e0f0;
+  --muted: #4a4a6a;
+  --card: #0a0a14;
+  --border: rgba(255,255,255,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0,229,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,4,10,0.9);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-right: auto; letter-spacing: 2px; }
+.nav-pill {
+  font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(123,47,255,0.4);
+  color: rgba(123,47,255,0.8); text-decoration: none; transition: all 0.2s;
+}
+.nav-pill:hover { background: rgba(123,47,255,0.15); border-color: var(--accent); color: #fff; }
+
+.hero { padding: 90px 0 50px; }
+.hero-eyebrow {
+  font-family: 'Syne Mono', monospace; font-size: 11px; letter-spacing: 4px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(123,47,255,0.3); }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 100px);
+  line-height: 0.92; margin-bottom: 28px;
+  color: #fff;
+}
+
+.hero-desc { max-width: 750px; font-size: 16px; color: rgba(210,210,240,0.72); line-height: 1.8; margin-bottom: 40px; }
+
+section { padding: 70px 0; border-top: 1px solid var(--border); }
+.section-label { font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 64px); line-height: 1; margin-bottom: 40px; color: #fff; }
+
+.concept-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 36px;
+  border-left: 4px solid var(--card-accent, var(--accent));
+  transition: all 0.3s;
+}
+
+.concept-card:hover {
+  border-color: var(--card-accent, var(--accent));
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  transform: translateY(-2px);
+}
+
+.concept-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--card-accent, var(--accent));
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.concept-body {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.9;
+  margin-bottom: 28px;
+}
+
+.concept-body p {
+  margin-bottom: 18px;
+}
+
+.concept-body strong {
+  color: #fff;
+}
+
+.code-block {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 28px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #fff;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.code-comment { color: #5c7a8a; }
+.code-keyword { color: var(--accent); }
+.code-string { color: var(--green); }
+.code-number { color: var(--warm); }
+.code-function { color: var(--cool); }
+
+.teaching-box {
+  background: rgba(123,47,255,0.1);
+  border-left: 4px solid var(--accent);
+  padding: 24px;
+  border-radius: 10px;
+  margin: 28px 0;
+  font-size: 15px;
+  color: rgba(210,210,240,0.9);
+  line-height: 1.8;
+}
+
+.teaching-box strong {
+  color: #fff;
+}
+
+.impact-box {
+  background: linear-gradient(135deg, rgba(123,47,255,0.15) 0%, rgba(0,229,255,0.08) 100%);
+  border: 1px solid rgba(123,47,255,0.3);
+  border-radius: 14px;
+  padding: 32px;
+  margin-top: 32px;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.impact-item {
+  padding: 24px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  border-left: 4px solid var(--impact-color, var(--accent));
+}
+
+.impact-item-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--impact-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.impact-item-content {
+  font-size: 13px;
+  color: rgba(200,200,220,0.88);
+  line-height: 1.8;
+}
+
+.insight-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 28px 0;
+  border-left: 4px solid var(--insight-color, var(--accent));
+}
+
+.insight-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--insight-color, var(--accent));
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.insight-content {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.8;
+}
+
+footer {
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 60px 0 40px; }
+  section { padding: 50px 0; }
+  .impact-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">NEURAL NETWORK BASICS</div>
+  <a href="#foundations" class="nav-pill">Foundations</a>
+  <a href="#learning" class="nav-pill">Learning</a>
+  <a href="#architecture" class="nav-pill">Architecture</a>
+  <a href="#activation" class="nav-pill">Activation</a>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-eyebrow">Understanding How Artificial Intelligence Learns</div>
+    <h1>Neural Network Basics: From Neurons to Networks</h1>
+    <p class="hero-desc">Neural networks are inspired by how biological brains process information. The human brain contains billions of neurons, each receiving signals from many other neurons, processing that information, and sending signals forward. Individual neurons are simple: they receive inputs, process them through weighted connections, and produce outputs. The power emerges from connecting billions of these simple units. Artificial neural networks follow the same principle. Individual artificial neurons are mathematically simple operations. A neuron multiplies inputs by weights, adds a bias, and applies an activation function. The result is passed to the next layer. With many layers of neurons, simple components create systems capable of learning incredibly complex patterns. This section teaches you how this learning works from the ground up. You'll start with the perceptron, the simplest neural unit, and understand how it makes predictions. You'll learn forward propagation, how information flows through a network. You'll learn backpropagation, how networks learn by adjusting weights based on errors. You'll learn about activation functions, the nonlinearities that give networks their power. You'll learn about network architecture, how to design networks for different problems. This understanding is foundational. You won't become a deep learning expert from this section, but you'll understand how neural networks fundamentally work, giving you the intuition to learn more advanced architectures and techniques.</p>
+  </section>
+
+  <section id="foundations">
+    <div class="section-label">Building Blocks of Learning</div>
+    <h2 class="section-title">Core Concepts: From Perceptrons to Neural Networks</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🧠 The Perceptron: Understanding the Simplest Neural Unit</div>
+      <div class="concept-body">
+        <p>Understanding neural networks begins with the perceptron, the simplest neural unit. A perceptron is remarkably straightforward conceptually, though this simplicity hides profound implications. A perceptron receives multiple inputs, each with an associated weight. It multiplies each input by its weight, adds a bias term, and checks if the result exceeds a threshold. If yes, output one. If no, output zero. This seems almost trivially simple, yet understanding this simple operation deeply is key to understanding all neural networks, which are essentially many perceptrons connected together.</p>
+
+        <p>Let me break down what each component does. Weights determine how important each input is. A large weight means small changes to that input significantly affect the output. A weight near zero means the input barely matters. Biases shift the decision boundary, allowing the perceptron to represent patterns that don't pass through the origin. Without biases, certain simple patterns become impossible to learn. The threshold is the boundary where the perceptron switches from outputting zero to outputting one. Mathematically, if the weighted sum of inputs plus the bias exceeds the threshold, output one, otherwise output zero.</p>
+
+        <p>The perceptron can be trained. You show it examples, it makes predictions, and if predictions are wrong, you adjust the weights. The perceptron learning rule is straightforward. If you incorrectly predict zero when the actual label is one, increase the weights of the inputs that were on to make the output more likely to be one. If you incorrectly predict one when the actual label is zero, decrease those weights. This simple rule gradually adjusts weights until the perceptron learns to separate the two classes.</p>
+
+        <p>The limitation of perceptrons is that they can only learn linearly separable patterns. If the true boundary between classes is curved or requires multiple separate regions, a single perceptron cannot learn it no matter how you adjust the weights. This limitation motivated the development of neural networks with multiple layers, which can learn arbitrary boundaries by composing simple linear decisions into complex nonlinear ones.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding the perceptron as a simple decision maker.</strong> Imagine a loan officer deciding whether to approve a loan. They look at income, credit score, and debt-to-income ratio. Income is weighted heavily—high earners are more likely to repay. Credit score is weighted moderately—it predicts past payment behavior. Debt-to-income ratio is weighted heavily—too much debt signals risk. The officer combines these weighted factors and decides: above a threshold, approve; below, deny. A perceptron does exactly this. It learns weights from historical loan decisions, computing how much each factor actually matters for approval. Once trained, it applies these learned weights to new loans. Simple, but powerful for linearly separable problems.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># The perceptron: simplest neural unit</span>
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+
+<span class="code-class">class</span> <span class="code-function">Perceptron</span>:
+    <span class="code-string">"""Simple perceptron for binary classification"""</span>
+    
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(<span class="code-keyword">self</span>, input_size, learning_rate=<span class="code-number">0.01</span>):
+        <span class="code-comment"># Initialize weights randomly (small values near zero)</span>
+        <span class="code-keyword">self</span>.weights = np.random.randn(input_size) * <span class="code-number">0.01</span>
+        <span class="code-comment"># Initialize bias to zero</span>
+        <span class="code-keyword">self</span>.bias = <span class="code-number">0</span>
+        <span class="code-keyword">self</span>.learning_rate = learning_rate
+    
+    <span class="code-keyword">def</span> <span class="code-function">forward</span>(<span class="code-keyword">self</span>, X):
+        <span class="code-comment"># Compute weighted sum: X @ weights + bias</span>
+        z = np.dot(X, <span class="code-keyword">self</span>.weights) + <span class="code-keyword">self</span>.bias
+        <span class="code-comment"># Apply threshold: if z > 0 output 1, else output 0</span>
+        <span class="code-keyword">return</span> (<span class="code-number">1</span> <span class="code-keyword">if</span> z > <span class="code-number">0</span> <span class="code-keyword">else</span> <span class="code-number">0</span>)
+    
+    <span class="code-keyword">def</span> <span class="code-function">train</span>(<span class="code-keyword">self</span>, X_train, y_train, epochs=<span class="code-number">10</span>):
+        <span class="code-comment"># Train the perceptron on examples</span>
+        <span class="code-keyword">for</span> epoch <span class="code-keyword">in</span> <span class="code-function">range</span>(epochs):
+            <span class="code-keyword">for</span> X, y <span class="code-keyword">in</span> <span class="code-function">zip</span>(X_train, y_train):
+                <span class="code-comment"># Make prediction</span>
+                prediction = <span class="code-keyword">self</span>.forward(X)
+                <span class="code-comment"># If wrong, update weights and bias</span>
+                <span class="code-keyword">if</span> prediction != y:
+                    error = y - prediction
+                    <span class="code-comment"># Increase weights if we predicted 0 but should be 1</span>
+                    <span class="code-comment"># Decrease weights if we predicted 1 but should be 0</span>
+                    <span class="code-keyword">self</span>.weights += <span class="code-keyword">self</span>.learning_rate * error * X
+                    <span class="code-keyword">self</span>.bias += <span class="code-keyword">self</span>.learning_rate * error
+
+<span class="code-comment"># Key insight: the perceptron is trained via the learning rule</span>
+<span class="code-comment"># Weights gradually adjust based on errors</span>
+<span class="code-comment"># This is the foundation for neural network learning</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">📊 Forward Propagation: Information Flow Through Networks</div>
+      <div class="concept-body">
+        <p>Forward propagation is how neural networks make predictions. Starting with input data, the network passes information through layers of neurons, progressively transforming it until reaching the output. At each layer, neurons take their inputs, multiply by weights, add biases, apply activation functions, and pass results to the next layer. This process is entirely deterministic given the weights, biases, and inputs. Forward propagation is simple mathematically but profound conceptually because it shows how networks transform raw inputs into predictions.</p>
+
+        <p>Let me walk through a concrete example to make this concrete. Imagine a network with two inputs, one hidden layer with three neurons, and one output neuron. The first hidden layer receives the two raw inputs. Each of the three hidden neurons multiplies the two inputs by its weights, adds its bias, applies an activation function like ReLU, and produces an output. These three outputs become inputs to the output neuron, which multiplies them by its weights, adds its bias, applies an activation function appropriate for the output (like sigmoid for binary classification), and produces the final prediction.</p>
+
+        <p>The key insight is that by stacking layers, networks learn hierarchical representations. The first layer might learn to recognize simple patterns like edges in images. The second layer combines edge patterns to recognize shapes. The third layer combines shapes to recognize objects. Each layer progressively abstracts information, building from simple patterns to complex concepts. This hierarchical learning is what gives deep networks their power.</p>
+
+        <p>Forward propagation is not learning; it's using already-learned weights to make predictions. Learning happens during backpropagation, which computes how to adjust weights to reduce error. But understanding forward propagation is essential because backpropagation works by computing gradients through the forward pass.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Forward propagation: computing predictions through layers</span>
+
+<span class="code-class">class</span> <span class="code-function">SimpleNetwork</span>:
+    <span class="code-string">"""Simple feedforward neural network"""</span>
+    
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(<span class="code-keyword">self</span>, input_size, hidden_size, output_size):
+        <span class="code-comment"># Initialize weights and biases for each layer</span>
+        <span class="code-keyword">self</span>.W1 = np.random.randn(input_size, hidden_size) * <span class="code-number">0.01</span>
+        <span class="code-keyword">self</span>.b1 = np.zeros(hidden_size)
+        <span class="code-keyword">self</span>.W2 = np.random.randn(hidden_size, output_size) * <span class="code-number">0.01</span>
+        <span class="code-keyword">self</span>.b2 = np.zeros(output_size)
+    
+    <span class="code-keyword">def</span> <span class="code-function">relu</span>(<span class="code-keyword">self</span>, X):
+        <span class="code-comment"># Activation function: return max(0, X)</span>
+        <span class="code-keyword">return</span> np.maximum(<span class="code-number">0</span>, X)
+    
+    <span class="code-keyword">def</span> <span class="code-function">sigmoid</span>(<span class="code-keyword">self</span>, X):
+        <span class="code-comment"># Sigmoid: squashes values to (0, 1) for probability output</span>
+        <span class="code-keyword">return</span> <span class="code-number">1</span> / (<span class="code-number">1</span> + np.exp(-X))
+    
+    <span class="code-keyword">def</span> <span class="code-function">forward</span>(<span class="code-keyword">self</span>, X):
+        <span class="code-comment"># Forward pass through the network</span>
+        
+        <span class="code-comment"># Layer 1: Input to hidden</span>
+        z1 = np.dot(X, <span class="code-keyword">self</span>.W1) + <span class="code-keyword">self</span>.b1
+        a1 = <span class="code-keyword">self</span>.relu(z1)  <span class="code-comment"># Apply ReLU activation</span>
+        
+        <span class="code-comment"># Layer 2: Hidden to output</span>
+        z2 = np.dot(a1, <span class="code-keyword">self</span>.W2) + <span class="code-keyword">self</span>.b2
+        a2 = <span class="code-keyword">self</span>.sigmoid(z2)  <span class="code-comment"># Apply sigmoid for probability</span>
+        
+        <span class="code-comment"># Store intermediate values (needed for backpropagation)</span>
+        <span class="code-keyword">self</span>.cache = (X, z1, a1, z2, a2)
+        
+        <span class="code-keyword">return</span> a2
+
+<span class="code-comment"># Forward propagation transforms input -> hidden -> output</span>
+<span class="code-comment"># Each layer: matrix multiply, add bias, apply activation</span>
+<span class="code-comment"># This hierarchical transformation enables learning complex patterns</span>
+      </code-block>
+    </div>
+
+  </section>
+
+  <section id="learning">
+    <div class="section-label">How Networks Learn</div>
+    <h2 class="section-title">Backpropagation and Gradient Descent: The Learning Algorithm</h2>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🔄 Backpropagation: Computing How to Improve</div>
+      <div class="concept-body">
+        <p>Backpropagation is the algorithm that enables neural networks to learn. It answers the fundamental question: given that our prediction was wrong, how should we adjust the weights to improve? The elegance of backpropagation is that it efficiently computes gradients—how sensitive the loss is to each weight—by working backward through the network. Understanding backpropagation requires understanding the chain rule from calculus, but the intuition is simpler: errors flow backward through the network, and each layer learns how much its weights contributed to that error.</p>
+
+        <p>The process works like this. First, you compute the loss, measuring how far predictions are from actual labels. Then you compute the gradient of the loss with respect to the output layer's weights. This tells you how much changing each weight affects the loss. Then you propagate this gradient backward to the hidden layer, computing how much each hidden neuron contributed to the loss. Then you propagate further backward through more hidden layers if they exist. Each layer uses the chain rule to compute gradients with respect to its weights.</p>
+
+        <p>The name backpropagation reflects the direction of information flow. Forward propagation computes predictions by going forward through layers. Backpropagation computes gradients by going backward through layers. The beauty is that gradients flow efficiently. Rather than computing how each weight affects the loss from scratch, you use derivatives computed in the layer ahead, reducing computational cost dramatically.</p>
+
+        <p>What makes backpropagation powerful is that it's general. It works for any network architecture as long as the functions are differentiable. Whether you have ten layers or a hundred, linear layers or convolutional layers, backpropagation computes gradients. This generality enabled the deep learning revolution. Once backpropagation was understood, networks could have more layers and become more powerful.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding backpropagation as error attribution.</strong> Imagine a company where work flows through departments. Sales creates leads, Marketing qualifies them, and Sales closes deals. A month's revenue is disappointing. Management wants to know: where did things go wrong? Did sales create enough leads? Did marketing qualify them well? Did the sales team close them efficiently? You could examine each department's output in detail. Or you could work backward: start with the disappointing revenue, figure out how many deals were needed, work back to see if marketing qualified enough leads, work back to see if sales created enough leads. Backpropagation does this for neural networks. It starts with the loss (disappointing performance), works backward through layers, and figures out which weights most contributed to the error. Then you adjust those weights.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Backpropagation: computing gradients to improve weights</span>
+
+<span class="code-keyword">def</span> <span class="code-function">backward</span>(<span class="code-keyword">self</span>, y):
+    <span class="code-comment"># Unpack cached values from forward pass</span>
+    X, z1, a1, z2, a2 = <span class="code-keyword">self</span>.cache
+    m = X.shape[<span class="code-number">0</span>]  <span class="code-comment"># Number of examples</span>
+    
+    <span class="code-comment"># Output layer gradients</span>
+    <span class="code-comment"># How much did the output contribute to error?</span>
+    dz2 = a2 - y  <span class="code-comment"># Derivative of loss w.r.t. z2</span>
+    dW2 = np.dot(a1.T, dz2) / m
+    db2 = np.sum(dz2, axis=<span class="code-number">0</span>) / m
+    
+    <span class="code-comment"># Hidden layer gradients</span>
+    <span class="code-comment"># Work backward through activation function and weights</span>
+    da1 = np.dot(dz2, <span class="code-keyword">self</span>.W2.T)
+    <span class="code-comment"># ReLU gradient: 1 if z1 > 0, else 0</span>
+    dz1 = da1 * (z1 > <span class="code-number">0</span>)
+    dW1 = np.dot(X.T, dz1) / m
+    db1 = np.sum(dz1, axis=<span class="code-number">0</span>) / m
+    
+    <span class="code-comment"># Return gradients for weight updates</span>
+    <span class="code-keyword">return</span> dW1, db1, dW2, db2
+
+<span class="code-comment"># Backpropagation uses chain rule to compute gradients efficiently</span>
+<span class="code-comment"># Gradients tell us how to adjust weights to reduce loss</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">⬇️ Gradient Descent: Following Error's Slope</div>
+      <div class="concept-body">
+        <p>Backpropagation computes gradients—the direction and magnitude of change that would most reduce error. Gradient descent uses these gradients to update weights. The principle is simple: compute gradients, adjust weights in the opposite direction of gradients. If a gradient is positive, increasing that weight increased the loss, so decrease the weight. If a gradient is negative, increasing that weight decreased the loss, so increase the weight. The magnitude tells you how much to change.</p>
+
+        <p>The update rule is straightforward. New weight equals old weight minus learning rate times gradient. The learning rate controls how aggressively you update. A high learning rate means large jumps toward lower loss, which could overshoot and diverge. A low learning rate means small jumps, which are safer but slower. Finding the right learning rate is critical to effective training. Too high and the network never converges. Too low and training is agonizingly slow.</p>
+
+        <p>Gradient descent variants exist to address different challenges. Standard gradient descent updates weights using gradients from all training data at once. This is accurate but slow for large datasets. Stochastic gradient descent updates using gradients from one example at a time, which is fast but noisy. Mini-batch gradient descent updates using gradients from a small batch, balancing speed and stability. Momentum variants maintain a moving average of gradients, helping navigate through valleys and over plateaus. Adam, the most popular variant, adapts the learning rate per parameter based on gradient history.</p>
+
+        <p>The key insight is that gradient descent is a local optimization algorithm. It finds a local minimum where small changes increase loss. This might not be the global minimum with the lowest loss overall. However, in high-dimensional spaces like those of neural networks, good local minima often generalize well. The challenge is that some local minima generalize much better than others, and finding the right one matters.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Gradient descent: updating weights using gradients</span>
+
+<span class="code-keyword">def</span> <span class="code-function">update_weights</span>(<span class="code-keyword">self</span>, dW1, db1, dW2, db2, learning_rate):
+    <span class="code-comment"># Gradient descent update: w_new = w_old - learning_rate * gradient</span>
+    <span class="code-keyword">self</span>.W1 -= learning_rate * dW1
+    <span class="code-keyword">self</span>.b1 -= learning_rate * db1
+    <span class="code-keyword">self</span>.W2 -= learning_rate * dW2
+    <span class="code-keyword">self</span>.b2 -= learning_rate * db2
+
+<span class="code-keyword">def</span> <span class="code-function">train_with_gradient_descent</span>(<span class="code-keyword">self</span>, X_train, y_train, epochs=<span class="code-number">100</span>, learning_rate=<span class="code-number">0.01</span>):
+    <span class="code-comment"># Train the network by repeatedly computing gradients and updating weights</span>
+    <span class="code-keyword">for</span> epoch <span class="code-keyword">in</span> <span class="code-function">range</span>(epochs):
+        <span class="code-comment"># Forward pass: compute predictions</span>
+        predictions = <span class="code-keyword">self</span>.forward(X_train)
+        
+        <span class="code-comment"># Backward pass: compute gradients</span>
+        dW1, db1, dW2, db2 = <span class="code-keyword">self</span>.backward(y_train)
+        
+        <span class="code-comment"># Update weights: move in direction that reduces loss</span>
+        <span class="code-keyword">self</span>.update_weights(dW1, db1, dW2, db2, learning_rate)
+
+<span class="code-comment"># Gradient descent iteratively improves the network</span>
+<span class="code-comment"># Learning rate controls step size: too large diverges, too small is slow</span>
+<span class="code-comment"># This is how neural networks learn to make better predictions</span>
+      </code-block>
+    </div>
+
+  </section>
+
+  <section id="architecture">
+    <div class="section-label">Designing Networks That Learn</div>
+    <h2 class="section-title">Network Architecture: Layers, Depth, Width, and Capacity</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🏗️ Understanding Network Depth and Width</div>
+      <div class="concept-body">
+        <p>Network architecture determines what patterns a network can learn. Architecture consists of choices about how many layers to use, how many neurons per layer, and how to connect them. These choices profoundly affect learning. Too shallow a network might lack the capacity to learn complex patterns. Too deep a network becomes hard to train because gradients vanish. Too few neurons in each layer might make learning impossible. Too many neurons create overfitting risk.</p>
+
+        <p>Depth refers to the number of layers. Deep networks can learn hierarchical representations where each layer builds on the previous one's abstractions. A shallow network might need a huge number of neurons to approximate the same function as a deeper network with fewer neurons per layer. However, deep networks have challenges. Gradients must propagate back through many layers, and at each multiplication, gradients can become vanishingly small (vanishing gradient problem) or explosively large (exploding gradient problem). Modern techniques like residual connections and normalization help address these challenges.</p>
+
+        <p>Width refers to the number of neurons in each layer. Wider layers increase the network's capacity—its ability to approximate complex functions. But wider networks have more parameters, requiring more training data to avoid overfitting. There's a tradeoff between capacity and generalization. A network should be wide enough to learn the underlying pattern but not so wide that it just memorizes training data.</p>
+
+        <p>The universal approximation theorem states that a network with one sufficiently wide hidden layer can approximate any continuous function on a compact domain. This seems to suggest shallow networks are sufficient. However, the width required might be impractically large. In practice, deep networks with moderate widths often learn more efficiently and generalize better than shallow networks with massive widths. The combination of depth and moderate width seems to match how structure exists in real data.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding depth and width as learning capacity.</strong> Imagine learning to recognize paintings from art history. A very shallow approach might be to memorize every painting you see. You'd need a huge database (very wide). Or you could learn concepts: impressionism, renaissance, modernism. Then learn which artists work in which style. Then learn which paintings fit which style. You're building a hierarchy. Each concept builds on previous ones. You need far fewer memorized facts because you understand concepts. Deep networks work similarly. Rather than memorizing patterns, they learn hierarchies. Early layers learn simple patterns, later layers combine them. This hierarchy allows learning with fewer parameters than brute-force memorization.
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">🔢 Counting Parameters: Understanding Network Size</div>
+      <div class="concept-body">
+        <p>The number of parameters in a network—the total count of weights and biases—determines how much the network can learn and how much data it needs. A network with many parameters can fit complex patterns but needs lots of training data to avoid overfitting. A network with few parameters is simple but might underfit by missing important patterns.</p>
+
+        <p>Parameter counting is straightforward. A layer that transforms from input size A to output size B has A times B weights plus B biases, for a total of A times B plus B parameters. A network with an input layer of size 784 (28x28 pixels), a hidden layer of size 128, and an output layer of size 10 has 784 times 128 plus 128 weights plus biases in the first layer, then 128 times 10 plus 10 in the second layer. That's approximately one hundred thousand parameters.</p>
+
+        <p>Modern networks can have billions of parameters. GPT-3 has 175 billion parameters. Yet despite the enormous size, well-trained large networks often generalize remarkably well. This seems to contradict the intuition that more parameters cause overfitting. Research suggests that in high-dimensional spaces, networks find solutions that generalize despite their capacity. The interaction between large capacity and training data dynamics creates an implicit regularization.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="activation">
+    <div class="section-label">Nonlinearity: The Key to Learning Complex Patterns</div>
+    <h2 class="section-title">Activation Functions: Introducing Nonlinearity</h2>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🌀 Why Activation Functions Matter</div>
+      <div class="concept-body">
+        <p>Without activation functions, neural networks would be just stacked linear transformations. Layer one computes a linear combination of inputs. Layer two computes a linear combination of layer one's outputs. But composing linear transformations produces another linear transformation. A ten-layer network of purely linear transformations is mathematically equivalent to a single linear transformation. You can't represent curved decision boundaries or complex patterns with pure linearity.</p>
+
+        <p>Activation functions introduce nonlinearity. After each linear transformation, you apply an activation function that's nonlinear. This nonlinearity enables networks to approximate any function. The composition of nonlinear functions can represent arbitrarily complex patterns. This is why activation functions are sometimes called the secret sauce of neural networks. Without them, networks are powerless. With them, networks become universal function approximators.</p>
+
+        <p>Different activation functions have different properties. Some are smooth, facilitating gradient flow. Others are sparse, allowing efficient computation. Some are bounded, constraining outputs. Others are unbounded. The choice of activation function affects training dynamics and what patterns networks can efficiently learn.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding activation functions as introducing flexibility.</strong> Imagine a robot trying to find the optimal path through a hilly landscape. If it can only move in straight lines, it's stuck. It can't follow the contours of hills or navigate valleys. With the ability to turn and curve (nonlinearity), it can navigate any landscape. Activation functions give neural networks this flexibility. Without them, networks can only create linear paths. With them, networks can navigate complex landscapes of data, finding patterns that linear systems never could.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Activation functions introduce nonlinearity, enabling complex learning</span>
+
+<span class="code-keyword">def</span> <span class="code-function">relu</span>(x):
+    <span class="code-comment"># ReLU: max(0, x) - returns 0 for negative inputs, x for positive</span>
+    <span class="code-comment"># Simple but effective; enables gradient flow while introducing nonlinearity</span>
+    <span class="code-keyword">return</span> np.maximum(<span class="code-number">0</span>, x)
+
+<span class="code-keyword">def</span> <span class="code-function">sigmoid</span>(x):
+    <span class="code-comment"># Sigmoid: 1 / (1 + e^(-x)) - squashes to (0, 1)</span>
+    <span class="code-comment"># Historical choice; smooth but has vanishing gradient at extremes</span>
+    <span class="code-keyword">return</span> <span class="code-number">1</span> / (<span class="code-number">1</span> + np.exp(-x))
+
+<span class="code-keyword">def</span> <span class="code-function">tanh</span>(x):
+    <span class="code-comment"># Tanh: (e^x - e^(-x)) / (e^x + e^(-x)) - squashes to (-1, 1)</span>
+    <span class="code-comment"># Zero-centered, often better than sigmoid</span>
+    <span class="code-keyword">return</span> np.tanh(x)
+
+<span class="code-keyword">def</span> <span class="code-function">leaky_relu</span>(x, alpha=<span class="code-number">0.01</span>):
+    <span class="code-comment"># Leaky ReLU: x if x > 0, else alpha*x</span>
+    <span class="code-comment"># Allows small gradient for negative inputs, addressing ReLU's dying neuron problem</span>
+    <span class="code-keyword">return</span> np.where(x > <span class="code-number">0</span>, x, alpha * x)
+
+<span class="code-keyword">def</span> <span class="code-function">gelu</span>(x):
+    <span class="code-comment"># GELU: uses error function for smooth approximation</span>
+    <span class="code-comment"># Modern choice, smoother than ReLU, used in transformers</span>
+    <span class="code-keyword">return</span> <span class="code-number">0.5</span> * x * (<span class="code-number">1</span> + np.tanh(np.sqrt(<span class="code-number">2</span> / np.pi) * (x + <span class="code-number">0.044715</span> * x**<span class="code-number">3</span>)))
+
+<span class="code-keyword">def</span> <span class="code-function">softmax</span>(x):
+    <span class="code-comment"># Softmax: exp(x) / sum(exp(x)) - converts logits to probabilities</span>
+    <span class="code-comment"># Used in output layer for multi-class classification</span>
+    e_x = np.exp(x - np.max(x))  <span class="code-comment"># Subtract max for numerical stability</span>
+    <span class="code-keyword">return</span> e_x / e_x.sum()
+
+<span class="code-comment"># Each activation function has different properties</span>
+<span class="code-comment"># ReLU: simple, fast, sparse gradients</span>
+<span class="code-comment"># Sigmoid/Tanh: smooth, but suffer from vanishing gradients</span>
+<span class="code-comment"># GELU: modern choice, smooth and efficient</span>
+<span class="code-comment"># Softmax: converts outputs to probabilities for classification</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">📈 Modern Activation Functions and Their Properties</div>
+      <div class="concept-body">
+        <p>ReLU (Rectified Linear Unit) has become the standard activation function in hidden layers despite its simplicity. ReLU is max(zero, x). It returns x if x is positive, zero otherwise. The beauty of ReLU is simplicity and efficiency. It's trivial to compute, and it enables sparse gradients where many units become inactive. However, ReLU has a problem called dying ReLU. Once a unit's weights adjust such that its weighted sum is always negative, it outputs zero forever. Gradients are zero for dead units, so they never recover. Leaky ReLU fixes this by using a small positive slope for negative inputs instead of zero, allowing small gradients to keep the unit alive.</p>
+
+        <p>Sigmoid squashes inputs to the range zero to one, which makes it useful for outputs requiring probabilities. However, sigmoid has issues with vanishing gradients. At extreme values, the gradient approaches zero. Deep networks with sigmoid activations struggle because gradients diminish as they propagate backward through many layers. Tanh is similar but squashes to negative one to one. Both are now rarely used in hidden layers of deep networks, though sigmoid is still used in output layers when outputs should be probabilities.</p>
+
+        <p>GELU (Gaussian Error Linear Unit) is a modern activation function that uses a smooth approximation. It's more sophisticated than ReLU but maintains efficient computation. GELU is used in transformers and has become popular for state-of-the-art models. Swish (SiLU) is another modern activation that uses a learned scaling factor. These smooth activations seem to help large models train more effectively.</p>
+
+        <p>Softmax is special because it's used in output layers for multi-class classification. It converts a vector of scores into a probability distribution where all outputs sum to one. Each output represents the probability of that class. Softmax enables the network to output meaningful probabilities rather than arbitrary numbers.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section>
+    <div class="section-label">Core Understanding</div>
+    <h2 class="section-title">Why Neural Networks Work: Bringing It Together</h2>
+
+    <div class="insight-box" style="--insight-color: var(--cool);">
+      <div class="insight-title">Networks Learn by Adjusting Weights Based on Error</div>
+      <div class="insight-content">The entire learning process of neural networks reduces to a simple principle: make predictions, measure error, adjust weights to reduce error, repeat. Forward propagation makes predictions using current weights. The loss function measures how far predictions are from reality. Backpropagation computes gradients showing which weights most contributed to the error. Gradient descent adjusts weights in the direction that reduces error. Repeating this process gradually improves the network. This is elegant precisely because it's simple. No hand-engineering of features required. No explicit programming of rules. Just weights adjusting based on error signals. Over many iterations with many examples, patterns emerge.</div>
+    </div>
+
+    <div class="insight-box" style="--insight-color: var(--green);">
+      <div class="insight-title">Nonlinearity Enables Complexity Without Explosion</div>
+      <div class="insight-content">Activation functions are crucial because they introduce nonlinearity. Without them, networks can only learn linear patterns. With them, networks can approximate any function. This enables networks to learn incredibly complex patterns from data without explicitly programming them. The interplay between linear transformations and nonlinear activations allows networks to build hierarchical representations where each layer captures increasingly abstract patterns. This is why even relatively small networks can solve problems that would be impossible with linear systems.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--warm);">
+      <div class="insight-title">Architecture Choices Determine Learning Capacity</div>
+      <div class="insight-content">The number of layers, neurons per layer, and activation functions determine what a network can possibly learn. Too shallow and the network lacks capacity for complex patterns. Too deep and the network becomes hard to train due to gradient flow issues. The right architecture for a problem requires understanding the problem's complexity and the network's learning dynamics. As you gain experience, you develop intuition for these choices. But fundamentally, architecture is a tradeoff between capacity and trainability, between powerful learning ability and practical convergence.</div>
+    </insight-box>
+
+  </section>
+
+</div>
+
+<footer>
+  <p class="footer-text">Neural Network Basics — The Foundation for Modern Deep Learning</p>
+</footer>
+
+</body>
+</html>
