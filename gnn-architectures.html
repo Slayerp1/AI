@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GNN Architectures — Learning on Graphs Through Neural Message Passing</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #04040a;
+  --accent: #7b2fff;
+  --hot: #ff2d78;
+  --cool: #00e5ff;
+  --warm: #ffb800;
+  --green: #00ff9d;
+  --text: #e0e0f0;
+  --muted: #4a4a6a;
+  --card: #0a0a14;
+  --border: rgba(255,255,255,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0,229,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,4,10,0.9);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-right: auto; letter-spacing: 2px; }
+.nav-pill {
+  font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(123,47,255,0.4);
+  color: rgba(123,47,255,0.8); text-decoration: none; transition: all 0.2s;
+}
+.nav-pill:hover { background: rgba(123,47,255,0.15); border-color: var(--accent); color: #fff; }
+
+.hero { padding: 90px 0 50px; }
+.hero-eyebrow {
+  font-family: 'Syne Mono', monospace; font-size: 11px; letter-spacing: 4px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(123,47,255,0.3); }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 100px);
+  line-height: 0.92; margin-bottom: 28px;
+  color: #fff;
+}
+
+.hero-desc { max-width: 750px; font-size: 16px; color: rgba(210,210,240,0.72); line-height: 1.8; margin-bottom: 40px; }
+
+section { padding: 70px 0; border-top: 1px solid var(--border); }
+.section-label { font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 64px); line-height: 1; margin-bottom: 40px; color: #fff; }
+
+.concept-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 36px;
+  border-left: 4px solid var(--card-accent, var(--accent));
+  transition: all 0.3s;
+}
+
+.concept-card:hover {
+  border-color: var(--card-accent, var(--accent));
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  transform: translateY(-2px);
+}
+
+.concept-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--card-accent, var(--accent));
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.concept-body {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.9;
+  margin-bottom: 28px;
+}
+
+.concept-body p {
+  margin-bottom: 18px;
+}
+
+.concept-body strong {
+  color: #fff;
+}
+
+.code-block {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 28px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #fff;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.code-comment { color: #5c7a8a; }
+.code-keyword { color: var(--accent); }
+.code-string { color: var(--green); }
+.code-number { color: var(--warm); }
+.code-function { color: var(--cool); }
+
+.teaching-box {
+  background: rgba(123,47,255,0.1);
+  border-left: 4px solid var(--accent);
+  padding: 24px;
+  border-radius: 10px;
+  margin: 28px 0;
+  font-size: 15px;
+  color: rgba(210,210,240,0.9);
+  line-height: 1.8;
+}
+
+.teaching-box strong {
+  color: #fff;
+}
+
+.impact-box {
+  background: linear-gradient(135deg, rgba(123,47,255,0.15) 0%, rgba(0,229,255,0.08) 100%);
+  border: 1px solid rgba(123,47,255,0.3);
+  border-radius: 14px;
+  padding: 32px;
+  margin-top: 32px;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.impact-item {
+  padding: 24px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  border-left: 4px solid var(--impact-color, var(--accent));
+}
+
+.impact-item-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--impact-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.impact-item-content {
+  font-size: 13px;
+  color: rgba(200,200,220,0.88);
+  line-height: 1.8;
+}
+
+.insight-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 28px 0;
+  border-left: 4px solid var(--insight-color, var(--accent));
+}
+
+.insight-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--insight-color, var(--accent));
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.insight-content {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.8;
+}
+
+footer {
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 60px 0 40px; }
+  section { padding: 50px 0; }
+  .impact-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">GNN ARCHITECTURES</div>
+  <a href="#fundamentals" class="nav-pill">Fundamentals</a>
+  <a href="#architectures" class="nav-pill">Architectures</a>
+  <a href="#advanced" class="nav-pill">Advanced</a>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-eyebrow">Extending Neural Networks to Graph-Structured Data</div>
+    <h1>GNN Architectures: Learning on Graphs Through Message Passing</h1>
+    <p class="hero-desc">Neural networks have transformed machine learning through their ability to learn hierarchical representations of data. Convolutional neural networks revolutionized image processing by learning to detect features at multiple scales. Recurrent neural networks enabled learning from sequences by maintaining memory of previous elements. Yet these architectures assume data has particular structure: images have grid structure with local neighborhoods, sequences have temporal order with sequential dependencies. But much real-world data is inherently graph-structured: social networks, molecular structures, knowledge graphs, citation networks, recommendation systems. Standard neural network architectures don't naturally apply to graphs because graphs lack the regular structure that images and sequences have. A node has a variable number of neighbors, not a fixed neighborhood pattern. The connections are irregular, not following a temporal sequence. Graph Neural Networks extend the power of deep learning to graph-structured data by learning how to propagate information across the graph. The core insight is message passing: each node updates its representation by aggregating information from its neighbors. By stacking multiple layers of such aggregation, nodes can eventually incorporate information from distant parts of the graph. Different GNN architectures implement this core idea differently, using different aggregation functions, attention mechanisms, or spectral methods. Understanding GNNs requires understanding both the foundational message passing principle and how different architectures implement variations. This section teaches you GNNs from first principles, building from the simple idea of nodes aggregating neighbor information through increasingly sophisticated architectures that handle attention, sampling, and temporal dynamics. By the end, you'll understand how neural networks can be extended to graphs and when different GNN architectures are appropriate for different problems.</p>
+  </section>
+
+  <section id="fundamentals">
+    <div class="section-label">Understanding Neural Information Flow on Graphs</div>
+    <h2 class="section-title">GNN Fundamentals: Message Passing and Local Aggregation</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">💌 Message Passing: The Core Principle of Graph Neural Networks</div>
+      <div class="concept-body">
+        <p>Let me start by explaining the fundamental principle underlying all graph neural networks: message passing. The key insight is that rather than trying to process the entire graph at once, you can have each node learn by communicating with its neighbors. At each layer of a GNN, every node sends information to its neighbors and receives information from its neighbors. By combining this received information with its own representation, the node updates itself. By stacking multiple layers, nodes can eventually incorporate information from nodes far away in the graph, effectively learning about the global graph structure through purely local communication.</p>
+
+        <p>Think about this intuitively. Imagine you're in a social network and want to know about job opportunities in your network. You could ask your friends (neighbors) what they know. Your friends ask their friends. After one round, you know what's within distance two. After two rounds, you know what's within distance three. By conducting multiple rounds of message passing, information propagates outward from each node, eventually reaching nodes far away. Each node doesn't need to know about the entire network; it only needs to communicate with neighbors and aggregate their information.</p>
+
+        <p>Mathematically, message passing works like this. In each layer, a node receives messages from its neighbors, typically the current representations of those neighbors. It aggregates these messages using some function like summation or averaging. Then it combines its own representation with the aggregated neighbor information using some transformation function. This updated representation becomes the node's new representation for the next layer. By repeating this process across multiple layers, each node builds an increasingly sophisticated representation that incorporates information from increasingly distant parts of the graph.</p>
+
+        <p>The power of message passing is that it respects the graph structure. A node can only directly influence its neighbors. Information must propagate through intermediate nodes to reach distant nodes. This is both a strength and a limitation. It's a strength because it means the architecture respects the graph's locality structure. It's a limitation because reaching distant nodes requires many layers. To get information from distance ten away, you might need ten layers, which can create training challenges. Despite this limitation, message passing has proven remarkably effective because most important information in real-world graphs is often localized: you tend to be influenced most by your immediate neighbors and slightly distant neighbors, not random distant nodes.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Think about how epidemiologists study disease spread. Rather than trying to understand the entire population at once, they recognize that disease spreads person to person. Each person infects their contacts, who infect their contacts, and so on. By understanding person-to-person transmission (the local mechanism), they can model how disease spreads through the entire population (the global pattern). Message passing works identically. By understanding how nodes aggregate information from neighbors (the local mechanism), we can model how information flows through the entire graph (the global pattern). The local rule, when applied consistently across the network, creates sophisticated global learning.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding message passing in graph neural networks</span>
+
+<span class="code-keyword">def</span> <span class="code-function">message_passing_layer</span>(node_features, adjacency_list, aggregation_fn, update_fn):
+    <span class="code-comment"># Message passing has three key steps:</span>
+    <span class="code-comment"># 1. Message creation: each node prepares information to send neighbors</span>
+    <span class="code-comment"># 2. Aggregation: each node collects messages from all neighbors</span>
+    <span class="code-comment"># 3. Update: each node combines its own info with aggregated neighbor info</span>
+    
+    new_node_features = {}
+    
+    <span class="code-keyword">for</span> node_id <span class="code-keyword">in</span> node_features:
+        <span class="code-comment"># Step 1: Neighbors prepare messages (here just their representations)</span>
+        neighbor_ids = adjacency_list[node_id]
+        neighbor_messages = [node_features[neighbor_id] <span class="code-keyword">for</span> neighbor_id <span class="code-keyword">in</span> neighbor_ids]
+        
+        <span class="code-comment"># Step 2: Aggregate neighbor messages</span>
+        <span class="code-comment"># Aggregation could be sum, mean, max, or learned function</span>
+        aggregated_message = aggregation_fn(neighbor_messages)
+        
+        <span class="code-comment"># Step 3: Update node representation</span>
+        <span class="code-comment"># Combine own representation with aggregated neighbor information</span>
+        own_feature = node_features[node_id]
+        updated_feature = update_fn(own_feature, aggregated_message)
+        
+        new_node_features[node_id] = updated_feature
+    
+    <span class="code-keyword">return</span> new_node_features
+
+<span class="code-comment"># Key insight: by applying this layer multiple times,</span>
+<span class="code-comment"># information propagates through the graph</span>
+<span class="code-comment"># After k layers, each node has incorporated information</span>
+<span class="code-comment"># from nodes up to distance k away (k-hop neighbors)</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">📊 Aggregation Functions: Combining Neighbor Information</div>
+      <div class="concept-body">
+        <p>A crucial design choice in message passing is the aggregation function: how does a node combine information from multiple neighbors into a single aggregated representation? Different choices have different properties. Summation aggregation adds up all neighbor representations. This is simple and preserves information (no loss from averaging), but the aggregated representation scales with the number of neighbors. A node with many neighbors gets a much larger aggregated value than a node with few neighbors. Mean aggregation averages neighbor representations, making the aggregation invariant to the number of neighbors. This can help with training stability but loses some magnitude information. Max aggregation takes element-wise maximum across neighbors, keeping only the strongest signal for each dimension. This is useful for capturing what features any neighbor has, but loses information about which neighbors specifically have these features.</p>
+
+        <p>More sophisticated aggregation uses learned functions. Rather than fixed summation or averaging, you can apply a neural network to the neighbor features before aggregating. This enables the node to learn how to weight different neighbors and combine their information non-linearly. The learned aggregation can adapt to the specific task and graph structure. Different aggregation choices reflect different assumptions about what information matters. Should a node weight all neighbors equally or learn which neighbors are most important? Should aggregation preserve the magnitude of the signal or normalize it?</p>
+
+        <p>The aggregation function interacts with the update function. After aggregating neighbor information, the node combines this with its own representation. Simple concatenation appends the aggregated neighbor info to the node's own feature. Linear transformation projects the concatenated result to the new representation. More sophisticated approaches use gating mechanisms to learn how much to weight the node's own information versus neighbor information. This is particularly important in deep GNNs where you want to avoid the node's original features from being overwhelmed by many layers of aggregation.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Think about how you form opinions by talking to friends. You could equally weight everyone's view. You could average all opinions. You could be influenced most by the strongest opinion you hear. Or you could learn to trust some friends more than others because their views often align with your own experience. Different aggregation strategies correspond to these different approaches. Simple aggregation like summation or averaging works when all neighbors have similar importance. Learned aggregation works when different neighbors should have different influence, and the network can learn these influence patterns from data.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="architectures">
+    <div class="section-label">Implementing Message Passing in Practice</div>
+    <h2 class="section-title">GNN Architectures: From Graph Convolution to Attention</h2>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🧠 Graph Convolutional Networks: Spectral Inspiration, Spatial Implementation</div>
+      <div class="concept-body">
+        <p>Graph Convolutional Networks represent an elegant approach to implementing message passing inspired by spectral graph theory. The fundamental idea is that convolution in the spectral domain (working with eigenvalues and eigenvectors of the graph Laplacian) can be approximated in the spatial domain (working with node features directly) without explicit spectral computation. This is mathematically elegant and computationally efficient. Rather than computing eigendecompositions of the Laplacian (which is expensive for large graphs), you can apply a simple local operation on each node and its neighbors.</p>
+
+        <p>The GCN layer works like this: for each node, take the average of its neighbors' representations (including itself), then apply a linear transformation and nonlinearity. This is remarkably simple, yet empirically very effective. The mathematical foundation comes from spectral graph convolution, but the implementation is purely spatial: just averaging and transforming. The beauty of GCN is that the simplicity of the aggregation function enables efficient computation while the theoretical foundation ensures the aggregation makes sense mathematically.</p>
+
+        <p>To understand the power of GCN, consider what happens across multiple layers. In the first layer, each node's representation becomes an average of its own and neighbors' features. In the second layer, each node's representation becomes influenced by nodes two hops away because the neighbors already incorporated their neighbors. After k layers, each node's representation incorporates information from k-hop neighborhoods, which can cover the entire graph if the graph is connected and not too large. This hierarchical aggregation of increasingly distant information is analogous to how convolutional neural networks build hierarchies of features in images.</p>
+
+        <p>One important detail is normalization. Simple averaging can make representations shrink when there are many neighbors (many neighbors contribute equally small amounts). GCN uses degree normalization where you divide by the degree of the node and its neighbors. This ensures that a node with many neighbors doesn't just accumulate huge numbers but averages more carefully. The normalization makes the aggregation more stable and interpretable.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Imagine you're a teacher trying to understand student learning by looking at how students influence each other. In the first week, you see how each student is influenced by their immediate friends. In the second week, you can infer influence through second-degree friendships because first-degree friends are already carrying information from their friends. By tracking this process over multiple weeks, you can understand how information and influence propagate through the social network of students. GCN layers work identically: each layer incorporates information from increasingly distant nodes, building an increasingly global understanding of the graph structure.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding Graph Convolutional Networks</span>
+
+<span class="code-keyword">def</span> <span class="code-function">gcn_layer</span>(node_features, adjacency_matrix, weight_matrix):
+    <span class="code-comment"># GCN aggregates normalized neighbor features</span>
+    <span class="code-comment"># The elegant formula: output = ReLU(D^{-1/2} A D^{-1/2} X W)</span>
+    <span class="code-comment"># where D is the degree matrix, A is adjacency, X is features, W is weights</span>
+    
+    <span class="code-comment"># Compute degree matrix (diagonal matrix of node degrees)</span>
+    degrees = compute_degrees(adjacency_matrix)
+    degree_sqrt_inv = <span class="code-number">1</span> / sqrt(degrees)  <span class="code-comment"># D^{-1/2}</span>
+    
+    <span class="code-comment"># Normalize adjacency: D^{-1/2} A D^{-1/2}</span>
+    <span class="code-comment"># This ensures aggregated neighbor info doesn't blow up with node degree</span>
+    normalized_adjacency = degree_sqrt_inv @ adjacency_matrix @ degree_sqrt_inv
+    
+    <span class="code-comment"># Aggregate: normalized adjacency times node features</span>
+    <span class="code-comment"># This is averaging neighbors' features with proper normalization</span>
+    aggregated = normalized_adjacency @ node_features
+    
+    <span class="code-comment"># Transform: apply learned weights</span>
+    transformed = aggregated @ weight_matrix
+    
+    <span class="code-comment"># Apply nonlinearity to enable learning complex functions</span>
+    output = relu(transformed)
+    
+    <span class="code-keyword">return</span> output
+
+<span class="code-comment"># Key properties of GCN:</span>
+<span class="code-comment"># - Theoretically grounded in spectral graph theory</span>
+<span class="code-comment"># - Computationally efficient (sparse matrix multiplication)</span>
+<span class="code-comment"># - Simple: just averaging neighbors and transforming</span>
+<span class="code-comment"># - Effective: performs well in practice on many graph tasks</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">👁️ Graph Attention Networks: Learning Which Neighbors Matter</div>
+      <div class="concept-body">
+        <p>Graph Attention Networks introduce an important innovation: rather than aggregating equally from all neighbors, learn which neighbors are most important for each node. This is implemented through attention mechanisms similar to those used in Transformers. For each node, you compute attention weights over its neighbors, indicating how much each neighbor should influence the node's update. These attention weights are learned, typically by computing scores based on the node's features and each neighbor's features, then normalizing with softmax to get attention weights between zero and one.</p>
+
+        <p>The attention mechanism enables nodes to learn which neighbors are relevant. In a social network, a person might attend more to friends with similar interests. In a molecular graph, an atom might attend more to atoms it bonds strongly with. In a citation network, a paper might attend more to citations it finds most relevant. Rather than assuming all neighbors matter equally (as in GCN), GAT learns these importance weights. This flexibility often leads to better performance because it captures the reality that not all neighbors are equally important.</p>
+
+        <p>Multi-head attention (similar to Transformers) is typically used where multiple attention mechanisms operate in parallel, each learning different importance patterns. One head might learn to attend to neighbors of similar type, another to structural neighbors, another to feature-similar neighbors. The outputs from different heads are concatenated or averaged, giving the node a richer view of relevant neighbors. This multi-perspective attention is particularly powerful for complex graphs where nodes have different reasons to attend to neighbors.</p>
+
+        <p>The computational cost is higher than GCN because you must compute attention weights explicitly, but the improved expressiveness often justifies the cost. For sparse graphs where computing dense matrix multiplications is expensive anyway, the added attention computation is manageable. GAT has proven particularly effective on node classification and link prediction tasks where the importance of neighbors varies significantly.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Imagine you're in a crowded room trying to have a conversation. You don't listen equally to everyone. You focus attention on the person speaking to you, less on background conversations. Your attention weight for each person depends on relevance to what you're trying to understand. Graph Attention Networks work identically: nodes learn attention weights over their neighbors based on relevance. Different types of graphs might require attending to different aspects (direct message content in social networks, bond strength in molecules, citation relevance in papers), which is why learning attention weights is more flexible than hard-coding equal aggregation.</p>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🎯 GraphSAGE and Sampling-Based Inductive Learning</div>
+      <div class="concept-body">
+        <p>GraphSAGE (Graph Sample and AggreGatE) addresses a practical challenge with GCNs: they require computing representations for all nodes simultaneously, which is memory-intensive for large graphs. GraphSAGE enables mini-batch learning by sampling subsets of neighbors rather than aggregating from all neighbors. For each node, instead of aggregating from all neighbors, you randomly sample a fixed number of neighbors. This makes computation tractable even for large graphs with high-degree nodes. You can train on mini-batches by sampling neighborhoods around target nodes.</p>
+
+        <p>The sampling strategy enables inductive learning where you can generate representations for new nodes never seen during training. You don't need to retrain the entire model; you just apply the learned aggregation functions to the new node and its sampled neighbors. This is powerful for applications with evolving graphs where new nodes appear after training. Standard GCNs require retraining on the entire graph to incorporate new nodes. GraphSAGE can handle new nodes immediately using the learned aggregation functions.</p>
+
+        <p>Different sampling strategies have different tradeoffs. Uniform sampling is simple: randomly sample k neighbors regardless of their importance. Importance sampling samples neighbors with probability proportional to some importance measure. Layer-wise sampling samples from each hop separately, controlling how many neighbors to consider at each distance. The sampling strategy affects both computational efficiency and learning quality. Too little sampling and the aggregation might miss important information. Too much sampling and computation becomes expensive.</p>
+
+        <p>GraphSAGE's sampling-based approach has become practically important for real-world deployment of GNNs on graphs with billions of nodes and trillions of edges. Rather than loading entire graphs into memory, you sample neighborhoods, compute on mini-batches, and aggregate results. This practical tractability has made GNNs deployable in industrial systems where the full graph is too large to fit in memory.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Imagine you're researching public opinion on a topic in a large city. You could try to interview everyone, but that's impractical. Instead, you randomly sample neighborhoods: interview some people, ask them about their friends' opinions, get a sense of the opinion landscape through sampled neighborhoods. If new people move to the city, you use the same sampling strategy to assess their opinions. GraphSAGE works identically: rather than aggregating from all nodes (expensive), sample neighborhoods (tractable). New nodes can be handled using the learned aggregation on sampled neighbors without retraining on the entire graph.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="advanced">
+    <div class="section-label">Sophisticated Graph Learning</div>
+    <h2 class="section-title">Advanced GNN Variants: GINs, Temporal Graphs, and Beyond</h2>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">🔍 Graph Isomorphism Networks: Matching Graph Structure</div>
+      <div class="concept-body">
+        <p>Graph Isomorphism Networks address a theoretical question: how expressive can graph neural networks be? Can they distinguish between different graph structures? GIN was designed to match the expressiveness of the Weisfeiler-Lehman graph isomorphism test, a classical algorithm for checking if two graphs are isomorphic. The insight is that simple message passing with careful aggregation can be as powerful as this classical test, which is known to fail on some graph pairs but succeed on most practical graphs.</p>
+
+        <p>The key innovation in GIN is that it uses an element-wise sum aggregation with a learned function applied to the aggregated neighbor features and the node's own features. Rather than averaging (which can lose information when there are many neighbors), GIN sums neighbor contributions. The update rule is designed to be injective, meaning different neighbor sets produce different aggregated results. This injectivity ensures that the GNN doesn't inadvertently collapse different graph structures into the same representation.</p>
+
+        <p>Empirically, GIN has proven particularly effective on graph-level prediction tasks like molecular property prediction, where you need to distinguish between different molecular structures. The injectivity property ensures that if two graphs have different structures, the GNN should learn different representations for them. This theoretical grounding combined with practical effectiveness makes GIN a strong baseline for many applications.</p>
+
+        <p>The lesson from GIN is that architectural choices have theoretical implications. By carefully designing the aggregation function to be injective, the network gains provable expressiveness. This demonstrates the value of understanding the theoretical properties of architectures, not just their empirical performance.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Think about how artists distinguish paintings by analyzing their structure. Two paintings of the same scene by different artists have different structures: different brush strokes, color distributions, composition. A good analysis method should distinguish between these different structures. Graph Isomorphism Networks are designed with theoretical guarantees that different graph structures will produce different representations. This principled design ensures the network doesn't accidentally treat different structures as the same, which is important for tasks where structure matters fundamentally.</p>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">⏰ Temporal Graph Networks: Learning on Dynamic Graphs</div>
+      <div class="concept-body">
+        <p>Many real-world graphs are not static but dynamic, changing over time. Social networks gain and lose connections. Transaction networks process new transactions continuously. Recommendation systems have users discovering new items. Temporal Graph Networks extend GNNs to handle graphs that evolve over time. The key challenge is maintaining representations that evolve appropriately as the graph changes while remaining computationally tractable.</p>
+
+        <p>One approach uses recurrent modules where node representations evolve over time according to recurrent update rules. As new information arrives (new edges, node features), you update node representations using RNN-like mechanisms. This captures how information should influence node understanding over time. Another approach uses temporal attention where you weight historical information differently depending on its relevance and recency. Recent edges might be more important than old ones, or edges with specific properties might be most relevant.</p>
+
+        <p>Temporal encoding is important: you must somehow represent when events occurred. Absolute time works for some applications, but relative time (time since the event) is often more useful. Temporal features might encode hours, days, weeks depending on the relevant timescale. The temporal structure interacts with the graph structure: an edge might be important not just because it exists but because of when it occurred relative to other events.</p>
+
+        <p>Temporal GNNs have become increasingly important as streaming graph data becomes more common. Rather than batch training on static snapshots, temporal GNNs can continuously update as new information arrives, important for real-time recommendation, fraud detection, and dynamic network analysis.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Think about how a trader monitors stock markets. The current stock price matters, but so does how prices have changed recently. Recent price movements matter more than movements from months ago. Temporal information is crucial for making good predictions. Temporal Graph Networks similarly recognize that when edges occurred matters. A transaction network needs to remember recent transactions more strongly than old ones. A social network might weight recent friendships more heavily than old ones. By combining graph structure with temporal information, these networks learn richer representations of evolving systems.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section>
+    <div class="section-label">Understanding GNNs Holistically</div>
+    <h2 class="section-title">Why Graph Neural Networks Enable Learning on Structured Data</h2>
+
+    <div class="insight-box" style="--insight-color: var(--cool);">
+      <div class="insight-title">Message Passing Respects Graph Structure While Enabling Global Learning</div>
+      <div class="insight-content">The power of message passing comes from respecting locality while enabling global learning. Each node only directly influences neighbors, respecting the graph's local structure. But by stacking layers, information propagates globally. This is different from fully-connected networks that treat all pairs of nodes equally, or convolutional networks that only consider local neighborhoods. Message passing naturally encodes the assumption that graph structure matters: nodes should primarily be influenced by their neighbors, with global influence building through multiple hops. This inductive bias matches real-world graphs where most influence is local or nearby, not random.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--green);">
+      <div class="insight-title">Different Architectures Encode Different Assumptions About Graphs</div>
+      <div class="insight-content">GCN assumes equal neighbor importance and simple averaging works. GAT assumes different neighbors matter differently and learns importance weights. GraphSAGE assumes sampling captures essential neighborhood information. GIN assumes sum aggregation provides sufficient expressiveness. These aren't just different implementations of the same idea; they encode fundamentally different assumptions about how graphs work. Choosing the right architecture means choosing assumptions that match your specific graph structure and problem. No universal best architecture exists; the right choice depends on what your data looks like and what you're trying to learn.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--warm);">
+      <div class="insight-title">GNNs Enable Learning on Diverse Graph Problems</div>
+      <div class="insight-content">Graph-structured data appears in countless domains: molecules (atoms and bonds), social networks (people and relationships), knowledge bases (entities and relationships), recommendation systems (users, items, and interactions), traffic networks (intersections and roads). GNNs provide a unified framework for learning on all these diverse structures. The same message passing principle applies whether you're predicting molecular properties, recommending products, or analyzing knowledge graphs. This universality combined with the ability to handle large graphs through sampling makes GNNs practical for real-world applications with complex relational data. Understanding GNNs means understanding how to extend the power of deep learning to the graphs that represent real-world relationships and structures.</div>
+    </insight-box>
+
+  </section>
+
+</div>
+
+<footer>
+  <p class="footer-text">GNN Architectures — Extending Neural Networks to Graph-Structured Data</p>
+</footer>
+
+</body>
+</html>
