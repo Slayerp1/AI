@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Autoencoders — Learning Compressed Representations of Data</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #04040a;
+  --accent: #7b2fff;
+  --hot: #ff2d78;
+  --cool: #00e5ff;
+  --warm: #ffb800;
+  --green: #00ff9d;
+  --text: #e0e0f0;
+  --muted: #4a4a6a;
+  --card: #0a0a14;
+  --border: rgba(255,255,255,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0,229,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,4,10,0.9);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-right: auto; letter-spacing: 2px; }
+.nav-pill {
+  font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(123,47,255,0.4);
+  color: rgba(123,47,255,0.8); text-decoration: none; transition: all 0.2s;
+}
+.nav-pill:hover { background: rgba(123,47,255,0.15); border-color: var(--accent); color: #fff; }
+
+.hero { padding: 90px 0 50px; }
+.hero-eyebrow {
+  font-family: 'Syne Mono', monospace; font-size: 11px; letter-spacing: 4px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(123,47,255,0.3); }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 100px);
+  line-height: 0.92; margin-bottom: 28px;
+  color: #fff;
+}
+
+.hero-desc { max-width: 750px; font-size: 16px; color: rgba(210,210,240,0.72); line-height: 1.8; margin-bottom: 40px; }
+
+section { padding: 70px 0; border-top: 1px solid var(--border); }
+.section-label { font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 64px); line-height: 1; margin-bottom: 40px; color: #fff; }
+
+.concept-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 36px;
+  border-left: 4px solid var(--card-accent, var(--accent));
+  transition: all 0.3s;
+}
+
+.concept-card:hover {
+  border-color: var(--card-accent, var(--accent));
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  transform: translateY(-2px);
+}
+
+.concept-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--card-accent, var(--accent));
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.concept-body {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.9;
+  margin-bottom: 28px;
+}
+
+.concept-body p {
+  margin-bottom: 18px;
+}
+
+.concept-body strong {
+  color: #fff;
+}
+
+.code-block {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 28px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #fff;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.code-comment { color: #5c7a8a; }
+.code-keyword { color: var(--accent); }
+.code-string { color: var(--green); }
+.code-number { color: var(--warm); }
+.code-function { color: var(--cool); }
+
+.teaching-box {
+  background: rgba(123,47,255,0.1);
+  border-left: 4px solid var(--accent);
+  padding: 24px;
+  border-radius: 10px;
+  margin: 28px 0;
+  font-size: 15px;
+  color: rgba(210,210,240,0.9);
+  line-height: 1.8;
+}
+
+.teaching-box strong {
+  color: #fff;
+}
+
+.impact-box {
+  background: linear-gradient(135deg, rgba(123,47,255,0.15) 0%, rgba(0,229,255,0.08) 100%);
+  border: 1px solid rgba(123,47,255,0.3);
+  border-radius: 14px;
+  padding: 32px;
+  margin-top: 32px;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.impact-item {
+  padding: 24px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  border-left: 4px solid var(--impact-color, var(--accent));
+}
+
+.impact-item-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--impact-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.impact-item-content {
+  font-size: 13px;
+  color: rgba(200,200,220,0.88);
+  line-height: 1.8;
+}
+
+.insight-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 28px 0;
+  border-left: 4px solid var(--insight-color, var(--accent));
+}
+
+.insight-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--insight-color, var(--accent));
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.insight-content {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.8;
+}
+
+footer {
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 60px 0 40px; }
+  section { padding: 50px 0; }
+  .impact-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">AUTOENCODERS</div>
+  <a href="#fundamentals" class="nav-pill">Fundamentals</a>
+  <a href="#variational" class="nav-pill">Variational</a>
+  <a href="#advanced" class="nav-pill">Advanced</a>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-eyebrow">Learning Efficient Data Representations</div>
+    <h1>Autoencoders: Unsupervised Learning Through Reconstruction</h1>
+    <p class="hero-desc">One of the most fundamental challenges in machine learning is finding good representations of data. A good representation captures the essential structure and patterns in data while being compact and discarding noise and irrelevant details. If you can learn such representations automatically from data without requiring labels, you have a powerful tool for unsupervised learning. Autoencoders provide exactly this: a framework for learning compressed representations by training networks to reconstruct their inputs. The elegant simplicity of the autoencoder objective belies its power. You simply train a network to take an input, compress it through a narrow bottleneck into a compact latent representation, then decompress it back to reconstruct the original input. The network is forced to learn what features matter because it must decide what information to keep when compressing and what to discard. What makes this fascinating is what emerges from this simple training objective. The learned representations often capture meaningful structure in the data. The latent space enables generating new samples similar to training data. By adding probabilistic structure through variational autoencoders, you get principled ways to generate diverse samples. By enforcing disentanglement, you can ensure different latent dimensions capture different semantic factors. This section teaches you autoencoders from first principles, building your understanding of how the bottleneck forces learning of meaningful representations, why reconstruction loss alone is insufficient for probabilistic generation, and how various advanced techniques extend the basic framework to solve different problems. You'll understand not just how autoencoders work mechanically, but the deeper principles that make them powerful for unsupervised representation learning.</p>
+  </section>
+
+  <section id="fundamentals">
+    <div class="section-label">Understanding Compression and Reconstruction</div>
+    <h2 class="section-title">Autoencoder Fundamentals: Architecture and Learning</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🔄 The Encoder-Decoder Architecture: Compression Through Necessity</div>
+      <div class="concept-body">
+        <p>An autoencoder consists of two parts: an encoder and a decoder. The encoder takes the input and compresses it into a lower-dimensional latent representation. The decoder takes this latent representation and reconstructs the original input. The architecture creates a bottleneck: information must flow through a narrow passage. This bottleneck forces the network to learn what information is essential to preserve. If the latent space is large enough to store all input information perfectly, the network learns a trivial identity mapping that tells you nothing useful. But if the latent space is smaller than the input, the network must learn to compress intelligently, discovering which features matter and which are noise.</p>
+
+        <p>Let me make this concrete with an example. Imagine teaching someone to photograph flowers. Rather than having them take high-resolution photos, you ask them to take photos with limited storage: only a few kilobytes. Forced by this constraint, they learn what makes each flower unique and photogenic. They might focus on capturing the flower shape, colors, and distinctive features, discarding background clutter and perfect focus on every petal. They learn an efficient visual summary. An autoencoder works similarly. Forced to compress images through a bottleneck, it learns to capture the essential visual features and discard unimportant details.</p>
+
+        <p>The training objective is straightforward: minimize the difference between input and reconstruction. This is typically measured through reconstruction loss, most commonly mean squared error between input and reconstructed output. You're asking the network: given this input, compress it, then decompress it back. How close can you get to the original? The network gradually improves at this task, learning better compressions. What's remarkable is that this simple objective leads to learning meaningful features. The network doesn't need semantic labels telling it what features matter. The compression constraint itself provides this information.</p>
+
+        <p>The latent space is the learned compressed representation. For images, if the input is a one-hundred-by-one-hundred-pixel image with three color channels, that's thirty thousand values. A bottleneck of fifty dimensions compresses this by six-hundred times. These fifty dimensions must capture enough information to reconstruct the image reasonably well. What these fifty dimensions represent is learned. In practice, they often correspond to interpretable factors: for face images, different latent dimensions might capture face angle, lighting, facial expression, or other semantic factors. For natural images, dimensions might capture object categories, textures, colors, or compositional elements. The network discovers these without explicit supervision.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Think about autoencoders like a writer learning to write abstracts of longer articles. Initially, they try to include every detail, but that's still too long. Forced to write shorter abstracts, they learn what matters. In a one-paragraph abstract of a one-hundred-page paper, every sentence must convey important information. They learn to identify key ideas, skip examples, and focus on contributions. Someone else reading the abstract might reasonably guess the paper's content and main results, even without reading the full paper. The abstract captures essential information. Autoencoders perform the same task: learn a compressed representation capturing essential information while discarding details.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding autoencoder architecture and learning</span>
+
+<span class="code-keyword">class</span> <span class="code-function">SimpleAutoencoder</span>:
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(<span class="code-keyword">self</span>, input_dim, latent_dim):
+        <span class="code-comment"># Encoder: compress input to latent representation</span>
+        <span class="code-comment"># Architecture: input_dim -> hidden -> latent_dim</span>
+        <span class="code-keyword">self</span>.encoder = Sequential([
+            Linear(input_dim, <span class="code-number">512</span>),
+            ReLU(),
+            Linear(<span class="code-number">512</span>, <span class="code-number">256</span>),
+            ReLU(),
+            Linear(<span class="code-number">256</span>, latent_dim)  <span class="code-comment"># Bottleneck layer</span>
+        ])
+        
+        <span class="code-comment"># Decoder: reconstruct from latent representation</span>
+        <span class="code-comment"># Architecture: latent_dim -> hidden -> input_dim</span>
+        <span class="code-keyword">self</span>.decoder = Sequential([
+            Linear(latent_dim, <span class="code-number">256</span>),
+            ReLU(),
+            Linear(<span class="code-number">256</span>, <span class="code-number">512</span>),
+            ReLU(),
+            Linear(<span class="code-number">512</span>, input_dim)  <span class="code-comment"># Reconstruct original</span>
+        ])
+    
+    <span class="code-keyword">def</span> <span class="code-function">forward</span>(<span class="code-keyword">self</span>, X):
+        <span class="code-comment"># Forward pass: compress then decompress</span>
+        <span class="code-comment"># latent represents the data in compressed form</span>
+        latent = <span class="code-keyword">self</span>.encoder(X)
+        <span class="code-comment"># reconstruction is the decoder's attempt to restore original</span>
+        reconstruction = <span class="code-keyword">self</span>.decoder(latent)
+        <span class="code-keyword">return</span> reconstruction, latent
+    
+    <span class="code-keyword">def</span> <span class="code-function">training_step</span>(<span class="code-keyword">self</span>, X, optimizer):
+        <span class="code-comment"># Forward pass</span>
+        reconstruction, latent = <span class="code-keyword">self</span>.forward(X)
+        
+        <span class="code-comment"># Reconstruction loss: how well does decoder recover input?</span>
+        <span class="code-comment"># Mean squared error is common for continuous data</span>
+        loss = mean_squared_error(X, reconstruction)
+        
+        <span class="code-comment"># The key insight: this simple loss forces learning of useful</span>
+        <span class="code-comment"># representations through the bottleneck constraint</span>
+        
+        <span class="code-comment"># Backpropagation and optimization</span>
+        loss.backward()
+        optimizer.step()
+        
+        <span class="code-keyword">return</span> loss
+
+<span class="code-comment"># The bottleneck principle:</span>
+<span class="code-comment"># If latent_dim is very small, the network must learn</span>
+<span class="code-comment"># efficient compression to reconstruct reasonably</span>
+<span class="code-comment"># If latent_dim equals input_dim, the network can learn</span>
+<span class="code-comment"># identity mapping without discovering structure</span>
+<span class="code-comment"># The size of latent_dim controls compression strength</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">📦 The Bottleneck and Latent Space: Where Learning Happens</div>
+      <div class="concept-body">
+        <p>The bottleneck is where the magic happens in autoencoders. By forcing information through a narrow passage, you create pressure for the network to discover efficient representations. This is analogous to how evolutionary pressure creates adaptation. A species in a harsh environment must adapt to survive. An autoencoder under compression pressure must learn efficient representations. Without this pressure, there's no incentive to learn anything meaningful. If the latent space is as large as the input space, the encoder can perfectly preserve all information without learning structure. If the latent space is tiny, the network must be clever about what to preserve.</p>
+
+        <p>The choice of latent dimension is crucial. Too large and the network doesn't compress meaningfully. Too small and the reconstruction becomes poor, preventing the network from learning at all because the bottleneck is too extreme. The right choice depends on your data and goals. For images, compression ratios vary widely depending on content. Simple images with few objects might compress substantially. Complex scenes might require larger latent spaces. In practice, you experiment: train with different latent dimensions and see which provides the best balance between compression and reconstruction quality.</p>
+
+        <p>What's particularly interesting is that different autoencoder variants impose different structure on the latent space. A basic autoencoder just minimizes reconstruction error. A variational autoencoder imposes probabilistic structure, assuming the latent space follows a particular distribution. A vector-quantized VAE imposes discrete structure, making the latent space consist of discrete tokens. Each variant encodes different assumptions about what makes a good latent representation. These aren't just technical differences; they reflect different philosophies about what makes representations useful.</p>
+
+        <p>The latent space learned by an autoencoder often has interesting properties. It's often smoother than the input space, meaning small changes in latent dimensions produce gradual changes in reconstruction rather than sudden jumps. It often has interpretable dimensions where changing one latent value changes a specific aspect of the output (like brightness in images, or speaking rate in audio). These properties emerge from the compression training objective without explicit encouragement. The network discovers them because they enable efficient compression and good reconstruction.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Consider how you mentally summarize a movie. The full movie contains hundreds of thousands of frames, dialogue, sound effects. You summarize it in your mind using just a few key elements: the main plot point, the characters' emotional arcs, the setting. This mental summary is your latent representation. When someone asks about the movie, you reconstruct the experience from this summary, filling in details from your understanding of typical movie conventions. The summary doesn't contain every frame, but it captures enough to reconstruct a reasonable approximation. More importantly, this summary reveals what you consider important about movies. Someone else might summarize differently, emphasizing cinematography or sound design instead of plot. The latent representation reveals what the compressor values.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="variational">
+    <div class="section-label">Moving Beyond Simple Reconstruction</div>
+    <h2 class="section-title">Variational Autoencoders: Probabilistic Representation Learning</h2>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🎲 Variational Autoencoders: Adding Probabilistic Structure</div>
+      <div class="concept-body">
+        <p>While basic autoencoders learn to reconstruct inputs well, they have limitations for generation. If you sample randomly from the latent space of a basic autoencoder, you often get garbage. The latent space might have learned efficient representations for the training data, but random points in that space correspond to meaningless data. This is because basic autoencoders don't impose structure on the latent space. Variational autoencoders solve this by treating the latent space as a probability distribution and learning that distribution explicitly.</p>
+
+        <p>A VAE works differently from a basic autoencoder in a crucial way. Rather than the encoder outputting a single latent vector, it outputs the parameters of a distribution: a mean and variance for each latent dimension. During training, you sample from this distribution, then pass the sample through the decoder. This sampling introduces noise, preventing the autoencoder from learning a degenerate solution where the encoder just memorizes data. The decoder must learn to reconstruct from noisy samples, forcing it to learn robust features.</p>
+
+        <p>The loss function for a VAE has two components. The reconstruction loss encourages good reconstruction, just like in basic autoencoders. The KL divergence term encourages the learned distribution to match a prior distribution, typically a standard normal distribution. This dual objective serves different purposes. Reconstruction loss ensures the learned representations are useful for reconstructing inputs. KL divergence ensures the learned distribution has a smooth structure where similar points in latent space produce similar reconstructions and where you can sample new points that generate meaningful data.</p>
+
+        <p>The beauty of VAEs is that they solve a practical problem: generation becomes possible. By sampling from a standard normal distribution and passing through the decoder, you generate new data that resembles training data. The learned distribution ensures that random samples produce reasonable outputs rather than garbage. This makes VAEs powerful for generative modeling. You can not just reconstruct training data but generate diverse new samples from the learned distribution.</p>
+
+        <p>Beta-VAE extends this by introducing a weighting parameter beta on the KL divergence term. Higher beta values push the learned distribution closer to the prior, encouraging stronger disentanglement where different latent dimensions capture different semantic factors. Lower beta values allow reconstruction to dominate, enabling better reconstruction at the cost of less structure in the latent space. This parameter provides control over the reconstruction versus structure tradeoff.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Imagine learning to draw faces. A basic approach is tracing training photos carefully until you can reproduce them perfectly. But this doesn't teach you to draw new faces. A VAE-like approach is different: learn the patterns in faces by drawing faces slightly differently each time, adding noise, and trying to still recognize and draw the face. This forces you to learn what matters: face structure, proportions, features. Once you understand these deep patterns, you can draw new faces by combining learned patterns in new ways. The noise during learning forces you to develop genuine understanding rather than memorization.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding Variational Autoencoder structure and loss</span>
+
+<span class="code-keyword">class</span> <span class="code-function">VariationalAutoencoder</span>:
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(<span class="code-keyword">self</span>, input_dim, latent_dim):
+        <span class="code-comment"># Encoder outputs distribution parameters, not just a point</span>
+        <span class="code-keyword">self</span>.encoder_mean = Sequential([...Linear(latent_dim)...])
+        <span class="code-keyword">self</span>.encoder_logvar = Sequential([...Linear(latent_dim)...])
+        
+        <span class="code-comment"># Decoder reconstructs from sampled latent</span>
+        <span class="code-keyword">self</span>.decoder = Sequential([...Linear(input_dim)...])
+    
+    <span class="code-keyword">def</span> <span class="code-function">encode</span>(<span class="code-keyword">self</span>, X):
+        <span class="code-comment"># Encoder outputs mean and log-variance of distribution</span>
+        <span class="code-comment"># Log-variance instead of variance for numerical stability</span>
+        mean = <span class="code-keyword">self</span>.encoder_mean(X)
+        logvar = <span class="code-keyword">self</span>.encoder_logvar(X)
+        <span class="code-keyword">return</span> mean, logvar
+    
+    <span class="code-keyword">def</span> <span class="code-function">sample_latent</span>(<span class="code-keyword">self</span>, mean, logvar):
+        <span class="code-comment"># Reparameterization trick: sample from distribution</span>
+        <span class="code-comment"># z = mean + epsilon * exp(0.5 * logvar)</span>
+        <span class="code-comment"># epsilon is sampled from standard normal</span>
+        <span class="code-comment"># This enables gradients to flow through sampling</span>
+        std = exp(<span class="code-number">0.5</span> * logvar)
+        epsilon = randn_like(std)  <span class="code-comment"># Standard normal sample</span>
+        z = mean + epsilon * std
+        <span class="code-keyword">return</span> z
+    
+    <span class="code-keyword">def</span> <span class="code-function">vae_loss</span>(<span class="code-keyword">self</span>, X, reconstruction, mean, logvar, beta=<span class="code-number">1.0</span>):
+        <span class="code-comment"># Reconstruction loss: how well does decoder reconstruct?</span>
+        reconstruction_loss = mean_squared_error(X, reconstruction)
+        
+        <span class="code-comment"># KL divergence loss: how close is learned distribution to prior?</span>
+        <span class="code-comment"># Prior is standard normal N(0, I)</span>
+        <span class="code-comment"># KL(N(mean, var) || N(0, I)) = -0.5 * sum(1 + logvar - mean^2 - exp(logvar))</span>
+        kl_loss = <span class="code-number">-0.5</span> * sum(<span class="code-number">1</span> + logvar - mean**<span class="code-number">2</span> - exp(logvar))
+        
+        <span class="code-comment"># Total loss: balance reconstruction and structure</span>
+        <span class="code-comment"># Beta controls the tradeoff</span>
+        total_loss = reconstruction_loss + beta * kl_loss
+        <span class="code-keyword">return</span> total_loss
+
+<span class="code-comment"># Key insight: VAE makes latent space smooth and structured</span>
+<span class="code-comment"># Reconstruction loss: learn useful representations</span>
+<span class="code-comment"># KL loss: ensure distributions follow a nice structure</span>
+<span class="code-comment"># Together: generation becomes possible</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">🎨 Vector Quantized VAE and Disentangled Representations</div>
+      <div class="concept-body">
+        <p>Vector-quantized VAE takes a different approach to structuring the latent space. Rather than continuous values, VQ-VAE uses discrete tokens from a learned vocabulary. The latent space consists of a codebook of discrete vectors, and each input is encoded as a sequence of indices into this codebook. This discrete structure has interesting properties. It prevents the posterior collapse problem that sometimes affects VAEs, where the KL term becomes zero and the latent space becomes inactive. Because VQ-VAE must learn discrete representations, the latent space is forced to be active and meaningful.</p>
+
+        <p>The learning mechanism in VQ-VAE is clever. The encoder produces continuous vectors, but these are replaced by their nearest neighbor in the codebook. This nearest neighbor is then passed to the decoder. The codebook vectors themselves are learned through training. Over time, the codebook vectors specialize to capture different input patterns. The approach enables learning discrete, interpretable representations while maintaining reasonable reconstruction quality.</p>
+
+        <p>Disentangled representations extend these ideas by encouraging different latent dimensions to capture different semantic factors. In a well-disentangled representation of faces, one dimension might control face angle, another controls lighting, another controls expression, and so on. Each dimension can be varied independently to control a specific aspect of the output. This is powerful for interpretability and manipulation. If you understand what each dimension controls, you can generate targeted variations.</p>
+
+        <p>Beta-VAE encourages disentanglement by increasing the weight on the KL term. This pushes the model to use the minimum number of dimensions necessary to encode information, naturally leading to factorization where different dimensions capture different factors. Other approaches like Factor-VAE explicitly encourage independence between dimensions. These techniques recognize that not all representations are equally useful; structured representations with clear semantic meaning are more valuable than entangled representations where dimension meanings are unclear.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Think about how you describe a scene to someone. You could say "there's a man in a blue shirt standing under a tree in sunlight," naturally factorizing the scene into components: the person, clothing, location, and lighting. A disentangled representation similarly separates different factors of variation. In an entangled representation, changing one latent dimension affects multiple aspects simultaneously in unpredictable ways. In a disentangled representation, each dimension controls a specific semantic factor. The disentangled version is far more useful for understanding what the model learned and for controlled generation.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="advanced">
+    <div class="section-label">Extending the Framework</div>
+    <h2 class="section-title">Advanced Autoencoder Variants: Solving Specific Problems</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🧹 Denoising Autoencoders: Learning Robust Features</div>
+      <div class="concept-body">
+        <p>A denoising autoencoder adds noise to the input, then trains the autoencoder to reconstruct the clean original. Rather than minimizing reconstruction error from noisy input to noisy input, you minimize error from noisy input to clean output. This forces the encoder to learn features that are robust to noise. The network must discover what signal is essential and separate it from noise. This is more informative than basic reconstruction because it explicitly teaches the model to be noise-robust.</p>
+
+        <p>Denoising autoencoders work well with different noise types: Gaussian noise, dropout applied to inputs, or even corruption like removing patches. The choice of noise affects what the network learns. Gaussian noise encourages learning smooth manifolds. Dropout encourages robustness to missing dimensions. Patch corruption encourages understanding of spatial structure. By choosing appropriate noise, you can encourage the network to learn features useful for your specific domain.</p>
+
+        <p>The principle underlying denoising is that useful representations should be robust to small variations. If your representation changes completely from tiny noise, it's not capturing essential structure. Forcing robustness through denoising encourages learning features at the right level of abstraction. This principle extends beyond autoencoders; many modern self-supervised learning methods use similar ideas of learning invariances to specific transformations.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Imagine learning to recognize your friend's voice. They speak normally, sometimes with background noise, sometimes with a cold affecting their voice, sometimes speaking faster or slower. Learning to recognize them across these variations is harder than just matching their exact voice, but the learned recognition is more useful. You're learning the essential features that make them identifiable despite variations. Denoising autoencoders do the same: they learn features robust to specified variations, encouraging learning of essential structure.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section>
+    <div class="section-label">Understanding Autoencoders Holistically</div>
+    <h2 class="section-title">Autoencoders: Principles and Applications</h2>
+
+    <div class="insight-box" style="--insight-color: var(--cool);">
+      <div class="insight-title">The Bottleneck Is the Key Principle</div>
+      <div class="insight-content">Across all autoencoder variants, the bottleneck principle is central. The latent space must be smaller than the input to force learning of meaningful representations. This principle extends beyond autoencoders: any framework that forces compression creates incentives for learning structure. This is why information bottleneck theory is relevant across machine learning. Compression forces discovery of essential structure. Whether through dimensionality reduction, quantization, or noise, imposing constraints creates learning opportunities.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--green);">
+      <div class="insight-title">Different Variants Serve Different Goals</div>
+      <div class="insight-content">Basic autoencoders excel at dimensionality reduction and feature learning. Variational autoencoders enable principled generation. Vector-quantized VAEs provide discrete structure. Denoising autoencoders encourage robustness. Rather than one autoencoder being universally best, different variants suit different problems. The choice depends on whether you prioritize reconstruction, generation, discrete structure, or robustness. Understanding these tradeoffs helps you select appropriate tools for your specific problem.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--warm);">
+      <div class="insight-title">Unsupervised Learning Through Reconstruction</div>
+      <div class="insight-content">The powerful insight underlying autoencoders is that you don't need labels to learn meaningful representations. By forcing the network to reconstruct its inputs, you indirectly supervise it to learn structure. The network discovers what matters by necessity: it must choose what to preserve through the bottleneck. This unsupervised approach to representation learning has proven remarkably effective and inspired many subsequent self-supervised learning methods that rely on similar principles of learning through reconstruction, prediction, or contrastive objectives rather than explicit labels.</div>
+    </insight-box>
+
+  </section>
+
+</div>
+
+<footer>
+  <p class="footer-text">Autoencoders — Learning Efficient Representations Through Reconstruction</p>
+</footer>
+
+</body>
+</html>
