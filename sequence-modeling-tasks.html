@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sequence Modeling Tasks — Solving Real-World Sequential Problems</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #04040a;
+  --accent: #7b2fff;
+  --hot: #ff2d78;
+  --cool: #00e5ff;
+  --warm: #ffb800;
+  --green: #00ff9d;
+  --text: #e0e0f0;
+  --muted: #4a4a6a;
+  --card: #0a0a14;
+  --border: rgba(255,255,255,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0,229,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,4,10,0.9);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-right: auto; letter-spacing: 2px; }
+.nav-pill {
+  font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(123,47,255,0.4);
+  color: rgba(123,47,255,0.8); text-decoration: none; transition: all 0.2s;
+}
+.nav-pill:hover { background: rgba(123,47,255,0.15); border-color: var(--accent); color: #fff; }
+
+.hero { padding: 90px 0 50px; }
+.hero-eyebrow {
+  font-family: 'Syne Mono', monospace; font-size: 11px; letter-spacing: 4px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(123,47,255,0.3); }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 100px);
+  line-height: 0.92; margin-bottom: 28px;
+  color: #fff;
+}
+
+.hero-desc { max-width: 750px; font-size: 16px; color: rgba(210,210,240,0.72); line-height: 1.8; margin-bottom: 40px; }
+
+section { padding: 70px 0; border-top: 1px solid var(--border); }
+.section-label { font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 64px); line-height: 1; margin-bottom: 40px; color: #fff; }
+
+.concept-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 36px;
+  border-left: 4px solid var(--card-accent, var(--accent));
+  transition: all 0.3s;
+}
+
+.concept-card:hover {
+  border-color: var(--card-accent, var(--accent));
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  transform: translateY(-2px);
+}
+
+.concept-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--card-accent, var(--accent));
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.concept-body {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.9;
+  margin-bottom: 28px;
+}
+
+.concept-body p {
+  margin-bottom: 18px;
+}
+
+.concept-body strong {
+  color: #fff;
+}
+
+.code-block {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 28px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #fff;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.code-comment { color: #5c7a8a; }
+.code-keyword { color: var(--accent); }
+.code-string { color: var(--green); }
+.code-number { color: var(--warm); }
+.code-function { color: var(--cool); }
+
+.teaching-box {
+  background: rgba(123,47,255,0.1);
+  border-left: 4px solid var(--accent);
+  padding: 24px;
+  border-radius: 10px;
+  margin: 28px 0;
+  font-size: 15px;
+  color: rgba(210,210,240,0.9);
+  line-height: 1.8;
+}
+
+.teaching-box strong {
+  color: #fff;
+}
+
+.impact-box {
+  background: linear-gradient(135deg, rgba(123,47,255,0.15) 0%, rgba(0,229,255,0.08) 100%);
+  border: 1px solid rgba(123,47,255,0.3);
+  border-radius: 14px;
+  padding: 32px;
+  margin-top: 32px;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.impact-item {
+  padding: 24px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  border-left: 4px solid var(--impact-color, var(--accent));
+}
+
+.impact-item-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--impact-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.impact-item-content {
+  font-size: 13px;
+  color: rgba(200,200,220,0.88);
+  line-height: 1.8;
+}
+
+.insight-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 28px 0;
+  border-left: 4px solid var(--insight-color, var(--accent));
+}
+
+.insight-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--insight-color, var(--accent));
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.insight-content {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.8;
+}
+
+footer {
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 60px 0 40px; }
+  section { padding: 50px 0; }
+  .impact-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">SEQUENCE MODELING TASKS</div>
+  <a href="#fundamentals" class="nav-pill">Fundamentals</a>
+  <a href="#architectures" class="nav-pill">Architectures</a>
+  <a href="#techniques" class="nav-pill">Techniques</a>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-eyebrow">Solving Real-World Sequential Problems with Deep Learning</div>
+    <h1>Sequence Modeling Tasks: From Theory to Applications</h1>
+    <p class="hero-desc">The theoretical concepts you've learned about recurrent neural networks become powerful only when applied to real-world problems. Language understanding, machine translation, speech recognition, time series forecasting, and video analysis all share fundamental sequential structure yet have distinct challenges and requirements. Understanding these tasks deeply requires moving beyond generic architectures to seeing how models are specifically designed and trained to solve particular problems. Language modeling teaches you to think about predicting the next element in a sequence. Machine translation shows you how to transform one sequence into another. Speech recognition demonstrates how to convert continuous signals into discrete tokens. Time series forecasting applies sequential understanding to numerical data. Video analysis extends sequential understanding to spatial-temporal domains. Text generation uses trained models to produce new sequences. Through these applications, you'll learn not just what models can do but how to design, train, and evaluate them for specific tasks. You'll understand the practical considerations that transform elegant theoretical architectures into systems that actually work in production. This section is where theory becomes practice, and where you'll learn to think like a machine learning engineer solving real problems rather than a student learning abstractions.</p>
+  </section>
+
+  <section id="fundamentals">
+    <div class="section-label">Understanding Sequential Prediction</div>
+    <h2 class="section-title">Sequence Modeling Foundations: Predicting What Comes Next</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🔮 Language Modeling: The Foundation of Sequential Understanding</div>
+      <div class="concept-body">
+        <p>Language modeling is the most fundamental sequence modeling task. A language model learns to predict the probability distribution over the next word given all previous words. When you're reading a sentence and someone asks you to guess the next word, you're doing language modeling implicitly. You consider the context of everything you've read so far and estimate which words are likely to come next. A neural language model does this mathematically. It takes a sequence of words as input, processes them through an RNN or Transformer to build up a representation of the context, and outputs a probability distribution over all possible next words. The word with the highest probability is the most likely next word.</p>
+
+        <p>Training a language model is surprisingly simple conceptually. You take a large text corpus (a collection of documents), process it as a sequence of words, and at each position, you have a training example where the input is all previous words and the target is the next word. You feed the words through the model up to position t, compute the output probabilities, and compare those probabilities to the actual word at position t plus one. The difference between predicted and actual probabilities is the loss. You use this loss to update the model's weights through backpropagation. By processing billions of words this way, the model learns statistical patterns about which words follow which other words. Interestingly, this simple training objective leads to models that capture remarkably sophisticated aspects of language, including grammar, facts, reasoning, and even common sense.</p>
+
+        <p>Language models are foundational because they address the fundamental problem of sequence modeling: predicting what comes next given what came before. The specific details of language modeling transfer to other sequence tasks. Understanding language modeling deeply gives you intuition applicable to machine translation, speech recognition, and other sequential problems. Additionally, language models trained on huge amounts of text have become powerful components in modern systems, used for text generation, question answering, and summarization through transfer learning. A model trained on predicting the next word in Wikipedia can be fine-tuned to answer questions about any topic, demonstrating the power of the foundational language modeling objective.</p>
+
+        <p>The perplexity metric is commonly used to evaluate language models. Perplexity measures how surprised the model is by the actual text. A model that assigns high probability to the words actually in the test set has low perplexity. A model that assigns low probability has high perplexity. More formally, perplexity is the exponential of the average cross-entropy loss. The intuition is that if a model assigns probability one to the correct next word at every position, perplexity is one. If it assigns equal probability to twenty possible words (each with probability zero point zero five), perplexity is twenty, meaning the model is perplexed about the true distribution. Lower perplexity indicates better language modeling performance.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Understanding language modeling as learning word patterns. Imagine you're learning to predict what word comes next based on watching transcripts of conversations. At first, you'd notice simple patterns: "the" frequently precedes nouns, "is" frequently comes after pronouns, "therefore" frequently starts sentences that draw conclusions. As you see more examples, you'd notice more sophisticated patterns: "machine learning" frequently appears together, sentences about technology contain specific words more frequently, certain topics have characteristic vocabulary. A neural language model learns similar patterns, except it does so mathematically by minimizing prediction error. The model develops internal representations that capture these statistical regularities, and these representations prove useful for many downstream tasks.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding language modeling: predicting the next word</span>
+
+<span class="code-keyword">def</span> <span class="code-function">language_model_training</span>(text_corpus, vocabulary, model, learning_rate):
+    <span class="code-comment"># Split text into words and convert to indices</span>
+    tokens = text_corpus.split()
+    token_indices = [vocabulary[word] <span class="code-keyword">for</span> word <span class="code-keyword">in</span> tokens]
+    
+    <span class="code-comment"># Process the sequence: at each position, predict next token</span>
+    <span class="code-keyword">for</span> position <span class="code-keyword">in</span> <span class="code-function">range</span>(<span class="code-number">1</span>, <span class="code-function">len</span>(token_indices)):
+        <span class="code-comment"># Input: all tokens up to this position</span>
+        input_sequence = token_indices[:position]
+        <span class="code-comment"># Target: the next token</span>
+        target_token = token_indices[position]
+        
+        <span class="code-comment"># Forward pass: model processes input sequence</span>
+        output_probabilities = model.forward(input_sequence)
+        
+        <span class="code-comment"># The output is probability distribution over vocabulary</span>
+        <span class="code-comment"># We compare this to the actual next token</span>
+        predicted_prob_target = output_probabilities[target_token]
+        
+        <span class="code-comment"># Loss: cross-entropy between predicted and actual</span>
+        loss = -np.log(predicted_prob_target)
+        
+        <span class="code-comment"># Backward pass: compute gradients</span>
+        gradients = model.backward(loss)
+        
+        <span class="code-comment"># Update weights using gradients</span>
+        model.update_weights(gradients, learning_rate)
+
+<span class="code-comment"># Key insight: language modeling training is simple conceptually</span>
+<span class="code-comment"># At each position, predict the next token, compare to actual, update</span>
+<span class="code-comment"># Processing billions of examples teaches the model language patterns</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">🔄 Sequence-to-Sequence Models: Transforming One Sequence into Another</div>
+      <div class="concept-body">
+        <p>Language modeling addresses the problem of predicting the next element in a sequence. But many real-world problems require transforming one sequence into a different sequence. Machine translation transforms a sequence of words in one language into a sequence of words in another language. Summarization transforms a long document into a shorter summary. Image captioning transforms an image into a sequence of words describing it. Question answering transforms a question and context into an answer. These tasks require an encoder-decoder architecture, also called sequence-to-sequence models. The encoder processes the input sequence, building a representation that captures the essential information. The decoder then uses this representation to generate the output sequence, one element at a time.</p>
+
+        <p>The encoder is typically a bidirectional RNN or Transformer that processes the entire input sequence and produces a context vector representing the entire input. The decoder is a unidirectional RNN or Transformer that generates the output sequence one element at a time. At each step, the decoder receives the context vector plus the previously generated output element, and outputs the probability distribution for the next element. During training, teacher forcing is typically used, where the decoder is given the actual previous element from the target sequence rather than its own prediction. This helps the model train faster and more stably. During inference, the decoder must use its own predictions as inputs for future positions.</p>
+
+        <p>The challenge with this simple encoder-decoder approach is that the entire input sequence must be compressed into a single context vector. For long input sequences, this single vector might not capture all the important information, leading to degradation in performance. The attention mechanism addresses this by allowing the decoder to attend to different parts of the encoder output when generating each output element. Rather than always using the same context vector, the decoder learns what parts of the input are relevant for generating each output element, enabling more precise transformations.</p>
+
+        <p>Different sequence-to-sequence tasks have different requirements. Machine translation requires preserving meaning while handling linguistic differences between languages. Summarization requires identifying important information and expressing it concisely. Image captioning requires transforming spatial information into sequential descriptions. Question answering requires understanding context and generating relevant answers. Despite these differences, the encoder-decoder architecture provides a general framework applicable to all of them. The specific details of training and evaluation change, but the fundamental approach of encoding the input into a representation and decoding it into an output sequence transfers across tasks.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Understanding sequence-to-sequence models as translation between representations. Imagine learning a new language by reading parallel texts where sentences in one language appear alongside their translations. You'd learn patterns about how concepts map between languages. The encoder learns to understand the source language, extracting meaning. The decoder learns to express that meaning in the target language. The context vector is the extracted meaning, passed from encoder to decoder. When the decoder generates each word, it considers not just the context but also what it has generated so far, like how you wouldn't repeat a word you just used in the target language. This bidirectional understanding of both input transformation and output generation is what makes sequence-to-sequence models powerful for diverse transformation tasks.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding sequence-to-sequence models: encoder-decoder architecture</span>
+
+<span class="code-keyword">class</span> <span class="code-function">Seq2SeqModel</span>:
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(<span class="code-keyword">self</span>, encoder, decoder):
+        <span class="code-keyword">self</span>.encoder = encoder
+        <span class="code-keyword">self</span>.decoder = decoder
+    
+    <span class="code-keyword">def</span> <span class="code-function">forward</span>(<span class="code-keyword">self</span>, input_sequence, target_sequence=<span class="code-keyword">None</span>, use_teacher_forcing=<span class="code-keyword">True</span>):
+        <span class="code-comment"># Encoder: process entire input sequence to build context</span>
+        context_vector = <span class="code-keyword">self</span>.encoder(input_sequence)
+        
+        <span class="code-comment"># Decoder: generate output sequence one element at a time</span>
+        output_sequence = []
+        
+        <span class="code-comment"># Start with a special start-of-sequence token</span>
+        decoder_input = START_TOKEN
+        
+        <span class="code-keyword">for</span> t <span class="code-keyword">in</span> <span class="code-function">range</span>(max_output_length):
+            <span class="code-comment"># Decoder generates next output element</span>
+            <span class="code-comment"># It considers context from encoder and what it's generated so far</span>
+            output_probs = <span class="code-keyword">self</span>.decoder(decoder_input, context_vector)
+            
+            <span class="code-comment"># Sample or select the most likely next element</span>
+            next_element = np.argmax(output_probs)
+            output_sequence.append(next_element)
+            
+            <span class="code-comment"># Teacher forcing: during training, use actual target element</span>
+            <span class="code-comment"># During inference, use predicted element</span>
+            <span class="code-keyword">if</span> use_teacher_forcing <span class="code-keyword">and</span> target_sequence <span class="code-keyword">is</span> <span class="code-keyword">not</span> <span class="code-keyword">None</span>:
+                decoder_input = target_sequence[t]
+            <span class="code-keyword">else</span>:
+                decoder_input = next_element
+            
+            <span class="code-comment"># Stop if end-of-sequence token generated</span>
+            <span class="code-keyword">if</span> next_element == EOS_TOKEN:
+                <span class="code-keyword">break</span>
+        
+        <span class="code-keyword">return</span> output_sequence
+
+<span class="code-comment"># Sequence-to-sequence models transform one sequence to another</span>
+<span class="code-comment"># Encoder captures input meaning, decoder expresses it in output space</span>
+      </code-block>
+    </div>
+
+  </section>
+
+  <section id="architectures">
+    <div class="section-label">Solving Specific Sequence Tasks</div>
+    <h2 class="section-title">Specialized Sequence Tasks: Speech, Time Series, and Multimodal Data</h2>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🎤 Speech Recognition: Converting Sound to Text</div>
+      <div class="concept-body">
+        <p>Speech recognition transforms audio signals into text. Unlike text-to-text tasks where inputs are discrete tokens, audio is a continuous signal. The first challenge is converting this continuous signal into a discrete representation. Typically, you apply signal processing (specifically spectral analysis like MFCC or mel-spectrograms) to convert the audio signal into a sequence of numerical feature vectors. Each vector represents the acoustic properties of a small time window (for example, ten milliseconds). This converts the problem from working with continuous audio to working with sequences of acoustic features, enabling RNN and Transformer models to process them.</p>
+
+        <p>The output of speech recognition is a sequence of phonemes or characters transcribed from the speech. The model must learn to map sequences of acoustic features to sequences of text tokens. This is challenging because spoken language has variability in accent, speaking speed, background noise, and pronunciation. The same person might pronounce the same word differently in different contexts. Different people pronounce the same word differently. The same text can be spoken at different speeds. The model must learn invariances to these variations while remaining sensitive to meaningful distinctions.</p>
+
+        <p>Connection Temporal Classification and sequence-to-sequence models with attention are both used for speech recognition. CTC is particularly useful because it handles the alignment between variable-length input sequences and variable-length output sequences automatically. The model outputs one character or phoneme at each frame, and CTC training handles the fact that frames don't align neatly with characters. When you say "hello," different speakers will take different amounts of time, producing different numbers of acoustic frames. CTC loss allows training the model without requiring explicit alignment between frames and characters, significantly simplifying training.</p>
+
+        <p>Time series forecasting applies sequence modeling to numerical prediction. Given historical values of a sequence (stock prices, temperature, power consumption), predict future values. Time series prediction is similar to language modeling but involves continuous values rather than discrete tokens. Models must learn temporal patterns, seasonal trends, and long-term drift. The challenge is that different time series have different scales and structures, making it harder to transfer knowledge between series compared to language where all text uses the same vocabulary.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Understanding speech recognition as learning acoustic-to-linguistic mappings. Imagine learning to recognize someone's handwriting by seeing many examples of their handwriting alongside the text they represent. At first, individual letters look inconsistent. But as you see many examples, you learn that even when the letter "a" is written in slightly different ways, it's still "a" because of the context and overall pattern. Similarly, a speech recognition model learns that even though different acoustic features can represent the same phoneme under different speaking conditions, the patterns remain recognizable through learned representations. The model captures the invariances and patterns that enable recognizing speech reliably.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding speech recognition as continuous-to-discrete mapping</span>
+
+<span class="code-keyword">def</span> <span class="code-function">speech_recognition_pipeline</span>(audio_signal, sample_rate):
+    <span class="code-comment"># Step 1: Convert continuous audio to feature sequence</span>
+    <span class="code-comment"># Extract spectral features from audio</span>
+    mel_spectrogram = extract_mel_spectrogram(audio_signal, sample_rate)
+    <span class="code-comment"># Shape: (time_steps, freq_bins)</span>
+    
+    <span class="code-comment"># Step 2: Pass feature sequence through RNN/Transformer encoder</span>
+    model = load_pretrained_speech_model()
+    acoustic_embeddings = model.encode(mel_spectrogram)
+    <span class="code-comment"># Shape: (time_steps, embedding_dim)</span>
+    
+    <span class="code-comment"># Step 3: Decode embeddings to character/phoneme sequence</span>
+    character_logits = model.decode(acoustic_embeddings)
+    <span class="code-comment"># Shape: (time_steps, num_characters)</span>
+    
+    <span class="code-comment"># Step 4: Convert character probabilities to text</span>
+    <span class="code-comment"># CTC decoding handles variable alignment between frames and characters</span>
+    predicted_text = ctc_decode(character_logits)
+    
+    <span class="code-keyword">return</span> predicted_text
+
+<span class="code-comment"># Speech recognition converts continuous acoustic signals to discrete text</span>
+<span class="code-comment"># Spectral features capture acoustic properties of sound</span>
+<span class="code-comment"># Models learn to map these features to linguistic units</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">📹 Video Analysis and Multimodal Sequences</div>
+      <div class="concept-body">
+        <p>Video extends sequence modeling to spatial-temporal domains. A video is a sequence of frames, where each frame is an image. To understand video, you must understand both the spatial content of individual frames and the temporal changes between frames. Action recognition requires understanding what activity is happening. Object tracking requires following objects as they move. Video captioning requires describing the video's content in language. These tasks extend sequence models to handle spatial-temporal data.</p>
+
+        <p>The simplest approach is to extract features from each frame independently using a CNN, then process the sequence of features through an RNN. This two-stream approach separates spatial understanding (done by CNNs) from temporal understanding (done by RNNs). More sophisticated approaches use 3D convolutions that convolve across time as well as space, extracting spatiotemporal features directly. These approaches capture motion patterns directly, which can be more efficient and effective than processing frames independently.</p>
+
+        <p>Video captioning is an interesting multimodal task combining vision and language. The encoder processes video frames, building a representation of the video content. The decoder generates a sequence of words describing the video. This requires bridging visual understanding and linguistic expression. The model must learn what aspects of the video are worth describing and how to express visual concepts in language. This type of cross-modal understanding is increasingly important as many real-world applications involve multiple types of information.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="techniques">
+    <div class="section-label">Techniques for Training and Inference</div>
+    <h2 class="section-title">Advanced Techniques: Attention, Teacher Forcing, and Decoding Strategies</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🧠 Attention Mechanisms: Focusing on Relevant Context</div>
+      <div class="concept-body">
+        <p>The attention mechanism revolutionized sequence modeling by enabling models to focus on relevant parts of the input when generating each output element. In machine translation, when generating a word in the target language, the model should attend to the corresponding word in the source language. In question answering, when generating an answer, the model should attend to relevant parts of the context. Rather than compressing the entire input into a single context vector, attention allows the decoder to dynamically select which parts of the input to focus on.</p>
+
+        <p>Mathematically, attention computes a weighted combination of all encoder outputs. At each decoding step, the model computes attention weights over all encoder outputs, producing higher weights for relevant parts. These weights are learned through training, allowing the model to discover which input parts are relevant for each output. The weighted combination of encoder outputs (the attention context) is then used to generate the next output element. This is more flexible than using a fixed context vector because the context changes based on what's being generated.</p>
+
+        <p>Multi-head attention computes multiple attention mechanisms in parallel, each attending to different aspects of the input. One head might attend to the previous word, another to the subject of the sentence, another to verbs related to the current action. By having multiple heads, the model can simultaneously attend to multiple relevant features. Each head produces its own weighted combination of encoder outputs, and these are concatenated to form a richer attention context. This parallelization enables the model to capture diverse relationships within a single layer.</p>
+
+        <p>Self-attention enables attending to different positions within the same sequence. In Transformers, self-attention allows each position to attend to all other positions in the input sequence, enabling the model to capture relationships between distant words. This is more powerful than the fixed window that RNNs see at each step. Self-attention enables bidirectional processing where positions can attend both backward and forward in the sequence. The combination of self-attention throughout the model and fully parallel processing enables Transformers to train much faster than RNNs while often achieving better performance.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Understanding attention as learning what to focus on. Imagine you're reading a book and someone asks a question about a character. Rather than re-reading the entire book, you focus on the sections mentioning that character. Your attention mechanism is selective. Similarly, when a neural network generates output, it benefits from selective attention to relevant input parts. Instead of compressing everything into one representation, the network can focus on different parts of the input as needed. This is particularly important for long inputs where a single compressed representation might lose important details. Attention enables the model to rediscover important information when needed, like your ability to find relevant book passages when answering questions.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding attention mechanism: dynamically focusing on relevant input</span>
+
+<span class="code-keyword">def</span> <span class="code-function">scaled_dot_product_attention</span>(query, key, value):
+    <span class="code-comment"># Compute attention scores between query and all keys</span>
+    <span class="code-comment"># Higher score means key is more relevant to query</span>
+    scores = np.dot(query, key.T) / np.sqrt(query.shape[-<span class="code-number">1</span>])
+    
+    <span class="code-comment"># Convert scores to attention weights using softmax</span>
+    <span class="code-comment"># Weights sum to one, enabling interpretation as importance</span>
+    attention_weights = softmax(scores)
+    
+    <span class="code-comment"># Compute weighted combination of values</span>
+    <span class="code-comment"># High weight means that value contributes more to output</span>
+    output = np.dot(attention_weights, value)
+    
+    <span class="code-keyword">return</span> output, attention_weights
+
+<span class="code-keyword">def</span> <span class="code-function">multi_head_attention</span>(query, key, value, num_heads):
+    <span class="code-comment"># Split query, key, value into multiple heads</span>
+    head_dim = query.shape[-<span class="code-number">1</span>] // num_heads
+    
+    outputs = []
+    <span class="code-keyword">for</span> h <span class="code-keyword">in</span> <span class="code-function">range</span>(num_heads):
+        <span class="code-comment"># Each head attends to different aspects</span>
+        q_h = query[:, h*head_dim:(h+<span class="code-number">1</span>)*head_dim]
+        k_h = key[:, h*head_dim:(h+<span class="code-number">1</span>)*head_dim]
+        v_h = value[:, h*head_dim:(h+<span class="code-number">1</span>)*head_dim]
+        
+        output_h, _ = scaled_dot_product_attention(q_h, k_h, v_h)
+        outputs.append(output_h)
+    
+    <span class="code-comment"># Concatenate outputs from all heads</span>
+    return np.concatenate(outputs, axis=-<span class="code-number">1</span>)
+
+<span class="code-comment"># Attention enables models to dynamically focus on relevant input parts</span>
+<span class="code-comment"># Multi-head attention captures multiple types of relationships</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">👨‍🏫 Teacher Forcing and Beam Search Decoding</div>
+      <div class="concept-body">
+        <p>Teacher forcing is a training technique for sequence-to-sequence models where the decoder receives the actual target sequence elements rather than its own predictions. During inference, the decoder must use its own predictions as inputs, but during training, providing the actual targets stabilizes learning. Without teacher forcing, if the decoder makes an error early in generation, subsequent predictions are conditioned on that error, causing error accumulation. With teacher forcing, each step is conditioned on the correct history, enabling faster and more stable training. The tradeoff is exposure bias: the decoder is trained on the distribution of teacher-forced inputs but tested on the distribution of its own predictions, which can differ. In practice, models often use mixed approaches where some of the time the actual target is provided and some of the time the model's prediction is used, gradually increasing the proportion of self-generated inputs during training.</p>
+
+        <p>Beam search is an inference technique that improves generation quality by maintaining multiple candidate sequences rather than greedily selecting the highest-probability word at each step. The model maintains the k most probable partial sequences (the beam width). At each step, for each partial sequence, the model generates probabilities for all possible next words, and the model keeps the k highest-probability complete sequences. This enables finding higher-probability sequences than greedy decoding which might get stuck in local optima of word-by-word decisions. Beam search trades off quality for computational cost, as maintaining multiple hypotheses requires more computation than single-path decoding.</p>
+
+        <p>Length normalization is often used with beam search to correct for the tendency of the model to prefer shorter sequences (which have higher probability simply because fewer words are required). By dividing the log-probability by sequence length, length normalization encourages finding balanced sequences. Similarly, coverage penalties encourage the model to attend to all parts of the input rather than repeatedly attending to the same words. These tuning strategies for decoding reflect practical insights about what sequences language models prefer and how to guide them toward more desirable outputs.</p>
+
+        <p>Temperature scaling in softmax affects the diversity of generated samples. Higher temperature makes the probability distribution more uniform (more random), while lower temperature makes it more peaked (more deterministic). At temperature zero, you always select the maximum-probability word. At very high temperature, all words have nearly equal probability. By controlling temperature, you can trade off between following the model's learned distribution (low temperature) and introducing diversity (high temperature). For tasks like translation where correctness is paramount, you might use low temperature. For creative text generation, you might use higher temperature to encourage varied outputs.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Understanding beam search as exploring multiple promising paths. Imagine hiking toward a mountain peak in fog where you can't see far ahead. At each step, greedy hiking means always taking the steepest uphill direction, which might lead you up a local hill that's not the peak. Beam search means exploring multiple paths simultaneously, keeping the k most promising ones. At each step, you extend each of the k paths slightly, then keep the k best extended paths. This approach is more likely to find the actual peak. Beam search similarly explores multiple sequence hypotheses, making it more likely to find high-quality translations or captions than greedy word-by-word selection. The computational cost of maintaining multiple hypotheses is the tradeoff for improved quality.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding beam search: exploring multiple promising sequences</span>
+
+<span class="code-keyword">def</span> <span class="code-function">beam_search_decode</span>(encoder_output, decoder, beam_width=<span class="code-number">3</span>, max_length=<span class="code-number">50</span>):
+    <span class="code-comment"># Initialize: beam with single START token</span>
+    candidates = [
+        {<span class="code-string">'sequence'</span>: [START_TOKEN], <span class="code-string">'score'</span>: <span class="code-number">0.0</span>}
+    ]
+    
+    <span class="code-keyword">for</span> step <span class="code-keyword">in</span> <span class="code-function">range</span>(max_length):
+        <span class="code-comment"># Expand each candidate with all possible next words</span>
+        all_candidates = []
+        
+        <span class="code-keyword">for</span> candidate <span class="code-keyword">in</span> candidates:
+            <span class="code-comment"># Decode next word probabilities given current sequence</span>
+            next_probs = decoder(candidate[<span class="code-string">'sequence'</span>], encoder_output)
+            
+            <span class="code-comment"># Consider all possible next words</span>
+            <span class="code-keyword">for</span> word_idx <span class="code-keyword">in</span> <span class="code-function">range</span>(vocab_size):
+                prob = next_probs[word_idx]
+                
+                <span class="code-comment"># Create new candidate with this word appended</span>
+                new_sequence = candidate[<span class="code-string">'sequence'</span>] + [word_idx]
+                <span class="code-comment"># Score is log-probability (use log for numerical stability)</span>
+                new_score = candidate[<span class="code-string">'score'</span>] + np.log(prob)
+                
+                all_candidates.append({
+                    <span class="code-string">'sequence'</span>: new_sequence,
+                    <span class="code-string">'score'</span>: new_score
+                })
+        
+        <span class="code-comment"># Keep top-k candidates by score</span>
+        <span class="code-comment"># This is the key to beam search: maintain multiple promising hypotheses</span>
+        candidates = sorted(all_candidates, key=<span class="code-keyword">lambda</span> x: x[<span class="code-string">'score'</span>], reverse=<span class="code-keyword">True</span>)[:beam_width]
+        
+        <span class="code-comment"># Stop if all sequences have generated END token</span>
+        <span class="code-keyword">if</span> <span class="code-function">all</span>(candidate[<span class="code-string">'sequence'</span>][-<span class="code-number">1</span>] == EOS_TOKEN <span class="code-keyword">for</span> candidate <span class="code-keyword">in</span> candidates):
+            <span class="code-keyword">break</span>
+    
+    <span class="code-comment"># Return best sequence (highest score)</span>
+    <span class="code-keyword">return</span> candidates[<span class="code-number">0</span>][<span class="code-string">'sequence'</span>]
+
+<span class="code-comment"># Beam search maintains multiple candidate sequences</span>
+<span class="code-comment"># More likely to find high-quality sequences than greedy decoding</span>
+      </code-block>
+    </div>
+
+  </section>
+
+  <section>
+    <div class="section-label">Understanding Sequence Modeling Holistically</div>
+    <h2 class="section-title">Connecting Tasks, Architectures, and Techniques</h2>
+
+    <div class="insight-box" style="--insight-color: var(--cool);">
+      <div class="insight-title">Different Sequence Tasks Share Fundamental Structure</div>
+      <div class="insight-content">Language modeling, machine translation, speech recognition, time series forecasting, and video analysis all involve predicting sequences conditioned on previous information. The fundamental challenge is learning to capture dependencies across time and generating coherent outputs. Different tasks require adaptations: language modeling works with tokens, speech recognition converts continuous signals to discrete outputs, time series works with continuous values. Yet the core principles of RNNs, attention mechanisms, and encoder-decoder architectures apply across these diverse tasks. Understanding this commonality enables transferring insights and even model weights across tasks. A language model trained on text can be adapted for machine translation. A speech recognition model can inform understanding of temporal patterns. The shared structure beneath superficial differences is what makes sequence modeling a unifying framework for diverse sequential problems.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--green);">
+      <div class="insight-title">Training and Inference Are Different Distributions</div>
+      <div class="insight-content">Teacher forcing makes training more efficient but creates exposure bias between training and inference distributions. During training, the model sees gold-standard targets. During inference, it sees its own predictions, which may be noisier. Techniques like scheduled sampling (gradually increasing the use of self-generated inputs during training) and data augmentation (training on noisy versions of targets) help bridge this gap. Understanding this fundamental mismatch between training and inference conditions is crucial for building robust systems. It's not sufficient to optimize training loss; you must consider how the model will behave at inference time when dealing with its own mistakes.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--warm);">
+      <div class="insight-title">Evaluation Varies by Task</div>
+      <div class="insight-content">Perplexity for language modeling, BLEU score for machine translation, word error rate for speech recognition, MAPE for time series forecasting. Each task has established metrics reflecting what matters for that application. Beyond automatic metrics, human evaluation often matters. Is the translation fluent and accurate? Is the summary informative and concise? These qualitative aspects can't always be captured by automatic metrics. The best approach combines both automatic metrics (for consistency and reproducibility) and human judgment (for quality assessment). Understanding both the possibilities and limitations of evaluation metrics prevents optimizing the wrong objectives.</div>
+    </insight-box>
+
+  </section>
+
+</div>
+
+<footer>
+  <p class="footer-text">Sequence Modeling Tasks — Mastering the Full Spectrum of Sequential Problems</p>
+</footer>
+
+</body>
+</html>
