@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clustering Algorithms — Finding Structure in Unlabeled Data</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #04040a;
+  --accent: #7b2fff;
+  --hot: #ff2d78;
+  --cool: #00e5ff;
+  --warm: #ffb800;
+  --green: #00ff9d;
+  --text: #e0e0f0;
+  --muted: #4a4a6a;
+  --card: #0a0a14;
+  --border: rgba(255,255,255,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0,229,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,4,10,0.9);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-right: auto; letter-spacing: 2px; }
+.nav-pill {
+  font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(123,47,255,0.4);
+  color: rgba(123,47,255,0.8); text-decoration: none; transition: all 0.2s;
+}
+.nav-pill:hover { background: rgba(123,47,255,0.15); border-color: var(--accent); color: #fff; }
+
+.hero { padding: 90px 0 50px; }
+.hero-eyebrow {
+  font-family: 'Syne Mono', monospace; font-size: 11px; letter-spacing: 4px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(123,47,255,0.3); }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 100px);
+  line-height: 0.92; margin-bottom: 28px;
+  color: #fff;
+}
+
+.hero-desc { max-width: 750px; font-size: 16px; color: rgba(210,210,240,0.72); line-height: 1.8; margin-bottom: 40px; }
+
+section { padding: 70px 0; border-top: 1px solid var(--border); }
+.section-label { font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 64px); line-height: 1; margin-bottom: 40px; color: #fff; }
+
+.concept-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 36px;
+  border-left: 4px solid var(--card-accent, var(--accent));
+  transition: all 0.3s;
+}
+
+.concept-card:hover {
+  border-color: var(--card-accent, var(--accent));
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  transform: translateY(-2px);
+}
+
+.concept-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--card-accent, var(--accent));
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.concept-body {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.9;
+  margin-bottom: 28px;
+}
+
+.concept-body p {
+  margin-bottom: 18px;
+}
+
+.concept-body strong {
+  color: #fff;
+}
+
+.code-block {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 28px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #fff;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.code-comment { color: #5c7a8a; }
+.code-keyword { color: var(--accent); }
+.code-string { color: var(--green); }
+.code-number { color: var(--warm); }
+.code-function { color: var(--cool); }
+
+.teaching-box {
+  background: rgba(123,47,255,0.1);
+  border-left: 4px solid var(--accent);
+  padding: 24px;
+  border-radius: 10px;
+  margin: 28px 0;
+  font-size: 15px;
+  color: rgba(210,210,240,0.9);
+  line-height: 1.8;
+}
+
+.teaching-box strong {
+  color: #fff;
+}
+
+.impact-box {
+  background: linear-gradient(135deg, rgba(123,47,255,0.15) 0%, rgba(0,229,255,0.08) 100%);
+  border: 1px solid rgba(123,47,255,0.3);
+  border-radius: 14px;
+  padding: 32px;
+  margin-top: 32px;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.impact-item {
+  padding: 24px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  border-left: 4px solid var(--impact-color, var(--accent));
+}
+
+.impact-item-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--impact-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.impact-item-content {
+  font-size: 13px;
+  color: rgba(200,200,220,0.88);
+  line-height: 1.8;
+}
+
+.insight-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 28px 0;
+  border-left: 4px solid var(--insight-color, var(--accent));
+}
+
+.insight-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--insight-color, var(--accent));
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.insight-content {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.8;
+}
+
+footer {
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 60px 0 40px; }
+  section { padding: 50px 0; }
+  .impact-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">CLUSTERING ALGORITHMS</div>
+  <a href="#partitioning" class="nav-pill">Partitioning</a>
+  <a href="#hierarchical" class="nav-pill">Hierarchical</a>
+  <a href="#density" class="nav-pill">Density</a>
+  <a href="#probabilistic" class="nav-pill">Probabilistic</a>
+  <a href="#evaluation" class="nav-pill">Evaluation</a>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-eyebrow">Discovering Hidden Structure in Data</div>
+    <h1>Clustering Algorithms: Finding Natural Groups Without Labels</h1>
+    <p class="hero-desc">Clustering addresses one of the fundamental challenges in machine learning: finding structure in data when we don't have labels telling us what the correct groups should be. Unlike classification where you learn from labeled examples, clustering must discover groups based solely on similarities and differences between observations. A retail business might want to segment customers by purchasing behavior without knowing in advance what segments exist. A biologist might want to group genes by expression patterns to discover related biological processes. A city planner might want to identify neighborhoods with similar characteristics to inform policy. These are all clustering problems: find natural groups in data based on similarity. The challenge is that "natural" and "similarity" aren't mathematically defined. Different clustering algorithms encode different assumptions about what constitutes a good clustering. Some assume clusters are roughly spherical in shape. Others can find arbitrary complex shapes. Some require you to specify how many clusters exist beforehand. Others discover the number of clusters from data. Understanding these different assumptions helps you choose the right algorithm for your specific problem and interpret results meaningfully. This section teaches you the most important clustering algorithms, the assumptions each makes, when each excels, and how to evaluate whether a clustering makes sense. You'll learn that clustering is not finding "the correct" clustering but finding a clustering that's useful for your specific purpose.</p>
+  </section>
+
+  <section id="partitioning">
+    <div class="section-label">The Foundation: Distance-Based Grouping</div>
+    <h2 class="section-title">K-Means Clustering: The Simplest and Most Popular Approach</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🎯 Understanding K-Means: Iterative Optimization of Centers</div>
+      <div class="concept-body">
+        <p>K-means clustering is the most widely used clustering algorithm because it's simple, fast, and works well for many real-world problems. The algorithm starts by assuming you know how many clusters exist—you specify K, the number of clusters you want. It then randomly selects K points as initial cluster centers and assigns every data point to its nearest center. After assigning all points, it computes the mean of each cluster's points and moves the center to that mean. It repeats this process—reassign points to nearest centers, recompute centers—until centers stop moving. This iterative refinement minimizes within-cluster variance, making clusters as tight as possible.</p>
+
+        <p>The elegance of K-means comes from its simplicity and efficiency. It requires only distance calculations and mean computations, both fast operations. The algorithm terminates quickly because the objective function—total within-cluster variance—always decreases with each iteration and is bounded below by zero. This mathematical guarantee means the algorithm must terminate. However, K-means finds a local optimum, not a global one. Different random initializations produce different final clusterings. This is why people run K-means multiple times with different initializations and keep the clustering with the lowest objective value.</p>
+
+        <p>K-means makes strong assumptions about cluster shape. It assumes clusters are roughly spherical and similarly sized. This works well when clusters truly have this structure but fails when real clusters are elongated, overlapping, or have very different densities. Imagine clustering points along two intersecting lines—K-means will create clusters that don't match the line structure because it assumes spherical clusters. Understanding this limitation prevents misapplying K-means to problems where its assumptions don't hold.</p>
+
+        <p>The biggest practical challenge with K-means is deciding K. Too few clusters and different groups get merged together. Too many clusters and natural groups get split apart. This is where evaluation metrics become critical. You run K-means for different K values and use metrics like silhouette score or elbow method to find the K that produces the best clustering. Some approaches use the silhouette coefficient to score each K and find the K with highest average silhouette score. Others look at how quickly the objective decreases as K increases—the elbow in the curve often indicates the right number of clusters.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding K-means as optimizing cluster tightness through iteration.</strong> Imagine you're trying to place K meeting points for groups of people scattered across a city. You want people in the same group to be as close as possible to their meeting point. You start with random meeting points. People go to their nearest point. Then you move each meeting point to the center of where its group is. People move to their new nearest points. You repeat. Gradually, meeting points settle to locations that minimize the total travel distance. K-means works the same way: it iteratively optimizes cluster centers to minimize the total distance from points to their cluster centers. The iteration continues until centers stop moving, indicating you've reached a local optimum.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># K-means clustering: finding K spherical clusters</span>
+<span class="code-keyword">from</span> sklearn.cluster <span class="code-keyword">import</span> KMeans
+<span class="code-keyword">from</span> sklearn.metrics <span class="code-keyword">import</span> silhouette_score, davies_bouldin_score
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+<span class="code-keyword">import</span> matplotlib.pyplot <span class="code-keyword">as</span> plt
+
+<span class="code-comment"># Generate example clustering data</span>
+np.random.seed(<span class="code-number">42</span>)
+X = np.vstack([
+    np.random.randn(<span class="code-number">100</span>, <span class="code-number">2</span>) + [<span class="code-number">0</span>, <span class="code-number">0</span>],
+    np.random.randn(<span class="code-number">100</span>, <span class="code-number">2</span>) + [<span class="code-number">5</span>, <span class="code-number">5</span>],
+    np.random.randn(<span class="code-number">100</span>, <span class="code-number">2</span>) + [<span class="code-number">10</span>, <span class="code-number">0</span>]
+])
+
+<span class="code-comment"># K-means with K=3 clusters</span>
+<span class="code-comment"># n_init: run algorithm multiple times with different initializations</span>
+kmeans = KMeans(n_clusters=<span class="code-number">3</span>, n_init=<span class="code-number">10</span>, random_state=<span class="code-number">42</span>)
+labels = kmeans.fit_predict(X)
+
+<span class="code-comment"># Access learned cluster centers</span>
+<span class="code-function">print</span>(<span class="code-string">f"Cluster centers:\n{kmeans.cluster_centers_}"</span>)
+
+<span class="code-comment"># Inertia: total within-cluster variance (lower is better)</span>
+<span class="code-function">print</span>(<span class="code-string">f"Inertia: {kmeans.inertia_:.2f}"</span>)
+
+<span class="code-comment"># Finding optimal K using elbow method and silhouette score</span>
+inertias = []
+silhouette_scores = []
+K_range = <span class="code-function">range</span>(<span class="code-number">2</span>, <span class="code-number">11</span>)
+
+<span class="code-keyword">for</span> k <span class="code-keyword">in</span> K_range:
+    kmeans_temp = KMeans(n_clusters=k, n_init=<span class="code-number">10</span>, random_state=<span class="code-number">42</span>)
+    labels_temp = kmeans_temp.fit_predict(X)
+    
+    <span class="code-comment"># Inertia: measures how tight clusters are</span>
+    inertias.append(kmeans_temp.inertia_)
+    
+    <span class="code-comment"># Silhouette score: measures cluster separation (higher is better)</span>
+    sil_score = silhouette_score(X, labels_temp)
+    silhouette_scores.append(sil_score)
+    <span class="code-function">print</span>(<span class="code-string">f"K={k}: Inertia={kmeans_temp.inertia_:.2f}, Silhouette={sil_score:.3f}"</span>)
+
+<span class="code-comment"># Find K with best silhouette score</span>
+best_k = K_range[np.argmax(silhouette_scores)]
+<span class="code-function">print</span>(<span class="code-string">f"\nOptimal K based on silhouette score: {best_k}"</span>)
+
+<span class="code-comment"># Elbow method: look for elbow in inertia curve</span>
+<span class="code-comment"># Inertia always decreases as K increases, but drops sharply at optimal K</span>
+      </code-block>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">🎯 When It Works Best</div>
+            <div class="impact-item-content">K-means works best when clusters are roughly spherical, similarly sized, and well-separated. It performs poorly when clusters are elongated, overlapping, or have very different densities. Use K-means when you need fast clustering of large datasets or when you have domain knowledge suggesting clusters have roughly spherical shape.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--green);">
+            <div class="impact-item-title">💡 Key Advantage</div>
+            <div class="impact-item-content">K-means is extremely efficient and works well at scale. It's interpretable—cluster centers show typical points in each cluster. It converges quickly even for large datasets. It's often used as a baseline because if K-means fails, more complex algorithms likely will too.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--hot);">
+            <div class="impact-item-title">⚠️ Main Challenge</div>
+            <div class="impact-item-content">Deciding K requires running the algorithm multiple times with different K values and using evaluation metrics. It's sensitive to initialization and outliers. It assumes clusters are spherical, which many real datasets violate.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="hierarchical">
+    <div class="section-label">Building Cluster Trees</div>
+    <h2 class="section-title">Hierarchical Clustering: Creating Dendrograms and Multiple Granularities</h2>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">🌳 Understanding Hierarchical Clustering: Building Trees of Clusters</div>
+      <div class="concept-body">
+        <p>Hierarchical clustering takes a fundamentally different approach from K-means. Rather than partitioning data into K groups all at once, hierarchical clustering builds a tree of clusters at multiple levels of granularity. The result is a dendrogram—a tree diagram showing how clusters merge (in agglomerative clustering, the most common approach) or divide (in divisive clustering). You can cut this tree at different heights to get different numbers of clusters, from N clusters (each point is its own cluster) down to one cluster containing all points.</p>
+
+        <p>Agglomerative clustering works bottom-up. It starts with each point as its own cluster and repeatedly merges the two closest clusters until only one cluster remains. What makes two clusters "close" depends on the linkage criterion. Single linkage measures distance as the minimum distance between any two points in the clusters, connecting clusters at their closest points. Complete linkage measures distance as the maximum distance, connecting at the farthest points. Average linkage averages distances between all pairs. Ward linkage minimizes the increase in within-cluster variance when merging. Different linkages produce different dendrograms and final clusterings.</p>
+
+        <p>The beauty of hierarchical clustering is that you get a complete picture of how data clusters at all levels of granularity. A single run gives you options: maybe three major clusters, or five if you want finer granularity, or ten if you want even more detail. You can visualize the dendrogram to understand cluster relationships. You can see which clusters merge late in the process, suggesting these are genuinely distinct groups. You don't need to specify K in advance; you choose it after seeing the dendrogram by deciding where to "cut" the tree.</p>
+
+        <p>The downside of hierarchical clustering is computational cost. Computing all pairwise distances takes O(N²) space and time, prohibitive for very large datasets. The algorithm is deterministic—different random seeds produce identical results, which is good for reproducibility but bad if initialization affects results. Most importantly, hierarchical clustering commits to early decisions: once two points are in the same cluster, they remain together in all subsequent merges. An early mistake can't be corrected. K-means can recover from local optima by reinitializing, but hierarchical clustering has no such recovery mechanism.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding hierarchical clustering as building a family tree of data.</strong> Imagine classifying animals. You start with each species as its own group. You notice dogs and wolves are similar, so you merge them. You notice cats and lions are similar, so you merge those. Now you have canines and felines. You notice canines and felines are both mammals, so you merge them. You build a tree showing relationships at different levels of abstraction. Zoologists looking at the tree can focus on fine details (individual species) or step back and see major categories (families, orders). Hierarchical clustering builds the same kind of tree for data: detailed relationships at low levels, major groups at high levels, all in one structure.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Hierarchical clustering: building trees of clusters</span>
+<span class="code-keyword">from</span> scipy.cluster.hierarchy <span class="code-keyword">import</span> dendrogram, linkage
+<span class="code-keyword">from</span> sklearn.cluster <span class="code-keyword">import</span> AgglomerativeClustering
+<span class="code-keyword">import</span> matplotlib.pyplot <span class="code-keyword">as</span> plt
+
+<span class="code-comment"># Hierarchical clustering with different linkage criteria</span>
+<span class="code-comment"># Linkage determines how cluster distance is computed</span>
+
+<span class="code-comment"># Method 1: Using scipy for dendrogram visualization</span>
+<span class="code-comment"># Complete linkage: distance is max distance between cluster members</span>
+Z_complete = linkage(X, method=<span class="code-string">'complete'</span>)
+
+<span class="code-comment"># Create dendrogram showing cluster merging process</span>
+plt.figure(figsize=(<span class="code-number">12</span>, <span class="code-number">6</span>))
+dendrogram(Z_complete)
+plt.title(<span class="code-string">'Hierarchical Clustering Dendrogram (Complete Linkage)'</span>)
+plt.xlabel(<span class="code-string">'Sample Index'</span>)
+plt.ylabel(<span class="code-string">'Distance'</span>)
+plt.show()
+
+<span class="code-comment"># Method 2: Using sklearn for cluster assignment</span>
+<span class="code-comment"># AgglomerativeClustering lets you specify number of clusters to extract</span>
+hc = AgglomerativeClustering(
+    n_clusters=<span class="code-number">3</span>,  <span class="code-comment"># Number of clusters to extract from dendrogram</span>
+    linkage=<span class="code-string">'ward'</span>  <span class="code-comment"># Ward linkage minimizes within-cluster variance</span>
+)
+labels_hc = hc.fit_predict(X)
+
+<span class="code-comment"># Compare different linkage methods</span>
+linkage_methods = [<span class="code-string">'single'</span>, <span class="code-string">'complete'</span>, <span class="code-string">'average'</span>, <span class="code-string">'ward'</span>]
+
+<span class="code-keyword">for</span> method <span class="code-keyword">in</span> linkage_methods:
+    Z = linkage(X, method=method)
+    
+    <span class="code-comment"># Cut dendrogram to get 3 clusters</span>
+    hc_temp = AgglomerativeClustering(n_clusters=<span class="code-number">3</span>, linkage=method)
+    labels_temp = hc_temp.fit_predict(X)
+    
+    <span class="code-comment"># Evaluate clustering quality</span>
+    sil_score = silhouette_score(X, labels_temp)
+    <span class="code-function">print</span>(<span class="code-string">f"{method.capitalize()} linkage: Silhouette={sil_score:.3f}"</span>)
+
+<span class="code-comment"># Cutting dendrogram at different heights gives different K</span>
+<span class="code-comment"># Low cut: many clusters. High cut: few clusters.</span>
+<span class="code-comment"># Choose cut height based on what granularity you need</span>
+      </code-block>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--warm);">
+            <div class="impact-item-title">🎯 When It Works Best</div>
+            <div class="impact-item-content">Hierarchical clustering works well when you want to explore data at multiple granularities or when cluster relationships are important to understand. It works well for moderate-sized datasets (thousands to tens of thousands of points). Use it when you want a dendrogram showing how clusters relate.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">💡 Key Advantage</div>
+            <div class="impact-item-content">You get a complete hierarchical structure showing relationships at all granularity levels. The dendrogram is interpretable and visually reveals cluster structure. You don't need to specify K in advance. Agglomerative clustering is deterministic, always producing the same results.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--green);">
+            <div class="impact-item-title">⚠️ Main Challenge</div>
+            <div class="impact-item-content">Computational cost is high—O(N²) in both time and space. Early decisions are irreversible—incorrect early merges affect all subsequent clustering. Different linkage criteria produce different results, requiring experimentation to find the best one.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="density">
+    <div class="section-label">Finding Arbitrary Shapes</div>
+    <h2 class="section-title">DBSCAN: Discovering Dense Regions and Arbitrary Cluster Shapes</h2>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🔍 Understanding DBSCAN: Density-Based Clustering Without Shape Assumptions</div>
+      <div class="concept-body">
+        <p>DBSCAN (Density-Based Spatial Clustering of Applications with Noise) takes a completely different approach from K-means and hierarchical clustering. Instead of minimizing distance or building hierarchies, DBSCAN groups together points that are densely packed and marks sparse points as outliers. The key insight is that clusters don't need to be spherical or similar-sized; they just need to be regions where points are densely packed relative to space around them.</p>
+
+        <p>DBSCAN requires two parameters. Epsilon (eps) defines the neighborhood around each point—points within this distance are considered neighbors. MinPts defines how many neighbors a point must have to be considered a core point. The algorithm works by identifying core points (points with at least MinPts neighbors within eps distance) and grouping connected core points into clusters. Points within eps distance of core points become cluster members. Points that are neither core points nor neighbors of core points become noise points, essentially outliers the algorithm refuses to force into clusters.</p>
+
+        <p>The elegance of DBSCAN is that it requires no specification of K. It discovers the number of clusters from the density structure of data. It handles clusters of arbitrary shape—elongated, spiral, curved—as long as cluster points are more densely packed than the space around clusters. It naturally identifies outliers as points in low-density regions. This contrasts sharply with K-means which forces every point into some cluster regardless of whether it truly belongs.</p>
+
+        <p>The main challenge with DBSCAN is parameter selection. Eps and MinPts determine the clustering, and finding good values requires understanding your data. Too-large eps and all points merge into one cluster. Too-small eps and no clusters form. Too-large MinPts and sparse legitimate clusters become noise. Too-small MinPts and everything becomes a cluster. The k-distance graph—sorting distances to the k-th nearest neighbor—helps visualize good eps values: you look for an elbow where distances increase sharply, suggesting a natural density threshold.</p>
+
+        <p>DBSCAN is particularly valuable for data where you suspect clusters have arbitrary shapes or where noise points (true outliers) exist that shouldn't be forced into groups. It works well for spatial data and discovers structures that spherical-cluster assumptions like K-means would miss. However, it struggles with clusters of varying density. If one region is dense and another sparse but both represent real clusters, DBSCAN might fail to separate them properly.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding DBSCAN as finding dense neighborhoods.</strong> Imagine finding groups of people in a city. Instead of assigning everyone to nearest centers (K-means) or building hierarchies (hierarchical), you ask: where are neighborhoods where people are crowded together? You walk around and find downtown is crowded—that's a cluster. You find the suburbs less crowded—that's another cluster. You find the wilderness sparsely populated—those are outliers. DBSCAN finds clusters this way: it identifies dense neighborhoods and marks sparse regions as noise. The shape of neighborhoods doesn't matter; what matters is that people are packed densely together relative to surroundings.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># DBSCAN: density-based clustering</span>
+<span class="code-keyword">from</span> sklearn.cluster <span class="code-keyword">import</span> DBSCAN
+<span class="code-keyword">from</span> sklearn.neighbors <span class="code-keyword">import</span> NearestNeighbors
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+
+<span class="code-comment"># Method 1: Find eps using k-distance graph</span>
+<span class="code-comment"># Plot distance to k-th nearest neighbor for all points</span>
+<span class="code-comment"># Elbow in curve suggests good eps value</span>
+
+neighbors = NearestNeighbors(n_neighbors=<span class="code-number">5</span>)
+neighbors_fit = neighbors.fit(X)
+distances, indices = neighbors_fit.kneighbors(X)
+
+<span class="code-comment"># Sort distances to find elbow</span>
+distances = np.sort(distances[:, <span class="code-number">4</span>], axis=<span class="code-number">0</span>)
+
+<span class="code-comment"># Plot k-distance graph</span>
+plt.figure(figsize=(<span class="code-number">10</span>, <span class="code-number">6</span>))
+plt.plot(distances)
+plt.ylabel(<span class="code-string">'5-th Nearest Neighbor Distance'</span>)
+plt.xlabel(<span class="code-string">'Points Sorted by Distance'</span>)
+plt.title(<span class="code-string">'K-distance Graph for eps Selection'</span>)
+plt.show()
+
+<span class="code-comment"># Method 2: DBSCAN with selected eps and min_samples</span>
+dbscan = DBSCAN(
+    eps=<span class="code-number">1.5</span>,  <span class="code-comment"># Neighborhood radius (from k-distance graph)</span>
+    min_samples=<span class="code-number">5</span>  <span class="code-comment"># Minimum points for core point</span>
+)
+labels_dbscan = dbscan.fit_predict(X)
+
+<span class="code-comment"># Identify noise points (labeled as -1)</span>
+n_clusters = len(set(labels_dbscan)) - (<span class="code-number">1</span> <span class="code-keyword">if</span> -<span class="code-number">1</span> <span class="code-keyword">in</span> labels_dbscan <span class="code-keyword">else</span> <span class="code-number">0</span>)
+n_noise = list(labels_dbscan).count(-<span class="code-number">1</span>)
+
+<span class="code-function">print</span>(<span class="code-string">f"Number of clusters: {n_clusters}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Number of noise points: {n_noise}"</span>)
+
+<span class="code-comment"># Method 3: Try different eps values to find good clustering</span>
+eps_values = [<span class="code-number">0.5</span>, <span class="code-number">1.0</span>, <span class="code-number">1.5</span>, <span class="code-number">2.0</span>]
+
+<span class="code-keyword">for</span> eps <span class="code-keyword">in</span> eps_values:
+    dbscan_temp = DBSCAN(eps=eps, min_samples=<span class="code-number">5</span>)
+    labels_temp = dbscan_temp.fit_predict(X)
+    
+    n_clusters_temp = len(set(labels_temp)) - (<span class="code-number">1</span> <span class="code-keyword">if</span> -<span class="code-number">1</span> <span class="code-keyword">in</span> labels_temp <span class="code-keyword">else</span> <span class="code-number">0</span>)
+    n_noise_temp = list(labels_temp).count(-<span class="code-number">1</span>)
+    
+    <span class="code-keyword">if</span> n_clusters_temp > <span class="code-number">0</span>:
+        <span class="code-comment"># Silhouette score excluding noise points</span>
+        mask = labels_temp != -<span class="code-number">1</span>
+        sil_score = silhouette_score(X[mask], labels_temp[mask])
+        <span class="code-function">print</span>(<span class="code-string">f"eps={eps}: Clusters={n_clusters_temp}, Noise={n_noise_temp}, Silhouette={sil_score:.3f}"</span>)
+      </code-block>
+
+      <div class="impact-box">
+        <div class="impact-grid">
+          <div class="impact-item" style="--impact-color: var(--green);">
+            <div class="impact-item-title">🎯 When It Works Best</div>
+            <div class="impact-item-content">DBSCAN works best when clusters are non-convex, have arbitrary shapes, or differ in density. It's particularly good for spatial data like geographic points or sensor locations. Use it when your data has noise points that shouldn't be forced into clusters.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--warm);">
+            <div class="impact-item-title">💡 Key Advantage</div>
+            <div class="impact-item-content">DBSCAN requires no specification of K and discovers number of clusters automatically. It handles arbitrary cluster shapes, not just spheres. It naturally identifies outliers as noise rather than forcing them into clusters. It's particularly good for spatial and density-based data.</div>
+          </div>
+          <div class="impact-item" style="--impact-color: var(--cool);">
+            <div class="impact-item-title">⚠️ Main Challenge</div>
+            <div class="impact-item-content">Selecting eps and min_samples requires understanding your data. Struggles with clusters of varying density. Dense regions might be split while sparse legitimate clusters might be marked as noise. k-distance graph helps but isn't always clear.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="probabilistic">
+    <div class="section-label">Probabilistic and Spectral Approaches</div>
+    <h2 class="section-title">Gaussian Mixture Models, Spectral Clustering, and Mean Shift</h2>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">🎲 Gaussian Mixture Models: Probabilistic Clustering with Soft Assignments</div>
+      <div class="concept-body">
+        <p>Gaussian Mixture Models (GMM) approach clustering probabilistically. Rather than assigning each point hard to a single cluster, GMM computes the probability that each point belongs to each cluster. You assume data was generated from K Gaussian distributions with different means, covariances, and mixture weights. The algorithm estimates these parameters and computes posterior probabilities of cluster membership for each point.</p>
+
+        <p>GMM provides soft assignments rather than hard assignments. A point might have a seventy percent probability of belonging to cluster one and thirty percent to cluster two. This probabilistic view is more realistic for many problems where points might genuinely be between clusters. It also provides a principled way to measure clustering quality using likelihood—the probability of the data given the model. The expectation-maximization (EM) algorithm estimates model parameters iteratively, alternating between assigning points to clusters based on probabilities (expectation step) and updating cluster parameters based on assignments (maximization step).</p>
+
+        <p>GMM's flexibility comes from modeling cluster covariance. Unlike K-means which assumes all clusters have similar spherical shape, GMM can learn elongated elliptical clusters with different orientations. This makes GMM more flexible than K-means for real data. However, like K-means, you must specify K, and estimating K requires running the algorithm for different values and using model selection criteria like BIC or AIC that balance likelihood with model complexity.</p>
+
+        <p>The downside is computational cost and overfitting risk. GMM with full covariance matrices requires estimating many parameters, increasing overfitting risk with limited data. The EM algorithm can get stuck in local optima, requiring multiple restarts with different initializations. For high-dimensional data, GMM becomes computationally expensive and numerically unstable.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Gaussian Mixture Models: probabilistic soft clustering</span>
+<span class="code-keyword">from</span> sklearn.mixture <span class="code-keyword">import</span> GaussianMixture
+
+<span class="code-comment"># GMM with 3 components</span>
+<span class="code-comment"># covariance_type controls cluster shapes</span>
+<span class="code-comment"># 'full': full covariance (elongated clusters)</span>
+<span class="code-comment"># 'spherical': spherical clusters (like K-means)</span>
+gmm = GaussianMixture(
+    n_components=<span class="code-number">3</span>,
+    covariance_type=<span class="code-string">'full'</span>,  <span class="code-comment"># Allows elongated clusters</span>
+    n_init=<span class="code-number">10</span>,  <span class="code-comment"># Multiple initializations to avoid local optima</span>
+    random_state=<span class="code-number">42</span>
+)
+gmm.fit(X)
+
+<span class="code-comment"># Hard assignments (most likely cluster for each point)</span>
+labels_gmm = gmm.predict(X)
+
+<span class="code-comment"># Soft probabilities (probability of each cluster for each point)</span>
+probabilities = gmm.predict_proba(X)
+
+<span class="code-comment"># Cluster centers (means of Gaussians)</span>
+<span class="code-function">print</span>(<span class="code-string">f"Cluster centers:\n{gmm.means_}"</span>)
+
+<span class="code-comment"># Model selection using BIC or AIC</span>
+<span class="code-comment"># Lower is better; balances fit with model complexity</span>
+bic_scores = []
+aic_scores = []
+K_range = <span class="code-function">range</span>(<span class="code-number">1</span>, <span class="code-number">11</span>)
+
+<span class="code-keyword">for</span> k <span class="code-keyword">in</span> K_range:
+    gmm_temp = GaussianMixture(n_components=k, n_init=<span class="code-number">10</span>, random_state=<span class="code-number">42</span>)
+    gmm_temp.fit(X)
+    
+    bic_scores.append(gmm_temp.bic(X))
+    aic_scores.append(gmm_temp.aic(X))
+
+best_k_bic = K_range[np.argmin(bic_scores)]
+<span class="code-function">print</span>(<span class="code-string">f"Optimal K by BIC: {best_k_bic}"</span>)
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--accent);">
+      <div class="concept-title">🔗 Spectral Clustering: Using Graph Structure for Arbitrary Shapes</div>
+      <div class="concept-body">
+        <p>Spectral clustering approaches the problem differently by building a similarity graph and finding clusters through the structure of that graph. The algorithm builds a similarity matrix where each element measures how similar two points are, creates a graph where edges connect similar points, computes eigenvectors of the normalized graph Laplacian, and uses K-means on these eigenvectors to find clusters.</p>
+
+        <p>The insight is that in the transformed eigenvector space, clusters become spherical and well-separated even if they were non-convex in the original space. Spectral clustering inherits the ability of K-means to find well-separated clusters but applies it in a transformed space where distances have been reparametrized to respect graph structure rather than Euclidean distance. This makes spectral clustering powerful for finding clusters of arbitrary shape as long as they're separated by low-similarity regions.</p>
+
+        <p>Spectral clustering requires constructing the similarity matrix, which has O(N²) complexity. It also requires choosing how to build the graph—using k-nearest neighbors, epsilon neighborhood, or fully connected with exponential similarity decay. Like K-means, you must specify K, and results depend on similarity metric choice.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Spectral Clustering: finding clusters through graph structure</span>
+<span class="code-keyword">from</span> sklearn.cluster <span class="code-keyword">import</span> SpectralClustering
+
+<span class="code-comment"># Spectral clustering with different affinity matrices</span>
+spectral = SpectralClustering(
+    n_clusters=<span class="code-number">3</span>,
+    affinity=<span class="code-string">'rbf'</span>,  <span class="code-comment"># RBF kernel for similarity</span>
+    gamma=<span class="code-number">1.0</span>,  <span class="code-comment"># Kernel parameter: larger gamma = more local similarity</span>
+    random_state=<span class="code-number">42</span>
+)
+labels_spectral = spectral.fit_predict(X)
+
+<span class="code-comment"># Spectral clustering works by finding clusters in transformed space</span>
+<span class="code-comment"># where distances respect data manifold structure</span>
+      </code-block>
+    </div>
+
+  </section>
+
+  <section id="evaluation">
+    <div class="section-label">Measuring Clustering Quality</div>
+    <h2 class="section-title">Evaluation Metrics: Silhouette, Davies-Bouldin, and Determining Optimal Clusters</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">📊 Understanding Clustering Evaluation Metrics</div>
+      <div class="concept-body">
+        <p>Unlike classification where you have ground truth labels, clustering quality is intrinsically harder to assess. You don't have labels telling you what the correct clustering is. This is both liberating and challenging. Liberating because you're free to find useful clusterings for your purpose. Challenging because you need metrics that measure whether a clustering makes sense without external labels. Internal validation metrics measure clustering quality using properties of clusters and data alone. High-quality clusterings have points close to their cluster center (high cohesion), clusters far from each other (good separation), and consistent cluster sizes.</p>
+
+        <p>The silhouette coefficient measures how similar a point is to its own cluster compared to other clusters. It ranges from negative one to one. Values near one indicate the point is well-matched to its cluster. Values near zero mean the point is on the boundary between clusters. Negative values indicate the point might be in the wrong cluster. The average silhouette score across all points measures overall clustering quality. A silhouette score of zero point seven or higher is generally considered good, though this varies by problem.</p>
+
+        <p>The Davies-Bouldin index measures the ratio of within-cluster distances to between-cluster distances. Lower values indicate better clustering: clusters are compact and well-separated. The Calinski-Harabasz index is the ratio of between-cluster variance to within-cluster variance. Higher values indicate tighter, better-separated clusters. These metrics help identify good K values by computing them for different K values and finding the K that optimizes the metric.</p>
+
+        <p>The challenge is that no single metric tells the whole story. Silhouette score might suggest K=three while the elbow method suggests K=four. Different metrics optimize different properties. This is why good practice uses multiple metrics and visualizes clusters to ensure the result makes sense. Ultimately, the best clustering is one that's useful for your specific task, whether that's customer segmentation, gene discovery, or exploratory data analysis.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding clustering evaluation as measuring cohesion and separation.</strong> Good clusters have two properties: members of the same cluster are similar to each other (cohesion), and clusters are different from each other (separation). Silhouette measures this directly: how similar is a point to its cluster versus other clusters? Davies-Bouldin measures the ratio of similarity within clusters to dissimilarity between clusters. These metrics quantify the intuition that good clusters should be tight groups far from other groups. Using multiple metrics helps because each emphasizes different clustering properties.
+      </teaching-box>
+
+      <div class="code-block">
+<span class="code-comment"># Evaluating clustering quality with multiple metrics</span>
+<span class="code-keyword">from</span> sklearn.metrics <span class="code-keyword">import</span> silhouette_score, davies_bouldin_score, calinski_harabasz_score
+
+<span class="code-comment"># Run K-means for multiple K values and evaluate each</span>
+silhouette_scores = []
+davies_bouldin_scores = []
+calinski_harabasz_scores = []
+
+K_range = <span class="code-function">range</span>(<span class="code-number">2</span>, <span class="code-number">10</span>)
+
+<span class="code-keyword">for</span> k <span class="code-keyword">in</span> K_range:
+    kmeans = KMeans(n_clusters=k, n_init=<span class="code-number">10</span>, random_state=<span class="code-number">42</span>)
+    labels = kmeans.fit_predict(X)
+    
+    <span class="code-comment"># Silhouette: higher is better (ranges -1 to 1)</span>
+    sil_score = silhouette_score(X, labels)
+    silhouette_scores.append(sil_score)
+    
+    <span class="code-comment"># Davies-Bouldin: lower is better</span>
+    db_score = davies_bouldin_score(X, labels)
+    davies_bouldin_scores.append(db_score)
+    
+    <span class="code-comment"># Calinski-Harabasz: higher is better</span>
+    ch_score = calinski_harabasz_score(X, labels)
+    calinski_harabasz_scores.append(ch_score)
+    
+    <span class="code-function">print</span>(<span class="code-string">f"K={k}: Silhouette={sil_score:.3f}, Davies-Bouldin={db_score:.3f}, Calinski-Harabasz={ch_score:.1f}"</span>)
+
+<span class="code-comment"># Find optimal K based on each metric</span>
+best_k_silhouette = K_range[np.argmax(silhouette_scores)]
+best_k_davies_bouldin = K_range[np.argmin(davies_bouldin_scores)]
+best_k_calinski = K_range[np.argmax(calinski_harabasz_scores)]
+
+<span class="code-function">print</span>(<span class="code-string">f"\nOptimal K by Silhouette: {best_k_silhouette}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Optimal K by Davies-Bouldin: {best_k_davies_bouldin}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Optimal K by Calinski-Harabasz: {best_k_calinski}"</span>)
+
+<span class="code-comment"># Combine multiple criteria: look for consensus among metrics</span>
+<span class="code-comment"># If different metrics suggest different K, use visualization and domain knowledge</span>
+      </code-block>
+    </div>
+
+  </section>
+
+  <section>
+    <div class="section-label">Choosing the Right Algorithm</div>
+    <h2 class="section-title">A Framework for Intelligent Clustering Algorithm Selection</h2>
+
+    <div class="insight-box" style="--insight-color: var(--cool);">
+      <div class="insight-title">Start with K-Means for Speed and Simplicity</div>
+      <div class="insight-content">K-means is your default first choice for clustering because it's fast, well-understood, and works well for many datasets. It's computationally efficient even for large datasets and provides interpretable cluster centers. If K-means produces sensible clusters, you're done. If results seem wrong—clusters don't match what you see visually or have weird shapes—then investigate alternatives. Starting with K-means and understanding why it fails (if it does) teaches you about your data and guides choosing better algorithms.</div>
+    </div>
+
+    <div class="insight-box" style="--insight-color: var(--green);">
+      <div class="insight-title">Use DBSCAN When Clusters Have Arbitrary Shapes</div>
+      <div class="insight-content">When you visualize data and see clusters that are elongated, spiral-shaped, or have irregular boundaries, K-means will fail because it assumes spherical clusters. DBSCAN naturally handles these shapes by looking for density rather than distance to centers. DBSCAN also helps when you suspect outliers exist and don't want to force them into clusters. The tradeoff is parameter selection complexity—you must find good eps and min_samples values.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--warm);">
+      <div class="insight-title">Use Hierarchical Clustering to Understand Relationships</div>
+      <div class="insight-content">When understanding how clusters relate to each other matters as much as the clusters themselves, hierarchical clustering provides a dendrogram showing relationships at all granularity levels. Use it when you want to explore data at multiple scales or need a visual representation of cluster structure. The computational cost is higher, limiting it to moderate-sized datasets.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--hot);">
+      <div class="insight-title">Use GMM When You Need Probabilistic Assignments</div>
+      <div class="insight-content">When soft cluster probabilities matter rather than hard assignments, Gaussian Mixture Models provide principled probabilistic clustering. Use GMM when you need to know the probability each point belongs to each cluster, or when clusters can have different shapes and sizes. The tradeoff is computational cost and the need to specify K.</div>
+    </insight-box>
+
+  </section>
+
+</div>
+
+<footer>
+  <p class="footer-text">Clustering Algorithms — Discovering Natural Structure in Unlabeled Data</p>
+</footer>
+
+</body>
+</html>
