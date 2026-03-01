@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Model Evaluation and Selection — Measuring Success and Choosing the Right Model</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #04040a;
+  --accent: #7b2fff;
+  --hot: #ff2d78;
+  --cool: #00e5ff;
+  --warm: #ffb800;
+  --green: #00ff9d;
+  --text: #e0e0f0;
+  --muted: #4a4a6a;
+  --card: #0a0a14;
+  --border: rgba(255,255,255,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0,229,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,4,10,0.9);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-right: auto; letter-spacing: 2px; }
+.nav-pill {
+  font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(123,47,255,0.4);
+  color: rgba(123,47,255,0.8); text-decoration: none; transition: all 0.2s;
+}
+.nav-pill:hover { background: rgba(123,47,255,0.15); border-color: var(--accent); color: #fff; }
+
+.hero { padding: 90px 0 50px; }
+.hero-eyebrow {
+  font-family: 'Syne Mono', monospace; font-size: 11px; letter-spacing: 4px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(123,47,255,0.3); }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 100px);
+  line-height: 0.92; margin-bottom: 28px;
+  color: #fff;
+}
+
+.hero-desc { max-width: 750px; font-size: 16px; color: rgba(210,210,240,0.72); line-height: 1.8; margin-bottom: 40px; }
+
+section { padding: 70px 0; border-top: 1px solid var(--border); }
+.section-label { font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 64px); line-height: 1; margin-bottom: 40px; color: #fff; }
+
+.concept-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 36px;
+  border-left: 4px solid var(--card-accent, var(--accent));
+  transition: all 0.3s;
+}
+
+.concept-card:hover {
+  border-color: var(--card-accent, var(--accent));
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  transform: translateY(-2px);
+}
+
+.concept-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--card-accent, var(--accent));
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.concept-body {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.9;
+  margin-bottom: 28px;
+}
+
+.concept-body p {
+  margin-bottom: 18px;
+}
+
+.concept-body strong {
+  color: #fff;
+}
+
+.code-block {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 28px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #fff;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.code-comment { color: #5c7a8a; }
+.code-keyword { color: var(--accent); }
+.code-string { color: var(--green); }
+.code-number { color: var(--warm); }
+.code-function { color: var(--cool); }
+
+.teaching-box {
+  background: rgba(123,47,255,0.1);
+  border-left: 4px solid var(--accent);
+  padding: 24px;
+  border-radius: 10px;
+  margin: 28px 0;
+  font-size: 15px;
+  color: rgba(210,210,240,0.9);
+  line-height: 1.8;
+}
+
+.teaching-box strong {
+  color: #fff;
+}
+
+.impact-box {
+  background: linear-gradient(135deg, rgba(123,47,255,0.15) 0%, rgba(0,229,255,0.08) 100%);
+  border: 1px solid rgba(123,47,255,0.3);
+  border-radius: 14px;
+  padding: 32px;
+  margin-top: 32px;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.impact-item {
+  padding: 24px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  border-left: 4px solid var(--impact-color, var(--accent));
+}
+
+.impact-item-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--impact-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.impact-item-content {
+  font-size: 13px;
+  color: rgba(200,200,220,0.88);
+  line-height: 1.8;
+}
+
+.insight-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 28px 0;
+  border-left: 4px solid var(--insight-color, var(--accent));
+}
+
+.insight-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--insight-color, var(--accent));
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.insight-content {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.8;
+}
+
+footer {
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 60px 0 40px; }
+  section { padding: 50px 0; }
+  .impact-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">MODEL EVALUATION</div>
+  <a href="#classification" class="nav-pill">Classification</a>
+  <a href="#regression" class="nav-pill">Regression</a>
+  <a href="#selection" class="nav-pill">Selection</a>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-eyebrow">Knowing Whether Your Model Actually Works</div>
+    <h1>Model Evaluation and Selection: Measuring Success and Choosing Well</h1>
+    <p class="hero-desc">Building a machine learning model is just the beginning. The harder question is: does it actually work? This seemingly simple question hides profound complexity. "Work" means different things in different contexts. In fraud detection, missing a single fraudulent transaction might be catastrophic while falsely flagging legitimate transactions causes customer frustration. In medical diagnosis, missing a disease is worse than a false alarm because it could cost someone their life. In recommendation systems, slightly worse recommendations are acceptable if the system runs faster or doesn't require storing personal data. No single metric captures all dimensions of performance. This section teaches you the landscape of evaluation metrics so you can choose the ones that genuinely measure what matters for your problem. It teaches you how to interpret metrics correctly so you understand what they're telling you about your model. Most importantly, it teaches you that evaluation is inseparable from selection. You don't just evaluate one model, you evaluate many and select the best. This requires systematic approaches to hyperparameter tuning that balance exploration with exploitation. This section teaches you to think of evaluation not as a final step but as a core part of the machine learning process that guides development toward models that solve your actual problem.</p>
+  </section>
+
+  <section id="classification">
+    <div class="section-label">Evaluating Binary and Multi-Class Predictions</div>
+    <h2 class="section-title">Classification Metrics: Understanding When Your Model Gets It Right</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🎯 The Foundation: Confusion Matrix and Basic Metrics</div>
+      <div class="concept-body">
+        <p>Understanding classification metrics starts with the confusion matrix, a table showing how many predictions were correct and incorrect. For binary classification, there are four possibilities. A true positive is correctly predicting class one when the actual label is one. A false positive is incorrectly predicting class one when the actual label is zero. A true negative is correctly predicting class zero when the actual label is zero. A false negative is incorrectly predicting class zero when the actual label is one. These four numbers completely describe a binary classification outcome.</p>
+
+        <p>From these four numbers flow all other classification metrics. Accuracy is the simple percentage of correct predictions: how many did you get right out of everything? Accuracy equals true positives plus true negatives divided by the total number of examples. This seems like the obvious metric, yet it's deeply misleading in many scenarios. In a heavily imbalanced problem where ninety-nine percent of examples are class zero and one percent are class one, you can achieve ninety-nine percent accuracy by simply predicting class zero for everything. You've achieved high accuracy while completely failing at your task.</p>
+
+        <p>This is why precision and recall exist. Precision asks: of the examples you predicted as positive, how many were actually positive? It measures your accuracy when you do make a positive prediction. High precision means you rarely make false positive errors. Recall asks: of all the examples that are actually positive, how many did you correctly identify? It measures your ability to find all the positive cases. High recall means you rarely miss positive cases. These two metrics reveal the fundamental tradeoff in classification: you can usually improve one at the expense of the other by adjusting your prediction threshold.</p>
+
+        <p>The F1 score combines precision and recall into a single number, specifically the harmonic mean of the two. The harmonic mean weights both metrics equally, so neither can be very low without the F1 score suffering. If your precision is ninety percent but your recall is ten percent, the F1 score is around eighteen percent, revealing that despite high precision, the model is failing badly at recall. This makes F1 useful for evaluating models where you care about both precision and recall.</p>
+
+        <p>The challenge is deciding whether you care about precision, recall, or both. This depends on your problem. In disease diagnosis, false negatives are catastrophic—missing a disease can be fatal—so you prioritize recall even if it means false positives that create patient anxiety. In spam detection, false positives are intolerable—marking legitimate emails as spam causes users to miss important messages—so you prioritize precision even if some spam slips through. Understanding your problem determines which metric to optimize.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding precision and recall as different failures.</strong> Imagine a security system designed to catch dangerous people entering a building. Precision asks: when your system alerts, how often is it actually a dangerous person (avoiding false alarms that cost money and embarrass innocent people)? Recall asks: of all the dangerous people trying to enter, what fraction does your system catch (missing dangerous people creates safety risks)? You want both, but usually improving one worsens the other. A system that alerts on everyone has perfect recall but terrible precision. A system that almost never alerts has good precision but terrible recall. The right balance depends on your tolerance for different mistakes. Airport security prioritizes recall—they want to catch dangerous people even if innocent people get extra screening. Store loss prevention might prioritize precision—they want to catch thieves but avoid accusing innocent customers.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Classification metrics: understanding what your model measures</span>
+<span class="code-keyword">from</span> sklearn.metrics <span class="code-keyword">import</span> confusion_matrix, accuracy_score, precision_score
+<span class="code-keyword">from</span> sklearn.metrics <span class="code-keyword">import</span> recall_score, f1_score, roc_curve, auc, roc_auc_score
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+<span class="code-keyword">import</span> matplotlib.pyplot <span class="code-keyword">as</span> plt
+
+<span class="code-comment"># Actual labels and predictions (binary classification: 0 or 1)</span>
+y_true = np.array([<span class="code-number">0</span>, <span class="code-number">1</span>, <span class="code-number">1</span>, <span class="code-number">0</span>, <span class="code-number">1</span>, <span class="code-number">0</span>, <span class="code-number">1</span>, <span class="code-number">1</span>])
+y_pred = np.array([<span class="code-number">0</span>, <span class="code-number">1</span>, <span class="code-number">0</span>, <span class="code-number">0</span>, <span class="code-number">1</span>, <span class="code-number">0</span>, <span class="code-number">1</span>, <span class="code-number">0</span>])
+
+<span class="code-comment"># Confusion matrix: TN FP / FN TP (True Neg, False Pos / False Neg, True Pos)</span>
+cm = confusion_matrix(y_true, y_pred)
+tn, fp, fn, tp = cm.ravel()
+<span class="code-function">print</span>(<span class="code-string">f"Confusion Matrix:\nTrue Negatives: {tn}, False Positives: {fp}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"False Negatives: {fn}, True Positives: {tp}"</span>)
+
+<span class="code-comment"># Accuracy: overall percentage correct (misleading with imbalanced data)</span>
+accuracy = accuracy_score(y_true, y_pred)
+<span class="code-function">print</span>(<span class="code-string">f"\nAccuracy: {accuracy:.3f}"</span>)  <span class="code-comment"># (TP+TN)/(TP+TN+FP+FN)</span>
+
+<span class="code-comment"># Precision: of predicted positives, how many were correct?</span>
+precision = precision_score(y_true, y_pred)
+<span class="code-function">print</span>(<span class="code-string">f"Precision: {precision:.3f}"</span>)  <span class="code-comment"># TP/(TP+FP)</span>
+<span class="code-comment"># Avoids false alarms: when model says positive, is it right?</span>
+
+<span class="code-comment"># Recall: of actual positives, how many did we find?</span>
+recall = recall_score(y_true, y_pred)
+<span class="code-function">print</span>(<span class="code-string">f"Recall: {recall:.3f}"</span>)  <span class="code-comment"># TP/(TP+FN)</span>
+<span class="code-comment"># Avoids missing positives: do we catch the actual positive cases?</span>
+
+<span class="code-comment"># F1 Score: harmonic mean of precision and recall</span>
+f1 = f1_score(y_true, y_pred)
+<span class="code-function">print</span>(<span class="code-string">f"F1 Score: {f1:.3f}"</span>)  <span class="code-comment"># 2 * (precision * recall) / (precision + recall)</span>
+
+<span class="code-comment"># Specificity: of actual negatives, how many did we correctly identify?</span>
+specificity = tn / (tn + fp)
+<span class="code-function">print</span>(<span class="code-string">f"Specificity: {specificity:.3f}"</span>)  <span class="code-comment"># TN/(TN+FP)</span>
+<span class="code-comment"># Measures how well model avoids false positives</span>
+
+<span class="code-comment"># Sensitivity: another word for recall (true positive rate)</span>
+sensitivity = tp / (tp + fn)
+<span class="code-function">print</span>(<span class="code-string">f"Sensitivity: {sensitivity:.3f}"</span>)  <span class="code-comment"># TP/(TP+FN) = Recall</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">📊 ROC Curves and AUC: Understanding Threshold Effects</div>
+      <div class="concept-body">
+        <p>A critical insight about binary classification is that most algorithms don't directly output class zero or one. They output probabilities or scores. Logistic regression outputs the probability of class one. Decision trees and neural networks output probabilities through their output layers. These probabilities are then thresholded—typically at zero point five—to convert to class predictions. If probability exceeds the threshold, predict class one. Otherwise, predict class zero. But this default threshold might not be optimal for your problem.</p>
+
+        <p>The ROC (Receiver Operating Characteristic) curve visualizes this threshold effect. As you vary the threshold from zero to one, the true positive rate and false positive rate change. At threshold zero, you predict everything as positive, giving one hundred percent true positive rate but also one hundred percent false positive rate. At threshold one, you predict everything as negative, giving zero percent true positive rate and zero percent false positive rate. Between these extremes, as you increase the threshold, you move from left to right on the ROC curve. Points in the upper left are better because they have high true positive rate and low false positive rate.</p>
+
+        <p>The AUC (Area Under the ROC Curve) quantifies how good the ROC curve is by computing the area under it. AUC ranges from zero to one. A random classifier has AUC of zero point five because it produces a diagonal line from bottom left to top right. A perfect classifier has AUC of one because the curve goes straight up to the top left then straight across to the top right. The beauty of AUC is that it measures the classifier's ability to distinguish between classes across all possible thresholds, not just the default threshold. An AUC of zero point nine means the probability of a random positive example scoring higher than a random negative example is ninety percent.</p>
+
+        <p>The advantage of ROC curves and AUC is that they're robust to class imbalance. If your positive class is only one percent of the data, the false positive rate is computed among the ninety-nine percent negative examples, so imbalance doesn't artificially inflate or deflate the metric. This makes AUC particularly valuable for imbalanced classification problems where precision and recall tell incomplete stories.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># ROC curves and AUC: evaluating across all thresholds</span>
+
+<span class="code-comment"># Get probability predictions (not hard class predictions)</span>
+y_proba = np.array([<span class="code-number">0.1</span>, <span class="code-number">0.9</span>, <span class="code-number">0.4</span>, <span class="code-number">0.2</span>, <span class="code-number">0.8</span>, <span class="code-number">0.3</span>, <span class="code-number">0.95</span>, <span class="code-number">0.2</span>])
+
+<span class="code-comment"># Compute ROC curve: how TPR and FPR change with threshold</span>
+fpr, tpr, thresholds = roc_curve(y_true, y_proba)
+
+<span class="code-comment"># Compute AUC: area under the ROC curve</span>
+roc_auc = auc(fpr, tpr)
+<span class="code-function">print</span>(<span class="code-string">f"AUC-ROC: {roc_auc:.3f}"</span>)
+<span class="code-comment"># 0.5 = random, 1.0 = perfect classification</span>
+
+<span class="code-comment"># Alternative: compute AUC directly from y_true and y_proba</span>
+auc_direct = roc_auc_score(y_true, y_proba)
+<span class="code-function">print</span>(<span class="code-string">f"AUC (direct computation): {auc_direct:.3f}"</span>)
+
+<span class="code-comment"># Plot ROC curve</span>
+plt.figure()
+plt.plot(fpr, tpr, color=<span class="code-string">'darkorange'</span>, label=<span class="code-string">f'ROC curve (AUC = {roc_auc:.2f})'</span>)
+plt.plot([<span class="code-number">0</span>, <span class="code-number">1</span>], [<span class="code-number">0</span>, <span class="code-number">1</span>], color=<span class="code-string">'navy'</span>, label=<span class="code-string">'Random classifier'</span>)
+plt.xlabel(<span class="code-string">'False Positive Rate'</span>)
+plt.ylabel(<span class="code-string">'True Positive Rate'</span>)
+plt.title(<span class="code-string">'ROC Curve'</span>)
+plt.legend()
+plt.show()
+
+<span class="code-comment"># Precision-Recall curve: useful for imbalanced data</span>
+<span class="code-keyword">from</span> sklearn.metrics <span class="code-keyword">import</span> precision_recall_curve
+
+precision_vals, recall_vals, pr_thresholds = precision_recall_curve(y_true, y_proba)
+<span class="code-comment"># PR curve shows precision-recall tradeoff across thresholds</span>
+<span class="code-comment"># More informative than ROC for imbalanced classification</span>
+      </code-block>
+    </div>
+
+    <div class="impact-box">
+      <div class="impact-grid">
+        <div class="impact-item" style="--impact-color: var(--cool);">
+          <div class="impact-item-title">🎯 When to Use Each Metric</div>
+          <div class="impact-item-content">Use accuracy only with balanced classes. Use precision when false positives are costly. Use recall when false negatives are costly. Use F1 when you care about both equally. Use AUC-ROC for robust evaluation across thresholds, especially with imbalance. Use precision-recall curves specifically for imbalanced problems where positive class is rare.</div>
+        </div>
+        <div class="impact-item" style="--impact-color: var(--green);">
+          <div class="impact-item-title">💡 Key Insight</div>
+          <div class="impact-item-content">Classification metrics aren't about finding the "correct" metric. They're about understanding what your model is actually doing and whether it solves your problem. Always compute multiple metrics and understand what each tells you. A model with ninety percent accuracy might have zero recall on the minority class, making it useless despite high accuracy.</div>
+        </div>
+        <div class="impact-item" style="--impact-color: var(--hot);">
+          <div class="impact-item-title">⚠️ Common Mistake</div>
+          <div class="impact-item-content">Using accuracy as the only metric for imbalanced problems. This creates false confidence in models that are actually failing at the important task. Always use class-wise metrics like precision and recall, or AUC which handles imbalance naturally.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="regression">
+    <div class="section-label">Evaluating Continuous Value Predictions</div>
+    <h2 class="section-title">Regression Metrics: Measuring Prediction Accuracy</h2>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">📏 Understanding Regression Error: Mean Squared Error and Its Variants</div>
+      <div class="concept-body">
+        <p>Regression metrics measure how far predictions are from actual values. The most basic metric is mean squared error: average the squared difference between predicted and actual values. Squaring the differences emphasizes large errors. An error of ten is squared to one hundred while an error of one is squared to one. This means MSE heavily penalizes models that make large mistakes on some examples while being accurate on others. This is valuable when you want to avoid catastrophic errors. If you're predicting airplane fuel consumption, one huge error that stalls the plane is worse than ten small errors.</p>
+
+        <p>Root mean squared error is simply the square root of MSE, bringing the metric back to the same units as your target variable. If you're predicting price in dollars, RMSE is also in dollars, making it more interpretable than MSE. An RMSE of one thousand on price prediction is easier to understand intuitively than MSE of one million. For this reason, RMSE is generally preferred over MSE for interpretation, though they rank models identically since taking the square root is monotonic.</p>
+
+        <p>Mean absolute error averages the absolute value of errors without squaring. An error of ten contributes ten to the average while an error of one contributes one. This treats all errors proportionally rather than emphasizing large errors. MAE is more robust to outliers than MSE because it doesn't square them. If you have a few predictions with enormous errors, MSE will be dominated by these outliers while MAE will reflect the typical error better. The choice between MAE and RMSE depends on whether you want to emphasize large errors or reflect typical error.</p>
+
+        <p>R-squared measures what fraction of variance in the target is explained by the model. It ranges from zero to one. Zero means the model explains none of the variation—it's no better than predicting the mean for everything. One means the model explains all variation—perfect predictions. An R-squared of zero point eight-five means the model explains eighty-five percent of the variance in the target. The advantage of R-squared is that it's scale-independent. Whether you predict prices in dollars, thousands of dollars, or any other scale, R-squared is the same for equivalent predictions. Adjusted R-squared penalizes models with many features, accounting for the danger of overfitting. A model might improve R-squared by adding features, but adjusted R-squared doesn't improve unless the features genuinely improve beyond what's expected by chance.</p>
+
+        <p>Mean absolute percentage error measures error as a percentage of actual values. An actual value of one hundred with prediction ninety has MAPE of ten percent. An actual value of ten with prediction nine has MAPE of ten percent. This makes MAPE useful when errors should be judged relative to the magnitude of what you're predicting. In sales forecasting, a one-unit error is negligible for thousand-unit sales but important for ten-unit sales.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding regression error metrics as different ways to measure miss-distance.</strong> Imagine throwing darts at a bullseye. MSE is like measuring the squared distance from the bullseye—it heavily penalizes darts far from the center. MAE is like measuring absolute distance—it treats being one inch off the same regardless of distance. RMSE is like MSE but converted back to inches so you understand it intuitively. R-squared is like asking: how much better are your darts than random throws? If ninety-five percent of the bullseye area you consistently hit is explained by skill rather than luck, that's like R-squared of zero point ninety-five. Different metrics answer different questions about your throwing accuracy, and different contexts prefer different questions.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Regression metrics: measuring prediction accuracy</span>
+<span class="code-keyword">from</span> sklearn.metrics <span class="code-keyword">import</span> mean_squared_error, mean_absolute_error, r2_score
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+
+<span class="code-comment"># Actual values and predictions</span>
+y_true = np.array([<span class="code-number">100</span>, <span class="code-number">200</span>, <span class="code-number">300</span>, <span class="code-number">400</span>, <span class="code-number">500</span>])
+y_pred = np.array([<span class="code-number">110</span>, <span class="code-number">190</span>, <span class="code-number">310</span>, <span class="code-number">400</span>, <span class="code-number">480</span>])
+
+<span class="code-comment"># Mean Squared Error: penalizes large errors heavily</span>
+mse = mean_squared_error(y_true, y_pred)
+<span class="code-function">print</span>(<span class="code-string">f"MSE: {mse:.2f}"</span>)
+
+<span class="code-comment"># Root Mean Squared Error: same as MSE but interpretable</span>
+rmse = np.sqrt(mse)
+<span class="code-function">print</span>(<span class="code-string">f"RMSE: {rmse:.2f}"</span>)  <span class="code-comment"># Average error magnitude in original units</span>
+
+<span class="code-comment"># Mean Absolute Error: treats all errors equally</span>
+mae = mean_absolute_error(y_true, y_pred)
+<span class="code-function">print</span>(<span class="code-string">f"MAE: {mae:.2f}"</span>)
+
+<span class="code-comment"># R-squared: variance explained by model</span>
+r2 = r2_score(y_true, y_pred)
+<span class="code-function">print</span>(<span class="code-string">f"R²: {r2:.3f}"</span>)
+<span class="code-comment"># 0.0 = as bad as predicting mean. 1.0 = perfect predictions</span>
+
+<span class="code-comment"># Mean Absolute Percentage Error: error relative to actual values</span>
+mape = np.mean(np.abs((y_true - y_pred) / y_true)) * <span class="code-number">100</span>
+<span class="code-function">print</span>(<span class="code-string">f"MAPE: {mape:.2f}%"</span>)
+
+<span class="code-comment"># Residual analysis: examining prediction errors</span>
+residuals = y_true - y_pred
+<span class="code-function">print</span>(<span class="code-string">f"\nResiduals: {residuals}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Mean residual: {np.mean(residuals):.2f}"</span>)
+<span class="code-comment"># Should be near zero if model is unbiased</span>
+<span class="code-function">print</span>(<span class="code-string">f"Std of residuals: {np.std(residuals):.2f}"</span>)
+<span class="code-comment"># Measures typical error magnitude</span>
+
+<span class="code-comment"># Visualize residuals to check for patterns</span>
+<span class="code-keyword">import</span> matplotlib.pyplot <span class="code-keyword">as</span> plt
+plt.scatter(y_pred, residuals)
+plt.axhline(y=<span class="code-number">0</span>, color=<span class="code-string">'r'</span>, linestyle=<span class="code-string">'--'</span>)
+plt.xlabel(<span class="code-string">'Predicted Values'</span>)
+plt.ylabel(<span class="code-string">'Residuals'</span>)
+plt.title(<span class="code-string">'Residual Plot'</span>)
+plt.show()
+<span class="code-comment"># If residuals show patterns, model is biased in systematic ways</span>
+      </code-block>
+    </div>
+
+    <div class="impact-box">
+      <div class="impact-grid">
+        <div class="impact-item" style="--impact-color: var(--warm);">
+          <div class="impact-item-title">🎯 When to Use Each Metric</div>
+          <div class="impact-item-content">Use RMSE when you want to penalize large errors and results in interpretable units. Use MAE when you want typical error magnitude robust to outliers. Use R² when comparing models—higher is always better and scale-independent. Use MAPE when errors should be judged relative to prediction magnitude. Always examine residuals visually to check for systematic patterns.</div>
+        </div>
+        <div class="impact-item" style="--impact-color: var(--cool);">
+          <div class="impact-item-title">💡 Key Insight</div>
+          <div class="impact-item-content">A model's metric value is meaningless without context. RMSE of one hundred might be excellent when predicting house prices (thousands of dollars) but terrible when predicting daily temperatures (tens of degrees). Always compare metrics across models or to a meaningful baseline like predicting the mean.</div>
+        </div>
+        <div class="impact-item" style="--impact-color: var(--hot);">
+          <div class="impact-item-title">⚠️ Residual Analysis Matters</div>
+          <div class="impact-item-content">Two models with identical RMSE might have very different residual patterns. One might be systematically high or low for certain input ranges. Visualizing residuals reveals whether your model is truly learning or just getting lucky. If residuals show patterns, your model isn't capturing all the information in the data.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="selection">
+    <div class="section-label">Finding Your Best Model</div>
+    <h2 class="section-title">Model Selection and Hyperparameter Tuning: Systematic Optimization</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🔍 Understanding the Hyperparameter Tuning Challenge</div>
+      <div class="concept-body">
+        <p>Most machine learning algorithms have hyperparameters that must be set before training. K-means requires specifying K. Neural networks require choosing layer sizes and learning rates. SVMs require selecting kernel type and regularization parameter. Tree depth limits control overfitting. These hyperparameters aren't learned from data; they're set before training. Yet they profoundly affect model performance. Choosing hyperparameters poorly can make the difference between a useless model and a state-of-the-art one.</p>
+
+        <p>The challenge is that hyperparameter space is often high-dimensional and non-convex. You can't solve for optimal hyperparameters analytically. You must search the space, evaluating different choices and comparing results. The question becomes: how do you search efficiently? Exhaustively trying all combinations is computationally prohibitive. Randomly guessing is wasteful. You need systematic approaches that balance exploration of new regions with exploitation of promising regions.</p>
+
+        <p>Grid search exhaustively tries combinations of hyperparameter values you specify. You provide a grid of values for each hyperparameter and grid search evaluates all combinations. If you specify three values for learning rate and three for regularization, grid search evaluates nine combinations. This is thorough but computationally expensive. With many hyperparameters or many values per hyperparameter, grid search becomes infeasible.</p>
+
+        <p>Random search randomly samples hyperparameter combinations from your specified ranges. It often works surprisingly well despite its simplicity. The insight is that with high-dimensional hyperparameter spaces, a few random samples often find good regions faster than an exhaustive grid. Random search is more computationally efficient than grid search for high-dimensional spaces. However, it doesn't leverage information about which hyperparameters matter or which regions have worked well previously.</p>
+
+        <p>Bayesian optimization uses a probabilistic model of how hyperparameters affect model performance, iteratively suggesting promising hyperparameters to evaluate. It learns from each evaluation, progressively focusing search toward promising regions. This makes Bayesian optimization very efficient at finding good hyperparameters with few evaluations. The downside is increased complexity and computational overhead from fitting the probabilistic model.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding hyperparameter tuning as strategic search.</strong> Imagine searching for the best restaurant in a huge city. Exhaustive search (grid search) visits every restaurant systematically. Randomized search picks random restaurants and hopes to find gems. Smart search (Bayesian optimization) uses clues from restaurants visited so far to focus exploration on promising neighborhoods. You don't always find the absolute best restaurant, but you find an excellent one efficiently. Hyperparameter tuning works the same way. You're searching for the best combination of settings. The right search strategy matters as much as the search space itself.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Hyperparameter tuning: finding optimal settings</span>
+<span class="code-keyword">from</span> sklearn.model_selection <span class="code-keyword">import</span> GridSearchCV, RandomizedSearchCV
+<span class="code-keyword">from</span> sklearn.ensemble <span class="code-keyword">import</span> RandomForestClassifier
+<span class="code-keyword">from</span> sklearn.svm <span class="code-keyword">import</span> SVC
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+
+<span class="code-comment"># Example data</span>
+X_train = np.random.randn(<span class="code-number">100</span>, <span class="code-number">20</span>)
+y_train = np.random.randint(<span class="code-number">0</span>, <span class="code-number">2</span>, <span class="code-number">100</span>)
+
+<span class="code-comment"># Method 1: Grid Search - exhaustively try combinations</span>
+param_grid = {
+    <span class="code-string">'n_estimators'</span>: [<span class="code-number">10</span>, <span class="code-number">50</span>, <span class="code-number">100</span>],
+    <span class="code-string">'max_depth'</span>: [<span class="code-number">3</span>, <span class="code-number">5</span>, <span class="code-number">10</span>, <span class="code-number">None</span>],
+    <span class="code-string">'min_samples_split'</span>: [<span class="code-number">2</span>, <span class="code-number">5</span>, <span class="code-number">10</span>]
+}
+
+rf_grid = GridSearchCV(
+    RandomForestClassifier(),
+    param_grid,
+    cv=<span class="code-number">5</span>,  <span class="code-comment"># 5-fold cross-validation for each combination</span>
+    scoring=<span class="code-string">'roc_auc'</span>  <span class="code-comment"># Metric to optimize</span>
+)
+rf_grid.fit(X_train, y_train)
+
+<span class="code-function">print</span>(<span class="code-string">f"Best parameters (grid search): {rf_grid.best_params_}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Best cross-validation score: {rf_grid.best_score_:.3f}"</span>)
+
+<span class="code-comment"># Method 2: Random Search - sample combinations randomly</span>
+<span class="code-comment"># More efficient for large hyperparameter spaces</span>
+param_dist = {
+    <span class="code-string">'n_estimators'</span>: [<span class="code-number">10</span>, <span class="code-number">50</span>, <span class="code-number">100</span>, <span class="code-number">200</span>],
+    <span class="code-string">'max_depth'</span>: [<span class="code-number">1</span>, <span class="code-number">3</span>, <span class="code-number">5</span>, <span class="code-number">10</span>, <span class="code-number">None</span>],
+    <span class="code-string">'min_samples_split'</span>: [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">5</span>, <span class="code-number">10</span>],
+    <span class="code-string">'min_samples_leaf'</span>: [<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">4</span>]
+}
+
+rf_random = RandomizedSearchCV(
+    RandomForestClassifier(),
+    param_dist,
+    n_iter=<span class="code-number">20</span>,  <span class="code-comment"># Try 20 random combinations (not all)</span>
+    cv=<span class="code-number">5</span>,
+    scoring=<span class="code-string">'roc_auc'</span>,
+    random_state=<span class="code-number">42</span>
+)
+rf_random.fit(X_train, y_train)
+
+<span class="code-function">print</span>(<span class="code-string">f"\nBest parameters (random search): {rf_random.best_params_}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Best cross-validation score: {rf_random.best_score_:.3f}"</span>)
+
+<span class="code-comment"># Compare computational cost: random search is much faster</span>
+<span class="code-comment"># Grid search: 3*4*3 = 36 combinations</span>
+<span class="code-comment"># Random search: 20 combinations (much less)</span>
+
+<span class="code-comment"># Access results for analysis</span>
+results_df = pd.DataFrame(rf_grid.cv_results_)
+results_df = results_df[[<span class="code-string">'param_n_estimators'</span>, <span class="code-string">'param_max_depth'</span>, 
+                         <span class="code-string">'mean_test_score'</span>, <span class="code-string">'std_test_score'</span>]]
+results_df = results_df.sort_values(<span class="code-string">'mean_test_score'</span>, ascending=<span class="code-keyword">False</span>)
+<span class="code-function">print</span>(<span class="code-string">"\nTop 5 parameter combinations:"</span>)
+<span class="code-function">print</span>(results_df.head())
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">📈 Learning Curves and Validation Curves: Diagnosing Model Issues</div>
+      <div class="concept-body">
+        <p>Learning curves plot training and validation performance as a function of training set size. They reveal whether your model suffers from bias (high error on both training and validation, suggesting the model is too simple), variance (high error on validation but low on training, suggesting overfitting), or is working well (both curves high and close together). A learning curve can tell you whether you need more training data, a more complex model, or if your current model is sufficient. If training error is high and validation error is high with no gap, adding more data won't help—you need a more complex model. If there's a large gap, training error is low but validation error is high, you have overfitting—you need more data, regularization, or a simpler model.</p>
+
+        <p>Validation curves plot training and validation performance as a function of a single hyperparameter while keeping others fixed. They reveal how sensitive your model is to that hyperparameter and what value works best. A validation curve might show that validation performance improves as regularization increases up to a point, then decreases as you add too much regularization. This tells you the optimal regularization value and how sensitive the model is to this hyperparameter.</p>
+
+        <p>These diagnostic tools are invaluable for understanding what your model needs. Rather than blindly tweaking hyperparameters, learning curves and validation curves tell you exactly what the bottleneck is. Is it bias or variance? Should you focus on hyperparameter tuning or gathering more data? These questions have dramatically different answers depending on what the curves show.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Learning curves: diagnose bias vs. variance</span>
+<span class="code-keyword">from</span> sklearn.model_selection <span class="code-keyword">import</span> learning_curve, validation_curve
+<span class="code-keyword">import</span> matplotlib.pyplot <span class="code-keyword">as</span> plt
+
+<span class="code-comment"># Generate learning curve</span>
+train_sizes, train_scores, val_scores = learning_curve(
+    RandomForestClassifier(n_estimators=<span class="code-number">100</span>),
+    X_train, y_train,
+    cv=<span class="code-number">5</span>,
+    train_sizes=np.linspace(<span class="code-number">0.1</span>, <span class="code-number">1.0</span>, <span class="code-number">10</span>),  <span class="code-comment"># Fractions of training set</span>
+    scoring=<span class="code-string">'roc_auc'</span>
+)
+
+<span class="code-comment"># Plot learning curve</span>
+train_mean = np.mean(train_scores, axis=<span class="code-number">1</span>)
+train_std = np.std(train_scores, axis=<span class="code-number">1</span>)
+val_mean = np.mean(val_scores, axis=<span class="code-number">1</span>)
+val_std = np.std(val_scores, axis=<span class="code-number">1</span>)
+
+plt.figure()
+plt.plot(train_sizes, train_mean, label=<span class="code-string">'Training score'</span>)
+plt.fill_between(train_sizes, train_mean - train_std, train_mean + train_std, alpha=<span class="code-number">0.1</span>)
+plt.plot(train_sizes, val_mean, label=<span class="code-string">'Validation score'</span>)
+plt.fill_between(train_sizes, val_mean - val_std, val_mean + val_std, alpha=<span class="code-number">0.1</span>)
+plt.xlabel(<span class="code-string">'Training Set Size'</span>)
+plt.ylabel(<span class="code-string">'Score (AUC)'</span>)
+plt.title(<span class="code-string">'Learning Curve'</span>)
+plt.legend()
+plt.show()
+
+<span class="code-comment"># If curves converge high: model works well, might need slight tuning</span>
+<span class="code-comment"># If both curves converge low: high bias, model is too simple</span>
+<span class="code-comment"># If gap remains: high variance, model overfits or needs regularization</span>
+
+<span class="code-comment"># Validation curve: see effect of single hyperparameter</span>
+param_range = np.array([<span class="code-number">1</span>, <span class="code-number">2</span>, <span class="code-number">4</span>, <span class="code-number">8</span>, <span class="code-number">16</span>, <span class="code-number">32</span>])
+
+train_scores_vc, val_scores_vc = validation_curve(
+    RandomForestClassifier(),
+    X_train, y_train,
+    param_name=<span class="code-string">'max_depth'</span>,  <span class="code-comment"># Hyperparameter to vary</span>
+    param_range=param_range,
+    cv=<span class="code-number">5</span>,
+    scoring=<span class="code-string">'roc_auc'</span>
+)
+
+<span class="code-comment"># Plot validation curve</span>
+train_mean_vc = np.mean(train_scores_vc, axis=<span class="code-number">1</span>)
+val_mean_vc = np.mean(val_scores_vc, axis=<span class="code-number">1</span>)
+
+plt.figure()
+plt.plot(param_range, train_mean_vc, label=<span class="code-string">'Training score'</span>)
+plt.plot(param_range, val_mean_vc, label=<span class="code-string">'Validation score'</span>)
+plt.xlabel(<span class="code-string">'max_depth'</span>)
+plt.ylabel(<span class="code-string">'Score (AUC)'</span>)
+plt.title(<span class="code-string">'Validation Curve: Effect of max_depth'</span>)
+plt.legend()
+plt.show()
+
+<span class="code-comment"># This shows you the optimal hyperparameter value visually</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🔀 Cross-Validation Strategies: Extracting Maximum Value from Limited Data</div>
+      <div class="concept-body">
+        <p>Cross-validation is your most important tool for honest model evaluation. Rather than using a single train-test split, cross-validation splits data into multiple folds, trains multiple models, and averages results. This gives you more robust performance estimates and makes better use of limited training data. K-fold cross-validation divides data into K equal parts. For each of K iterations, you use one fold as validation and the remaining K-minus-one folds as training. The final score is the average across all K iterations.</p>
+
+        <p>Different cross-validation strategies suit different problems. Standard K-fold is appropriate when data is randomly distributed. Stratified K-fold maintains class proportions in each fold, crucial for imbalanced classification where random folding might create folds with vastly different class ratios. Time series data requires special handling with forward-chaining where training always comes before validation temporally. Leave-one-out cross-validation uses one example as validation and the rest for training, repeating N times. This is thorough but computationally expensive for large datasets.</p>
+
+        <p>The key insight is that cross-validation estimates how your model generalizes. A model might score differently on different data subsets due to randomness. Cross-validation averages across subsets, giving you a stable estimate. The standard deviation of cross-validation scores tells you how much variation exists—high standard deviation means your model's performance varies significantly depending on data composition.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Cross-validation strategies for robust evaluation</span>
+<span class="code-keyword">from</span> sklearn.model_selection <span class="code-keyword">import</span> cross_val_score, StratifiedKFold, TimeSeriesSplit
+
+<span class="code-comment"># Standard K-fold cross-validation</span>
+model = RandomForestClassifier(n_estimators=<span class="code-number">100</span>)
+scores = cross_val_score(model, X_train, y_train, cv=<span class="code-number">5</span>, scoring=<span class="code-string">'roc_auc'</span>)
+
+<span class="code-function">print</span>(<span class="code-string">f"5-fold CV scores: {scores}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"Mean: {scores.mean():.3f}, Std: {scores.std():.3f}"</span>)
+<span class="code-comment"># Std tells you performance variance across different data subsets</span>
+
+<span class="code-comment"># Stratified K-fold: maintains class balance in each fold</span>
+<span class="code-comment"># Important for imbalanced classification</span>
+skf = StratifiedKFold(n_splits=<span class="code-number">5</span>, shuffle=<span class="code-keyword">True</span>, random_state=<span class="code-number">42</span>)
+scores_stratified = cross_val_score(model, X_train, y_train, cv=skf, scoring=<span class="code-string">'roc_auc'</span>)
+
+<span class="code-function">print</span>(<span class="code-string">f"\nStratified 5-fold CV scores: {scores_stratified}"</span>)
+<span class="code-comment"># Each fold has same class proportions as full dataset</span>
+
+<span class="code-comment"># Time series cross-validation: respect temporal order</span>
+<span class="code-comment"># Training must come before validation temporally</span>
+<span class="code-comment"># X_time_series is time-ordered data</span>
+tscv = TimeSeriesSplit(n_splits=<span class="code-number">5</span>)
+<span class="code-comment"># for train_idx, test_idx in tscv.split(X_time_series):</span>
+<span class="code-comment">#     X_train_fold, X_test_fold = X_time_series[train_idx], X_time_series[test_idx]</span>
+<span class="code-comment">#     y_train_fold, y_test_fold = y_time_series[train_idx], y_time_series[test_idx]</span>
+      </code-block>
+    </div>
+
+  </section>
+
+  <section>
+    <div class="section-label">Evaluating and Choosing Wisely</div>
+    <h2 class="section-title">Integrating Evaluation Into Your Development Process</h2>
+
+    <div class="insight-box" style="--insight-color: var(--cool);">
+      <div class="insight-title">Choose Metrics That Match Your Problem, Not Convenience</div>
+      <div class="insight-content">It's tempting to use accuracy because it's simple. Resist this temptation for imbalanced problems. It's tempting to use MSE because popular libraries compute it. Use RMSE instead for interpretability. It's tempting to optimize whatever metric is easiest to compute. Instead, define what success actually means for your problem and optimize that. A fraud detector that misses fraud is worse than one that creates false alarms. A disease diagnosis that misses illness is worse than one that over-diagnoses. Let your problem define your metric, not convenience define your problem.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--green);">
+      <div class="insight-title">Always Examine Failure Cases, Not Just Metrics</div>
+      <div class="insight-content">A model with high accuracy might fail systematically on a particular subset. A model with good average MAE might make catastrophic errors on some examples. Always visualize predictions and errors. Which examples does your model get wrong? Do they have common characteristics? Are these failures acceptable or problematic? A numerical metric never tells the complete story. Understanding failure modes prevents deploying models that look good on paper but fail in practice.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--warm);">
+      <div class="insight-title">Hyperparameter Tuning Has Diminishing Returns</div>
+      <div class="insight-content">Your first hyperparameter choices will give you big improvements. Tuning further gives smaller improvements. Know when to stop. A model that's ninety percent as good with default hyperparameters might beat a model that's ninety-five percent as good with weeks of tuning, especially when the simpler model is faster and easier to understand. The best model is often the simplest one that performs acceptably, not the most complex one that performs marginally better.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--hot);">
+      <div class="insight-title">Test Set Purity Is Non-Negotiable</div>
+      <div class="insight-content">Once you establish a test set, don't look at it until you've finalized your approach. Not even once. Every time you check test performance and adjust your model, you're using information from the test set implicitly. Your final test score is honest only if the test data truly represents unseen data. If you've iterated based on test performance, you can't trust that score. Treat test data as sacred. The performance you report is only valid if the test set was held out throughout development.</div>
+    </insight-box>
+
+  </section>
+
+</div>
+
+<footer>
+  <p class="footer-text">Model Evaluation and Selection — Building Confidence That Your Model Works</p>
+</footer>
+
+</body>
+</html>
