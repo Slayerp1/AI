@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diffusion Models — Learning to Generate Through Gradual Denoising</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #04040a;
+  --accent: #7b2fff;
+  --hot: #ff2d78;
+  --cool: #00e5ff;
+  --warm: #ffb800;
+  --green: #00ff9d;
+  --text: #e0e0f0;
+  --muted: #4a4a6a;
+  --card: #0a0a14;
+  --border: rgba(255,255,255,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0,229,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,4,10,0.9);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-right: auto; letter-spacing: 2px; }
+.nav-pill {
+  font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(123,47,255,0.4);
+  color: rgba(123,47,255,0.8); text-decoration: none; transition: all 0.2s;
+}
+.nav-pill:hover { background: rgba(123,47,255,0.15); border-color: var(--accent); color: #fff; }
+
+.hero { padding: 90px 0 50px; }
+.hero-eyebrow {
+  font-family: 'Syne Mono', monospace; font-size: 11px; letter-spacing: 4px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(123,47,255,0.3); }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 100px);
+  line-height: 0.92; margin-bottom: 28px;
+  color: #fff;
+}
+
+.hero-desc { max-width: 750px; font-size: 16px; color: rgba(210,210,240,0.72); line-height: 1.8; margin-bottom: 40px; }
+
+section { padding: 70px 0; border-top: 1px solid var(--border); }
+.section-label { font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 64px); line-height: 1; margin-bottom: 40px; color: #fff; }
+
+.concept-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 36px;
+  border-left: 4px solid var(--card-accent, var(--accent));
+  transition: all 0.3s;
+}
+
+.concept-card:hover {
+  border-color: var(--card-accent, var(--accent));
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  transform: translateY(-2px);
+}
+
+.concept-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--card-accent, var(--accent));
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.concept-body {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.9;
+  margin-bottom: 28px;
+}
+
+.concept-body p {
+  margin-bottom: 18px;
+}
+
+.concept-body strong {
+  color: #fff;
+}
+
+.code-block {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 28px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #fff;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.code-comment { color: #5c7a8a; }
+.code-keyword { color: var(--accent); }
+.code-string { color: var(--green); }
+.code-number { color: var(--warm); }
+.code-function { color: var(--cool); }
+
+.teaching-box {
+  background: rgba(123,47,255,0.1);
+  border-left: 4px solid var(--accent);
+  padding: 24px;
+  border-radius: 10px;
+  margin: 28px 0;
+  font-size: 15px;
+  color: rgba(210,210,240,0.9);
+  line-height: 1.8;
+}
+
+.teaching-box strong {
+  color: #fff;
+}
+
+.impact-box {
+  background: linear-gradient(135deg, rgba(123,47,255,0.15) 0%, rgba(0,229,255,0.08) 100%);
+  border: 1px solid rgba(123,47,255,0.3);
+  border-radius: 14px;
+  padding: 32px;
+  margin-top: 32px;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.impact-item {
+  padding: 24px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  border-left: 4px solid var(--impact-color, var(--accent));
+}
+
+.impact-item-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--impact-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.impact-item-content {
+  font-size: 13px;
+  color: rgba(200,200,220,0.88);
+  line-height: 1.8;
+}
+
+.insight-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 28px 0;
+  border-left: 4px solid var(--insight-color, var(--accent));
+}
+
+.insight-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--insight-color, var(--accent));
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.insight-content {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.8;
+}
+
+footer {
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 60px 0 40px; }
+  section { padding: 50px 0; }
+  .impact-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">DIFFUSION MODELS</div>
+  <a href="#fundamentals" class="nav-pill">Fundamentals</a>
+  <a href="#theory" class="nav-pill">Theory</a>
+  <a href="#practical" class="nav-pill">Practical</a>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-eyebrow">Learning to Generate by Reversing Noise</div>
+    <h1>Diffusion Models: Creating Images Through Iterative Denoising</h1>
+    <p class="hero-desc">Imagine if you could generate new images by starting with pure noise and gradually denoising it step by step, refining the noise into coherent images. This is the core idea behind diffusion models, and it's elegant in its simplicity yet powerful in its results. Diffusion models have become the dominant approach for generative modeling, powering state-of-the-art image generation systems like DALL-E, Midjourney, and Stable Diffusion. The key insight is that learning to denoise is easier than learning to generate directly. If you can train a network to remove noise from images, you can use this denoising capability iteratively to generate images from pure noise. The forward process gradually adds noise to clean images until they become indistinguishable from random noise. The reverse process learns to remove this noise, allowing you to start from noise and work backward to create new images. This reversal of a simple noise-adding process into a powerful generative model is remarkably effective. What makes diffusion models particularly appealing compared to other generative approaches like GANs is their training stability and the quality of generated samples. Unlike GANs with their adversarial dynamics and mode collapse problems, diffusion models train predictably. The objective is straightforward: predict the noise at each diffusion step. The training is stable because there's no adversarial game creating instability. Yet the results are often superior to GANs, producing highly detailed, diverse, high-quality images. This section teaches you diffusion models from first principles, building your understanding from the simple idea of noise addition through the mathematical theory of reverse diffusion, practical training techniques, and sophisticated variants that enable conditional generation and fast sampling. By understanding these depths, you'll grasp both the elegance of the approach and why it became the dominant generative modeling framework.</p>
+  </section>
+
+  <section id="fundamentals">
+    <div class="section-label">Understanding the Core Concept</div>
+    <h2 class="section-title">Diffusion Model Fundamentals: Forward and Reverse Processes</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🔄 The Forward and Reverse Processes: Noise and Denoising</div>
+      <div class="concept-body">
+        <p>To understand diffusion models, let me start by explaining the forward process, which is the simplest part. The forward process is just gradually adding noise to an image. You start with a clean image. At time step one, you add a small amount of Gaussian noise. At time step two, you add more noise to the already-noisy image. You continue this process for many steps, each time adding more noise. After enough steps, the image becomes indistinguishable from pure random noise. The mathematical formulation is elegant: at each step, you multiply the previous image by a factor slightly less than one (which attenuates the original signal) and add scaled Gaussian noise. This continues until the signal is completely overwhelmed by noise.</p>
+
+        <p>The crucial insight is that this forward process has a beautiful mathematical property: you can compute the noisy image at any step directly, without computing all previous steps. There's a closed-form formula that tells you exactly what the image looks like after adding noise for T steps. This closed-form property is powerful because during training, you can sample random noise levels and directly compute what the noisy image looks like at that noise level, without needing to iteratively add noise from the beginning.</p>
+
+        <p>The reverse process is what makes diffusion models work for generation. If you could reverse the forward process, starting from pure noise and gradually removing noise, you'd get a clean image. This is the key idea: train a neural network to learn the reverse of the forward process. The network learns to predict what noise was added at each step, enabling you to remove that noise. Start with random noise, run the network to predict and remove noise, then iterate this process. After many iterations of noise removal, you end up with a clean, generated image.</p>
+
+        <p>The elegance of this approach is that the reverse process is trained using the same data as the forward process. You take your training images, apply the forward process to create noisy versions at different noise levels, then train a network to predict the noise that was added. Once trained, you can generate new images by sampling random noise and iterating the reverse process. The network has learned to denoise, which enables generation when applied iteratively.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Think about solving a jigsaw puzzle in reverse. Forward, you mix all the pieces in a box. Reverse, you take the pieces and assemble them into a coherent image. The forward process is just randomization. The reverse process requires skill and understanding of what pieces go where. Similarly, the forward diffusion process just adds noise (randomization). The reverse process requires learning to recognize noise patterns and remove them. A network trained to remove noise can be used iteratively to assemble a coherent image from pure noise. The remarkable discovery is that this skill translates well from the training images to generating new images.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding forward and reverse diffusion processes</span>
+
+<span class="code-keyword">def</span> <span class="code-function">forward_diffusion_process</span>(x_0, t, noise_schedule):
+    <span class="code-comment"># Forward process: gradually add noise to image</span>
+    <span class="code-comment"># x_0: clean image</span>
+    <span class="code-comment"># t: time step (0 to T)</span>
+    <span class="code-comment"># noise_schedule: defines how much noise at each step</span>
+    
+    <span class="code-comment"># Noise schedule defines alpha values that control noise level</span>
+    <span class="code-comment"># Higher t means more noise in the image</span>
+    alpha_t = noise_schedule.alpha_at_time(t)
+    
+    <span class="code-comment"># Key property: closed-form formula for noisy image at time t</span>
+    <span class="code-comment"># Rather than iteratively adding noise, compute directly</span>
+    <span class="code-comment"># x_t = sqrt(alpha_t) * x_0 + sqrt(1 - alpha_t) * random_noise</span>
+    
+    noise = randn_like(x_0)  <span class="code-comment"># Standard Gaussian noise</span>
+    x_t = sqrt(alpha_t) * x_0 + sqrt(<span class="code-number">1</span> - alpha_t) * noise
+    
+    <span class="code-keyword">return</span> x_t, noise
+
+<span class="code-keyword">def</span> <span class="code-function">training_step</span>(denoiser_network, x_0, noise_schedule):
+    <span class="code-comment"># Training is remarkably simple:</span>
+    <span class="code-comment"># 1. Sample random noise level t</span>
+    <span class="code-comment"># 2. Create noisy image at that noise level</span>
+    <span class="code-comment"># 3. Train network to predict the noise</span>
+    
+    <span class="code-comment"># Sample random time step</span>
+    t = sample_random_time()  <span class="code-comment"># Uniform from 0 to T</span>
+    
+    <span class="code-comment"># Create noisy version of image and get true noise</span>
+    x_t, noise = forward_diffusion_process(x_0, t, noise_schedule)
+    
+    <span class="code-comment"># Network predicts noise from noisy image and time</span>
+    predicted_noise = denoiser_network(x_t, t)
+    
+    <span class="code-comment"># Loss is simple: MSE between predicted and actual noise</span>
+    loss = mean_squared_error(predicted_noise, noise)
+    
+    <span class="code-keyword">return</span> loss
+
+<span class="code-keyword">def</span> <span class="code-function">sampling</span>(denoiser_network, noise_schedule):
+    <span class="code-comment"># Start with pure random noise</span>
+    x_T = randn(image_shape)  <span class="code-comment"># Pure noise</span>
+    
+    <span class="code-comment"># Iteratively denoise</span>
+    x = x_T
+    <span class="code-keyword">for</span> t <span class="code-keyword">in</span> <span class="code-function">range</span>(T, <span class="code-number">0</span>, -<span class="code-number">1</span>):
+        <span class="code-comment"># Predict noise at this step</span>
+        predicted_noise = denoiser_network(x, t)
+        
+        <span class="code-comment"># Remove predicted noise to move toward cleaner image</span>
+        <span class="code-comment"># The exact formula comes from reversing the forward process</span>
+        alpha_t = noise_schedule.alpha_at_time(t)
+        alpha_t_prev = noise_schedule.alpha_at_time(t - <span class="code-number">1</span>)
+        
+        x = (x - sqrt(<span class="code-number">1</span> - alpha_t) * predicted_noise) / sqrt(alpha_t)
+    
+    <span class="code-comment"># x now contains generated image</span>
+    <span class="code-keyword">return</span> x
+
+<span class="code-comment"># Key insights:</span>
+<span class="code-comment"># 1. Forward process: simple noise addition with closed-form formula</span>
+<span class="code-comment"># 2. Training: predict noise from noisy image, simple MSE loss</span>
+<span class="code-comment"># 3. Sampling: iteratively remove predicted noise starting from noise</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">📐 The Bottleneck and Latent Space: Noise Levels as Structure</div>
+      <div class="concept-body">
+        <p>Diffusion models handle different noise levels differently, and this structure is important for understanding how they work. Early time steps (low noise) are where images look fairly clean, containing mostly recognizable structure. The network learns to predict subtle noise that's been added to slightly corrupted images. Later time steps (high noise) are where images look almost like pure noise, with maybe only vague structure remaining. The network learns to predict large amounts of noise from nearly-random images. Each noise level requires different skills from the network.</p>
+
+        <p>This structure creates interesting training dynamics. At low noise levels, the network learns to make fine adjustments, preserving most of the image while removing slight noise. At high noise levels, the network learns to extract information from nearly-pure noise, a harder and more abstract task. By training on all noise levels equally, the network learns to handle the full spectrum of denoising tasks. This is different from other generative models where there's often a bottleneck compressing information. In diffusion models, all information is preserved at every step; you're just learning to remove noise at increasing levels.</p>
+
+        <p>The noise schedule determines how fast noise accumulates. Different schedules have been proposed. Linear schedules add uniform amounts of noise at each step. Cosine schedules concentrate noise changes where they matter most. The choice of schedule affects what the network learns and how training progresses. A well-designed schedule ensures that the network receives training examples across the full range of noise levels with appropriate difficulty progression.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Think about learning to hear in increasingly noisy environments. First, you learn to identify words in a quiet room. Then in a slightly noisier environment. Then in a very noisy environment where you can barely hear through the noise. The training exercises at different noise levels teach you progressively harder skills. The final skill (understanding speech in very high noise) is the most challenging. Diffusion models learn similarly: at different noise levels, the network learns different denoising skills, from fine adjustments to gross feature extraction from noise.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="theory">
+    <div class="section-label">Understanding the Theory</div>
+    <h2 class="section-title">Theoretical Foundations: Probability and Score-Based Modeling</h2>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">📊 Score-Based Generative Modeling: Learning Gradients of Probability</div>
+      <div class="concept-body">
+        <p>There's a beautiful connection between diffusion models and score-based generative modeling that provides deeper understanding of why diffusion works. Score-based modeling focuses on learning the score function, which is the gradient of the log probability with respect to the input. Rather than learning to predict noise directly, you can learn to predict the score function. These are mathematically equivalent but conceptually different perspectives on the same problem. The score function tells you the direction of highest probability density, which is useful for understanding how to move through the data distribution.</p>
+
+        <p>The connection to diffusion models is that predicting the noise and predicting the score are related transformations of each other. Learning one enables computing the other. This theoretical perspective from score-based modeling provides intuition for why diffusion models work. You're learning to estimate the gradient of probability density, which enables sampling through a process similar to gradient ascent. Rather than climbing the probability gradient directly, you're doing it through the reverse of noise addition, which is mathematically equivalent.</p>
+
+        <p>Score-based models can be trained using score matching objectives, which have been studied extensively in the statistics and machine learning literature. These objectives are well-understood theoretically. The connection to diffusion models provides theoretical grounding for understanding why the training objective (predicting noise) works so well. It's not just an empirical observation but flows from deeper probability theory.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Imagine learning to navigate a landscape by understanding gradients. The score function tells you which direction is uphill (toward higher probability). To generate samples, you want to move toward high-probability regions. Score-based models learn these gradients, enabling navigation through probability space. Diffusion models accomplish the same navigation through the reverse of noise addition. The fact that these are equivalent reveals deep structure in generative modeling.</p>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">⚙️ Stochastic Differential Equations: Continuous-Time Perspective</div>
+      <div class="concept-body">
+        <p>A more sophisticated mathematical framework for understanding diffusion models views them through stochastic differential equations (SDEs). Rather than thinking of discrete time steps, you can think of the forward process as a continuous stochastic process governed by a differential equation. At each infinitesimal time interval, noise is added according to the SDE. The solution to the SDE describes how noise accumulates over continuous time.</p>
+
+        <p>The advantage of the SDE perspective is that it enables deriving the exact reverse SDE mathematically. The reverse SDE describes how to remove noise continuously in reverse time, exactly undoing the forward process. This is more principled than the discrete reverse process and enables understanding the theoretical properties of diffusion models. It also opens up possibilities for different sampling schemes based on solving the reverse SDE in different ways.</p>
+
+        <p>The SDE framework unifies several perspectives on diffusion models. You can view them as discrete noise prediction, as score-based models, or as solutions to SDEs. Each perspective provides different insights. The discrete view is most intuitive. The score-based view connects to probability theory. The SDE view connects to differential equations and enables sophisticated mathematical analysis. Understanding all three perspectives together provides comprehensive understanding of diffusion models.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>The SDE perspective is like the difference between thinking about a chemical reaction as discrete molecular collisions versus a continuous chemical process. The discrete view is intuitive and matches implementation. The continuous view enables mathematical analysis and reveals structure. Diffusion models can be understood either way, and each perspective reveals different insights about how and why they work.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="practical">
+    <div class="section-label">Practical Improvements and Applications</div>
+    <h2 class="section-title">Advanced Techniques: Speed, Conditioning, and Guidance</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">⚡ DDIM and Faster Sampling: Trading Steps for Speed</div>
+      <div class="concept-body">
+        <p>The original denoising diffusion probabilistic models required many sampling steps to generate high-quality images, often hundreds of steps. This is slow in practice, limiting real-world applications. DDIM (Denoising Diffusion Implicit Models) addresses this by enabling sampling in far fewer steps. The key insight is that you don't need to sample from the full distribution at intermediate steps. You can use deterministic steps that follow the mean of the distribution instead of sampling from it. This converts the stochastic reverse process into a deterministic process that achieves similar results in fewer steps.</p>
+
+        <p>The mathematical derivation shows that you can skip noise levels, jumping from high noise to lower noise in larger steps. With DDIM, you can generate images in ten to fifty steps instead of hundreds, a massive speedup with minimal quality degradation. The tradeoff is that DDIM uses less stochasticity, so diversity might decrease slightly, but in practice the diversity remains good while speed improves dramatically. This acceleration has been crucial for making diffusion models practical for real applications.</p>
+
+        <p>The insight generalizes beyond DDIM. Various sampling strategies have been developed that trade off between speed and quality. Some use higher-order solvers from numerical differential equations. Others use learned acceleration. The key realization is that the original formulation used many steps partly for mathematical convenience, but many of those steps aren't necessary for good results. This opened the door to practical deployment of diffusion models.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Think about climbing a mountain. One approach is to take tiny steps that carefully follow the contours. Another approach is to take larger steps, following the general direction but skipping small features. If the larger steps still get you up the mountain, why take the tiny steps? DDIM essentially realizes that you can take larger steps through noise levels without sampling at each intermediate step, reaching the top (clean image) much faster.</p>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">🎯 Conditional Generation and Classifier-Free Guidance: Directing Generation</div>
+      <div class="concept-body">
+        <p>Conditional diffusion models enable generating images matching specific conditions like class labels or text descriptions. The simplest approach is to condition the denoising network on the condition information. When training, you pass both the noisy image and the condition to the network. During sampling, you provide the desired condition, and the network generates samples matching that condition. This straightforward approach works but requires paired data with condition labels during training.</p>
+
+        <p>Classifier-free guidance is a clever technique that removes the requirement for paired condition data during inference. The idea is to train the network with both conditioned and unconditional inputs. Sometimes you pass the condition, sometimes you don't (replacing it with a null token). The network learns to perform well in both cases. During sampling, you can guide generation toward a condition by taking steps that increase the conditional likelihood while decreasing unconditional likelihood. This guidance doesn't require training separate classifier networks; it comes from the single network's learned knowledge of conditioned versus unconditional generation.</p>
+
+        <p>Text-to-image models like DALL-E and Stable Diffusion use a variation where the network is conditioned on text embeddings. The same classifier-free guidance principle applies: during training, sometimes the text is provided, sometimes it's not. During sampling, guidance toward matching the text is achieved by steering generation toward the conditioned distribution. This elegant approach enables powerful control over generation without requiring additional training infrastructure.</p>
+
+        <p>Guided diffusion extends this by using external networks to provide additional guidance. For example, you might use a pre-trained classifier to guide generation toward specific classes. Or you might use a pre-trained model to constrain generation to match specific attributes. These guidance mechanisms enable steering diffusion models toward specific desired outputs while maintaining the quality benefits of the underlying diffusion process.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Imagine learning to dance. Unconditional learning teaches you to move well. Conditional learning teaches you to move in specific styles (ballet, hip-hop, contemporary). Classifier-free guidance is like learning both styles so well that you can emphasize one style over another during performance by exaggerating the differences. You don't need a separate teacher pointing out style differences; you learned enough about both styles to self-guide toward one or the other. This is how classifier-free guidance works: the network learns enough about conditional and unconditional generation that it can self-guide toward specific conditions.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding classifier-free guidance</span>
+
+<span class="code-keyword">def</span> <span class="code-function">training_with_classifier_free_guidance</span>(denoiser_network, x_0, condition, noise_schedule):
+    <span class="code-comment"># Train to handle both conditioned and unconditional cases</span>
+    
+    <span class="code-comment"># With some probability, use null condition (unconditional)</span>
+    <span class="code-keyword">if</span> random() < <span class="code-number">0.1</span>:  <span class="code-comment"># 10% unconditional</span>
+        condition = null_token
+    
+    t = sample_random_time()
+    x_t, noise = forward_diffusion_process(x_0, t, noise_schedule)
+    
+    <span class="code-comment"># Network receives both noisy image and condition</span>
+    predicted_noise = denoiser_network(x_t, t, condition)
+    loss = mean_squared_error(predicted_noise, noise)
+    
+    <span class="code-keyword">return</span> loss
+
+<span class="code-keyword">def</span> <span class="code-function">sampling_with_guidance</span>(denoiser_network, condition, guidance_scale, noise_schedule):
+    <span class="code-comment"># Sample with guidance toward the condition</span>
+    
+    x = randn(image_shape)  <span class="code-comment"># Start with noise</span>
+    
+    <span class="code-keyword">for</span> t <span class="code-keyword">in</span> <span class="code-function">range</span>(T, <span class="code-number">0</span>, -<span class="code-number">1</span>):
+        <span class="code-comment"># Predict noise using conditioned network</span>
+        noise_conditional = denoiser_network(x, t, condition)
+        
+        <span class="code-comment"># Predict noise using unconditional network (with null condition)</span>
+        noise_unconditional = denoiser_network(x, t, null_token)
+        
+        <span class="code-comment"># Guided step: move toward conditioned prediction</span>
+        <span class="code-comment"># guidance_scale controls how strongly to guide</span>
+        <span class="code-comment"># Higher guidance_scale = stronger adherence to condition</span>
+        predicted_noise = (
+            noise_unconditional + 
+            guidance_scale * (noise_conditional - noise_unconditional)
+        )
+        
+        <span class="code-comment"># Remove predicted noise as before</span>
+        alpha_t = noise_schedule.alpha_at_time(t)
+        x = (x - sqrt(<span class="code-number">1</span> - alpha_t) * predicted_noise) / sqrt(alpha_t)
+    
+    <span class="code-keyword">return</span> x
+
+<span class="code-comment"># Key insight: guidance_scale = 0 gives unconditional generation</span>
+<span class="code-comment"># guidance_scale = 1 gives standard conditional generation</span>
+<span class="code-comment"># guidance_scale > 1 gives strongly guided generation toward condition</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🎨 Latent Diffusion Models: Efficient Diffusion in Compressed Spaces</div>
+      <div class="concept-body">
+        <p>Full-resolution diffusion models are computationally expensive because they operate on high-dimensional images. Latent diffusion models address this by running diffusion in a learned latent space rather than pixel space. You first train an autoencoder to compress images into a compact latent representation, typically reducing dimensions by a factor of four to eight in each spatial dimension. Then you train the diffusion model on these compressed latents rather than raw pixels. During sampling, you generate in latent space then decode using the autoencoder decoder to get images.</p>
+
+        <p>This approach provides enormous computational benefits. Operating in compressed latent space means the diffusion network is smaller and sampling is faster. The autoencoder handles pixel-level reconstruction details, while the diffusion model focuses on semantic structure. Empirically, latent diffusion models match the quality of full-resolution models while being significantly faster. Stable Diffusion, one of the most popular text-to-image models, uses this approach.</p>
+
+        <p>The latent space enables additional flexibility. You can edit images by modifying latents, enabling inpainting and editing applications. You can guide generation using latent-space classifiers. The compressed representation is more interpretable and manipulable than raw pixels. This architectural choice demonstrates that diffusion models work well across different input spaces, not just pixel space.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Think about editing photographs. You could edit pixel-by-pixel, tweaking individual RGB values. Or you could work in a compressed space where high-level changes are easier. An editor working with compressed representations can make semantic changes easily: change an object's color without touching every pixel individually. Latent diffusion models exploit this principle: working in compressed semantic space is easier and faster than working in pixel space.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section>
+    <div class="section-label">Understanding Diffusion Models Holistically</div>
+    <h2 class="section-title">Diffusion Models: Why They Dominate Generative Modeling</h2>
+
+    <div class="insight-box" style="--insight-color: var(--cool);">
+      <div class="insight-title">Simplicity Enables Stability and Quality</div>
+      <div class="insight-content">Diffusion models are remarkable for how simple the training objective is: predict noise from noisy images. Despite this simplicity, the results are exceptional. The straightforward training objective creates stable training dynamics unlike GANs. There's no adversarial game creating instability, no mode collapse, no discriminator collapse. The network simply learns to predict noise at different noise levels. This simplicity, combined with solid mathematical foundations from probability theory, creates a robust framework that works well in practice. The simplicity extends to conditional generation through classifier-free guidance, which requires no additional supervision. The entire framework is elegant and principled, which contributes to its effectiveness and reliability.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--green);">
+      <div class="insight-title">Multiple Theoretical Perspectives Provide Complementary Understanding</div>
+      <div class="insight-content">Diffusion models can be understood as noise prediction, score-based models, or solutions to SDEs. None of these perspectives is complete alone. Noise prediction is intuitive and matches implementation. Score-based modeling connects to probability theory and gradients. SDE perspective enables mathematical analysis and reveals continuous-time structure. Understanding all three provides comprehensive insight into why diffusion models work and how they're related to other generative frameworks. This multi-perspective understanding is powerful because each view reveals different aspects of the overall system.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--warm);">
+      <div class="insight-title">Practical Innovations Enable Real Applications</div>
+      <div class="insight-content">The theoretical foundations of diffusion models are elegant, but practical innovations have been crucial for real-world deployment. DDIM reduced sampling steps dramatically. Classifier-free guidance enabled controlling generation without additional networks. Latent diffusion made training and sampling efficient. Text-to-image extensions paired with large language models created powerful generation systems. These practical innovations haven't just improved engineering efficiency; they've unlocked new capabilities and applications that wouldn't be possible with the basic formulation. The combination of elegant theory and practical engineering has made diffusion models the dominant generative modeling framework.</div>
+    </insight-box>
+
+  </section>
+
+</div>
+
+<footer>
+  <p class="footer-text">Diffusion Models — Learning to Generate Through Elegant Iterative Denoising</p>
+</footer>
+
+</body>
+</html>
