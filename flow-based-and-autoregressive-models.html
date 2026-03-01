@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flow-Based and Autoregressive Models — Exact Likelihood Through Transformations</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #04040a;
+  --accent: #7b2fff;
+  --hot: #ff2d78;
+  --cool: #00e5ff;
+  --warm: #ffb800;
+  --green: #00ff9d;
+  --text: #e0e0f0;
+  --muted: #4a4a6a;
+  --card: #0a0a14;
+  --border: rgba(255,255,255,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0,229,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,4,10,0.9);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-right: auto; letter-spacing: 2px; }
+.nav-pill {
+  font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(123,47,255,0.4);
+  color: rgba(123,47,255,0.8); text-decoration: none; transition: all 0.2s;
+}
+.nav-pill:hover { background: rgba(123,47,255,0.15); border-color: var(--accent); color: #fff; }
+
+.hero { padding: 90px 0 50px; }
+.hero-eyebrow {
+  font-family: 'Syne Mono', monospace; font-size: 11px; letter-spacing: 4px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(123,47,255,0.3); }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 100px);
+  line-height: 0.92; margin-bottom: 28px;
+  color: #fff;
+}
+
+.hero-desc { max-width: 750px; font-size: 16px; color: rgba(210,210,240,0.72); line-height: 1.8; margin-bottom: 40px; }
+
+section { padding: 70px 0; border-top: 1px solid var(--border); }
+.section-label { font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 64px); line-height: 1; margin-bottom: 40px; color: #fff; }
+
+.concept-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 36px;
+  border-left: 4px solid var(--card-accent, var(--accent));
+  transition: all 0.3s;
+}
+
+.concept-card:hover {
+  border-color: var(--card-accent, var(--accent));
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  transform: translateY(-2px);
+}
+
+.concept-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--card-accent, var(--accent));
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.concept-body {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.9;
+  margin-bottom: 28px;
+}
+
+.concept-body p {
+  margin-bottom: 18px;
+}
+
+.concept-body strong {
+  color: #fff;
+}
+
+.code-block {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 28px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #fff;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.code-comment { color: #5c7a8a; }
+.code-keyword { color: var(--accent); }
+.code-string { color: var(--green); }
+.code-number { color: var(--warm); }
+.code-function { color: var(--cool); }
+
+.teaching-box {
+  background: rgba(123,47,255,0.1);
+  border-left: 4px solid var(--accent);
+  padding: 24px;
+  border-radius: 10px;
+  margin: 28px 0;
+  font-size: 15px;
+  color: rgba(210,210,240,0.9);
+  line-height: 1.8;
+}
+
+.teaching-box strong {
+  color: #fff;
+}
+
+.impact-box {
+  background: linear-gradient(135deg, rgba(123,47,255,0.15) 0%, rgba(0,229,255,0.08) 100%);
+  border: 1px solid rgba(123,47,255,0.3);
+  border-radius: 14px;
+  padding: 32px;
+  margin-top: 32px;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.impact-item {
+  padding: 24px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  border-left: 4px solid var(--impact-color, var(--accent));
+}
+
+.impact-item-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--impact-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.impact-item-content {
+  font-size: 13px;
+  color: rgba(200,200,220,0.88);
+  line-height: 1.8;
+}
+
+.insight-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 28px 0;
+  border-left: 4px solid var(--insight-color, var(--accent));
+}
+
+.insight-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--insight-color, var(--accent));
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.insight-content {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.8;
+}
+
+footer {
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 60px 0 40px; }
+  section { padding: 50px 0; }
+  .impact-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">FLOW & AUTOREGRESSIVE MODELS</div>
+  <a href="#flows" class="nav-pill">Flows</a>
+  <a href="#autoregressive" class="nav-pill">Autoregressive</a>
+  <a href="#advanced" class="nav-pill">Advanced</a>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-eyebrow">Exact Likelihoods and Sequential Prediction</div>
+    <h1>Flow-Based and Autoregressive Models: Two Paths to Likelihood-Based Generation</h1>
+    <p class="hero-desc">While diffusion models have recently dominated generative modeling, two other families of models offer compelling alternatives with distinct advantages. Flow-based models take a mathematical approach: they learn invertible transformations that map between simple distributions and complex data distributions. Because the transformations are invertible, you can compute exact likelihoods, which diffusion models cannot do. Autoregressive models take a factorization approach: they learn to predict each element of data sequentially given all previous elements. This factorization turns density estimation into a tractable problem solvable through neural networks. Both approaches have deep mathematical foundations. Flow-based models rest on the change of variables formula from calculus, transforming probability densities through invertible transformations. Autoregressive models rest on probability factorization, decomposing joint distributions into products of conditionals. Understanding these approaches requires appreciating the elegant mathematics underlying them and recognizing the computational and practical tradeoffs compared to other generative models. Flow-based models enable exact likelihood computation but require architectures that are invertible. Autoregressive models enable flexible architectures but involve sequential computation during generation. This section teaches you both families from first principles, building from mathematical foundations through practical architectures. You'll understand how invertible transformations enable likelihood computation, how Neural ODEs provide continuous flows, and how autoregressive models like WaveNet revolutionized sequential generation. By the end, you'll appreciate how different generative modeling approaches represent different mathematical frameworks, each with distinct strengths and limitations.</p>
+  </section>
+
+  <section id="flows">
+    <div class="section-label">Understanding Invertible Transformations</div>
+    <h2 class="section-title">Flow-Based Models: Learning Invertible Mappings Between Distributions</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🔄 Normalizing Flows and the Change of Variables Formula</div>
+      <div class="concept-body">
+        <p>Flow-based models rest on a fundamental insight from calculus: if you apply an invertible transformation to data sampled from one distribution, you can compute the probability density under the new distribution using the change of variables formula. This formula tells you that when you transform data through an invertible function, the probability density transforms by dividing by the absolute value of the determinant of the Jacobian matrix. This mathematical relationship is powerful because it means you can map between distributions while maintaining the ability to compute exact likelihoods.</p>
+
+        <p>Let me make this concrete. Imagine you have data drawn from a simple distribution, say a standard normal distribution. If you apply an invertible transformation to this data, you get new data. The change of variables formula tells you the probability density of this new data. If you can learn an invertible transformation that maps standard normal data to realistic images, you can compute the exact likelihood of any image under the model. This is fundamentally different from GANs, which cannot compute likelihoods, or diffusion models, which compute likelihoods only under approximations.</p>
+
+        <p>A normalizing flow is a composition of many invertible transformations. Rather than learning a single transformation, you learn a sequence of transformations, each invertible. The composition of invertible functions is itself invertible. By composing many transformations, you can learn to map from simple distributions to complex data distributions. Each transformation in the sequence is called a flow step. The term normalizing refers to the fact that you normalize probability densities through the transformations. The Jacobian determinant of the composition can be computed as the product of Jacobian determinants of individual transformations.</p>
+
+        <p>The key challenge with flow-based models is that the Jacobian determinant is computationally expensive to compute for general invertible functions. For a function mapping from d-dimensional space to d-dimensional space, the Jacobian is a d by d matrix. Computing its determinant is O(d cubed) with standard methods. For high-dimensional data like images, this becomes prohibitively expensive. This is why flow-based models require special architectures designed to have tractable Jacobians.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Think about transforming coordinates. If you have data in (x, y) coordinates and transform to polar coordinates (r, θ), the probability density changes according to the Jacobian of the transformation. A uniform distribution in Cartesian space becomes non-uniform in polar space because the transformation stretches distances differently in different directions. The change of variables formula captures this precisely. Flow-based models exploit this principle: by learning transformations that stretch and warp space in specific ways, they can map between distributions while maintaining ability to compute probabilities. The mathematical relationship between distributions is encoded in the Jacobian.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding the change of variables formula</span>
+
+<span class="code-keyword">def</span> <span class="code-function">change_of_variables</span>(x_original, transformation, jacobian_fn):
+    <span class="code-comment"># If y = f(x) where f is invertible, then:</span>
+    <span class="code-comment"># p_y(y) = p_x(f^{-1}(y)) * |det(J_{f^{-1}}(y))|</span>
+    <span class="code-comment"># Or equivalently:</span>
+    <span class="code-comment"># p_y(f(x)) = p_x(x) / |det(J_f(x))|</span>
+    <span class="code-comment"># where J is the Jacobian matrix of the transformation</span>
+    
+    <span class="code-comment"># Apply transformation</span>
+    x_transformed = transformation(x_original)
+    
+    <span class="code-comment"># Compute Jacobian matrix</span>
+    jacobian_matrix = jacobian_fn(x_original)
+    
+    <span class="code-comment"># Compute determinant of Jacobian</span>
+    <span class="code-comment"># This is computationally expensive for high dimensions!</span>
+    log_det_jacobian = log(abs(det(jacobian_matrix)))
+    
+    <span class="code-comment"># Probability density under transformed distribution</span>
+    <span class="code-comment"># p_x(x) is from simple distribution (e.g., standard normal)</span>
+    p_x = standard_normal_pdf(x_original)
+    log_p_x = log(p_x)
+    
+    <span class="code-comment"># Apply change of variables</span>
+    log_p_transformed = log_p_x - log_det_jacobian
+    
+    <span class="code-keyword">return</span> log_p_transformed
+
+<span class="code-comment"># Key insight:</span>
+<span class="code-comment"># - Invertible transformation maps between distributions</span>
+<span class="code-comment"># - Change of variables formula enables exact likelihood computation</span>
+<span class="code-comment"># - Jacobian determinant captures how transformation distorts space</span>
+<span class="code-comment"># - Challenge: computing determinant is expensive for high dimensions</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">🎯 Real NVP and Invertible Network Architecture</div>
+      <div class="concept-body">
+        <p>Real NVP (Non-Volume Preserving) is an architecture designed to have tractable Jacobian determinants. Rather than learning fully general invertible transformations, Real NVP uses a clever architectural choice: affine coupling layers. In each layer, you split the input into two parts. The first part passes through unchanged. The second part is transformed by an affine transformation whose parameters are computed by a neural network applied to the first part. This structure is invertible by construction: to invert, you compute the affine transformation parameters from the first part, apply the inverse affine transformation to the second part, then concatenate. The Jacobian is lower triangular, so its determinant is the product of diagonal entries, which are the scaling factors from the affine transformation.</p>
+
+        <p>This clever architectural choice elegantly solves the Jacobian computation problem. Rather than O(d cubed) computation, you can compute the determinant in O(d). The network only needs to output scaling factors for the affine transformation, not full Jacobians. By composing many such coupling layers with different partitions, you can learn expressive invertible transformations. Later layers use different partitionings so that different dimensions are transformed, enabling complex transformations with tractable Jacobians.</p>
+
+        <p>Glow extends Real NVP by adding additional architectural improvements. It adds actnorm layers that normalize activations, improving training stability. It uses learned permutations of dimensions instead of fixed partitions, enabling more flexible transformations. Despite these improvements, flow-based models still tend to produce lower-quality images compared to diffusion or GAN-based models, though they have the advantage of exact likelihood computation.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Think about a magic trick where the magician splits the audience: some see one hand, others see the other hand. Each group follows a simple rule based on what the magician says. The magic is that the rules are carefully designed so that they can be reversed. Coupling layers work similarly: they partition the input, apply simple invertible rules to each part, and by stacking many such layers with different partitions, enable learning complex transformations. The simplicity of each layer (affine transformation with parameters computed by a network) makes the Jacobian computation tractable, while the composition enables expressiveness.</p>
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🌊 Neural ODEs and Continuous Flows</div>
+      <div class="concept-body">
+        <p>Neural ODEs take a radically different approach to flows by viewing the transformation as the solution to an ordinary differential equation. Rather than applying a sequence of discrete transformations, you define a continuous transformation where the rate of change is specified by a neural network. The forward transformation solves the ODE from time zero to time one. To compute likelihoods, you use the trace of the Jacobian, which satisfies another ODE that can be solved simultaneously. This continuous perspective enables elegant mathematics and efficient computation of likelihoods without explicitly computing Jacobians.</p>
+
+        <p>The advantage of Neural ODEs is that you don't need to design clever architectures like coupling layers. The neural network can learn arbitrary transformations, and the continuous formulation handles likelihood computation. The disadvantage is that sampling requires solving ODEs numerically, which is slower than applying discrete transformations. Training also requires solving ODEs, which adds computational cost. Despite these challenges, Neural ODEs represent an intellectually elegant approach to generative modeling that unifies flows with differential equations.</p>
+
+        <p>The mathematical foundation is that the change of variables formula extends to continuous transformations through Jacobian trace computations. Rather than computing determinants of high-dimensional matrices, you compute traces, which are sums of diagonal elements and significantly easier to compute. This mathematical insight enables making Neural ODEs practical despite the continuous formulation.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Think about watching a ball move through space according to physics laws. You can describe its position as the solution to differential equations rather than listing discrete positions. Neural ODEs work similarly: rather than a sequence of discrete transformations, the data follows a continuous transformation path governed by differential equations. The equations are learned by neural networks, enabling flexible transformations. The continuous perspective provides elegant mathematics that avoids explicit Jacobian computation.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="autoregressive">
+    <div class="section-label">Learning Sequential Distributions</div>
+    <h2 class="section-title">Autoregressive Models: Sequential Prediction as Generative Modeling</h2>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">🔗 Autoregressive Factorization: Breaking Down Joint Distributions</div>
+      <div class="concept-body">
+        <p>Autoregressive models approach generation through probability factorization. Rather than learning a single model for the joint distribution of all data elements, you factor the joint distribution into a product of conditional distributions. For a sequence x_1, x_2, ..., x_n, the joint probability can be written as the product of the probability of the first element times the conditional probability of each subsequent element given all previous elements. This factorization is exact and doesn't lose any information. But it transforms the problem from learning a single complex distribution to learning a sequence of simpler conditional distributions.</p>
+
+        <p>This factorization is remarkably clever because neural networks are good at learning conditional distributions. If you train a neural network to predict x_i given x_1, ..., x_{i-1}, you're solving a tractable supervised learning problem. You can use standard supervised learning techniques with the network's output parameterizing the conditional distribution. To generate, you sample x_1 from the marginal, then sample x_2 from its conditional distribution given x_1, then x_3 given x_1 and x_2, and so on. The joint distribution emerges from the product of these conditionals.</p>
+
+        <p>The challenge with autoregressive models is that generation is inherently sequential. To generate one element, you must first generate all previous elements. For an image with thousands of pixels, generating them one by one is slow. For audio with hundreds of thousands of samples, generation becomes very slow. The tradeoff is that learning is efficient: each conditional distribution is simple to learn, and you don't need special architectures like coupling layers. The architecture can be any network that maps previous elements to a distribution over the next element.</p>
+
+        <p>PixelCNN pioneered applying autoregressive modeling to images. Rather than treating images as flat vectors, PixelCNN treats them as spatial sequences, predicting pixels one by one, scanning left-to-right, top-to-bottom. The network receives all previously generated pixels and predicts the distribution over the next pixel. Through careful masking, the network can only attend to pixels that have already been generated, respecting the autoregressive constraint. PixelCNN++ improved upon this with mixture of logistics losses and other techniques that improve sample quality.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Imagine learning to tell a story. Rather than creating the entire narrative simultaneously, you tell it sequentially: first sentence, then the next sentence given the first, then the next given the previous two, and so on. Each sentence builds on previous context. Autoregressive models work similarly: each element is predicted given previous elements. The advantage is that learning conditional distributions is easier than learning the full joint. The disadvantage is that telling the story element by element is slower than having the whole story available at once. But the sequential constraint provides structure that neural networks can learn effectively.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding autoregressive factorization</span>
+
+<span class="code-keyword">def</span> <span class="code-function">autoregressive_likelihood</span>(data, network):
+    <span class="code-comment"># Autoregressive factorization:</span>
+    <span class="code-comment"># p(x) = p(x_1) * p(x_2|x_1) * p(x_3|x_1,x_2) * ... * p(x_n|x_1...x_{n-1})</span>
+    
+    n = len(data)
+    log_likelihood = <span class="code-number">0</span>
+    
+    <span class="code-comment"># For each position in sequence</span>
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(n):
+        <span class="code-comment"># Get context: all previous elements</span>
+        context = data[:i]  <span class="code-comment"># Elements x_1 to x_i</span>
+        target = data[i]    <span class="code-comment"># Element we're predicting</span>
+        
+        <span class="code-comment"># Network outputs distribution over next element</span>
+        <span class="code-comment"># given context (all previous elements)</span>
+        distribution_params = network(context)
+        
+        <span class="code-comment"># Compute conditional probability of target under this distribution</span>
+        conditional_prob = compute_probability(target, distribution_params)
+        
+        <span class="code-comment"># Add log probability to running total</span>
+        log_likelihood += log(conditional_prob)
+    
+    <span class="code-keyword">return</span> log_likelihood
+
+<span class="code-keyword">def</span> <span class="code-function">autoregressive_sampling</span>(network, sequence_length):
+    <span class="code-comment"># Generate sequentially, one element at a time</span>
+    
+    generated_sequence = []
+    
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(sequence_length):
+        <span class="code-comment"># Get context from already-generated elements</span>
+        context = generated_sequence  <span class="code-comment"># Everything generated so far</span>
+        
+        <span class="code-comment"># Network predicts distribution over next element</span>
+        distribution_params = network(context)
+        
+        <span class="code-comment"># Sample next element from this distribution</span>
+        next_element = sample_from_distribution(distribution_params)
+        
+        generated_sequence.append(next_element)
+    
+    <span class="code-keyword">return</span> generated_sequence
+
+<span class="code-comment"># Key tradeoff:</span>
+<span class="code-comment"># - Learning: efficient, each conditional is simple</span>
+<span class="code-comment"># - Sampling: slow, must generate sequentially</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🎵 WaveNet and Audio Generation: Temporal Patterns Through Receptive Fields</div>
+      <div class="concept-body">
+        <p>WaveNet is a landmark autoregressive architecture designed for audio generation. Audio is fundamentally different from images: it's inherently sequential with temporal structure. WaveNet uses dilated convolutions to build large receptive fields efficiently. Each layer applies convolutions with exponentially increasing dilation (spacing between kernel elements), enabling each output to depend on increasingly long histories of the input. This architecture is efficient because you don't need to store the entire sequence in memory; you only need to store the receptive field, and dilated convolutions enable large receptive fields with few layers.</p>
+
+        <p>WaveNet was revolutionary because it showed that pure sequence modeling could produce high-quality, realistic audio. Before WaveNet, audio generation typically used explicit acoustic models. WaveNet demonstrated that end-to-end learning from raw waveforms produces better results. The key innovation was combining autoregressive factorization with careful architecture design that makes sequential modeling tractable. WaveNet produces audio that sounds remarkably natural because it learns the statistical structure of sound through direct waveform prediction.</p>
+
+        <p>WaveNet uses mixture of logistics distributions for the output, parameterizing a mixture of logistic distributions. This output distribution is more flexible than simple Gaussian or categorical distributions, enabling modeling of complex acoustic phenomena. The mixture of logistics loss is particularly effective for continuous data like audio samples, capturing multimodality and tail behavior better than Gaussian assumptions.</p>
+
+        <p>Transformer-based autoregressive models apply the same autoregressive factorization using Transformer architecture. Rather than dilated convolutions, they use self-attention to build context, with masking ensuring positions only attend to previous positions. Transformers can be more expressive than dilated convolutions, though they require more memory for long sequences. Many modern language models use this approach, including GPT models.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Imagine learning to compose music. Rather than creating the entire symphony simultaneously, you compose note by note. The next note depends on all previous notes: their pitches, durations, and how they harmonize. Early in the piece, you have limited context. Later, you have long context with many musical ideas to consider. Dilated convolutions are like using increasingly distant reference points to ensure you're thinking about both recent notes and broader musical structure. WaveNet works similarly for audio: predicting each sample given all previous samples, using dilated convolutions to efficiently manage long-range dependencies.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="advanced">
+    <div class="section-label">Specialized Architectures and Techniques</div>
+    <h2 class="section-title">Advanced Models: Gated PixelCNN and Specialized Distributions</h2>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">🖼️ Gated PixelCNN and Convolutional Gating</div>
+      <div class="concept-body">
+        <p>Gated PixelCNN improves upon PixelCNN by introducing gating mechanisms inspired by gated recurrent units. The network uses gated convolutions where each convolutional layer has two paths: one applies convolution and tanh nonlinearity, the other applies sigmoid nonlinearity. The sigmoid output acts as a gate, controlling what information flows forward. This gating mechanism allows the network to learn which features are important for prediction, improving expressiveness. Additionally, Gated PixelCNN uses residual connections to improve gradient flow and training stability through deep networks.</p>
+
+        <p>The architecture uses separate vertical and horizontal stacks with specific masking. The vertical stack looks at pixels above the current pixel, while the horizontal stack looks at pixels to the left. This separation of dependencies enables learning different aspects of images: vertical stack captures vertical structure, horizontal stack captures horizontal patterns. The stacks are combined through careful masking to maintain the autoregressive constraint while enabling rich feature learning.</p>
+
+        <p>Gated PixelCNN++ further improves with mixture of logistics loss, conditioning tricks, and additional architectural refinements. The mixture of logistics loss is particularly important, enabling modeling of continuous pixel values (typically represented as values between zero and one) with more flexibility than assuming Gaussian distributions. This output distribution naturally captures dependencies and correlations between color channels.</p>
+      </div>
+
+      <div class="teaching-box">
+        <p>Gating mechanisms are like decision gates in processing. Rather than always using all available information, gating learns what information matters for each decision. Some pixels strongly influence the next pixel's color, others don't. Gating mechanisms learn these importances, focusing computation on relevant information. When combined with vertical and horizontal stacks, the network separates learning different types of spatial patterns, much like human vision uses different neural pathways for vertical and horizontal edge detection.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section>
+    <div class="section-label">Understanding Flow and Autoregressive Models</div>
+    <h2 class="section-title">Comparing Frameworks: Mathematical Elegance vs. Practical Efficiency</h2>
+
+    <div class="insight-box" style="--insight-color: var(--cool);">
+      <div class="insight-title">Flow-Based Models Provide Exact Likelihoods at Architectural Cost</div>
+      <div class="insight-content">Flow-based models enable computing exact likelihoods of data, which neither GANs nor diffusion models can do. This is mathematically elegant and useful for likelihood-based evaluation and Bayesian inference. However, achieving this requires carefully designed invertible architectures like coupling layers that have tractable Jacobians. The architectural constraints limit expressiveness compared to unrestricted networks. The practical result is that flow-based models produce lower-quality images than diffusion models or GANs. They're powerful for applications where exact likelihoods matter more than sample quality, but they're not optimal when high-quality generation is the priority.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--green);">
+      <div class="insight-title">Autoregressive Models Trade Generation Speed for Learning Simplicity</div>
+      <div class="insight-content">Autoregressive models enable flexible architectures without special invertible constraints. Any network that maps context to conditional distributions works. Training is efficient because you're solving standard supervised learning problems: predicting each element given previous elements. However, generation is inherently sequential, requiring generating each element one by one. For images with thousands of pixels or audio with hundreds of thousands of samples, this sequential generation becomes prohibitively slow. The tradeoff between learning efficiency and generation speed is fundamental to the autoregressive approach. Recent work on distillation and acceleration techniques attempts to mitigate this, but fundamental sequential dependency remains.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--warm);">
+      <div class="insight-title">Complementary Strengths Enable Ensemble Approaches</div>
+      <div class="insight-content">Flow-based, autoregressive, diffusion, and GAN models each have distinct strengths. Flow-based models provide exact likelihoods. Autoregressive models enable flexible architectures. Diffusion models produce high-quality samples quickly. GANs are fast for generation. Modern applications often combine multiple approaches: using diffusion for high-quality image generation, autoregressive models for sequence generation where generation speed matters less, and flow-based models where likelihood computation is important. Understanding all these frameworks enables choosing the right approach for each problem's specific requirements.</div>
+    </insight-box>
+
+  </section>
+
+</div>
+
+<footer>
+  <p class="footer-text">Flow-Based and Autoregressive Models — Mathematical Elegance in Generative Modeling</p>
+</footer>
+
+</body>
+</html>
