@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Computer Vision Tasks with CNNs — From Perception to Understanding</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #04040a;
+  --accent: #7b2fff;
+  --hot: #ff2d78;
+  --cool: #00e5ff;
+  --warm: #ffb800;
+  --green: #00ff9d;
+  --text: #e0e0f0;
+  --muted: #4a4a6a;
+  --card: #0a0a14;
+  --border: rgba(255,255,255,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0,229,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,4,10,0.9);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-right: auto; letter-spacing: 2px; }
+.nav-pill {
+  font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(123,47,255,0.4);
+  color: rgba(123,47,255,0.8); text-decoration: none; transition: all 0.2s;
+}
+.nav-pill:hover { background: rgba(123,47,255,0.15); border-color: var(--accent); color: #fff; }
+
+.hero { padding: 90px 0 50px; }
+.hero-eyebrow {
+  font-family: 'Syne Mono', monospace; font-size: 11px; letter-spacing: 4px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(123,47,255,0.3); }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 100px);
+  line-height: 0.92; margin-bottom: 28px;
+  color: #fff;
+}
+
+.hero-desc { max-width: 750px; font-size: 16px; color: rgba(210,210,240,0.72); line-height: 1.8; margin-bottom: 40px; }
+
+section { padding: 70px 0; border-top: 1px solid var(--border); }
+.section-label { font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 64px); line-height: 1; margin-bottom: 40px; color: #fff; }
+
+.concept-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 36px;
+  border-left: 4px solid var(--card-accent, var(--accent));
+  transition: all 0.3s;
+}
+
+.concept-card:hover {
+  border-color: var(--card-accent, var(--accent));
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  transform: translateY(-2px);
+}
+
+.concept-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--card-accent, var(--accent));
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.concept-body {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.9;
+  margin-bottom: 28px;
+}
+
+.concept-body p {
+  margin-bottom: 18px;
+}
+
+.concept-body strong {
+  color: #fff;
+}
+
+.code-block {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 28px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #fff;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.code-comment { color: #5c7a8a; }
+.code-keyword { color: var(--accent); }
+.code-string { color: var(--green); }
+.code-number { color: var(--warm); }
+.code-function { color: var(--cool); }
+
+.teaching-box {
+  background: rgba(123,47,255,0.1);
+  border-left: 4px solid var(--accent);
+  padding: 24px;
+  border-radius: 10px;
+  margin: 28px 0;
+  font-size: 15px;
+  color: rgba(210,210,240,0.9);
+  line-height: 1.8;
+}
+
+.teaching-box strong {
+  color: #fff;
+}
+
+.impact-box {
+  background: linear-gradient(135deg, rgba(123,47,255,0.15) 0%, rgba(0,229,255,0.08) 100%);
+  border: 1px solid rgba(123,47,255,0.3);
+  border-radius: 14px;
+  padding: 32px;
+  margin-top: 32px;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.impact-item {
+  padding: 24px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  border-left: 4px solid var(--impact-color, var(--accent));
+}
+
+.impact-item-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--impact-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.impact-item-content {
+  font-size: 13px;
+  color: rgba(200,200,220,0.88);
+  line-height: 1.8;
+}
+
+.insight-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 28px 0;
+  border-left: 4px solid var(--insight-color, var(--accent));
+}
+
+.insight-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--insight-color, var(--accent));
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.insight-content {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.8;
+}
+
+footer {
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 60px 0 40px; }
+  section { padding: 50px 0; }
+  .impact-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">COMPUTER VISION TASKS</div>
+  <a href="#detection" class="nav-pill">Detection</a>
+  <a href="#segmentation" class="nav-pill">Segmentation</a>
+  <a href="#advanced" class="nav-pill">Advanced</a>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-eyebrow">From Image Understanding to Scene Comprehension</div>
+    <h1>Computer Vision Tasks with CNNs: Solving the Full Spectrum of Visual Problems</h1>
+    <p class="hero-desc">Computer vision encompasses far more than simply classifying images into categories. The real world requires machines to understand images at multiple levels of detail and in diverse ways. Sometimes you need to identify what objects are present in an image. Sometimes you need to know precisely where those objects are located. Sometimes you need to identify every pixel belonging to a particular object or category. Sometimes you need to understand the three-dimensional structure of a scene. Sometimes you need to recognize faces or detect human body poses. Sometimes you need to track motion through video sequences. Each of these tasks requires different network architectures, different loss functions, and different training strategies, yet they all build on the convolutional neural network foundations you've learned. This section teaches you the major computer vision tasks and how they're solved with deep learning. You'll understand the progression from simple image classification through sophisticated three-dimensional scene understanding. You'll learn that each task has fundamentally different requirements. Classification requires understanding what is present. Detection requires localizing objects precisely. Segmentation requires understanding every pixel. Pose estimation requires finding specific key points. Three-dimensional tasks require understanding space and structure. By understanding these tasks deeply, you'll be equipped to tackle real-world vision problems and recognize when specialized architectures are necessary.</p>
+  </section>
+
+  <section id="detection">
+    <div class="section-label">Locating Objects in Images</div>
+    <h2 class="section-title">Object Detection: Finding What and Where</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🎯 Understanding Object Detection: Beyond Classification</div>
+      <div class="concept-body">
+        <p>Image classification tells you what objects are present in an entire image, but it doesn't tell you where those objects are located. Object detection answers a more complex question: what objects are present, and where in the image does each one appear? The answer to where is typically provided as a bounding box, a rectangle that encompasses the object. A bounding box is defined by four numbers: the x and y coordinates of the top-left corner, and the width and height of the rectangle. Some methods instead provide center coordinates and dimensions, but the idea is the same.</p>
+
+        <p>Object detection is fundamentally harder than classification because the network must solve multiple sub-problems simultaneously. It must identify what objects are present, but it must also predict bounding boxes for each object. Additionally, images often contain multiple objects of the same class, and the network must detect all of them. The network must also handle objects at different scales (large objects near the camera and small objects far away), objects with different aspect ratios (tall and narrow or short and wide), and partially occluded objects (objects that are partially hidden by other objects or image boundaries). These challenges make object detection significantly more complex than classification.</p>
+
+        <p>Different object detection approaches have evolved to solve these challenges in different ways. Some approaches, like YOLO, treat detection as a regression problem. The image is divided into a grid, and for each grid cell, the network predicts whether an object is present, the bounding box coordinates, and the object class. This approach is fast because it requires only a single forward pass through the network. Other approaches, like Faster R-CNN, use a region-based approach. The network first identifies candidate regions likely to contain objects, then classifies and refines bounding boxes for these regions. This approach is typically more accurate but slower because it must process multiple regions.</p>
+
+        <p>Loss functions for object detection are more complex than for classification because they must combine multiple objectives. You need to penalize incorrect class predictions, incorrect bounding box coordinates, and false positives (detecting objects that aren't there). The challenge is balancing these different objectives. A common approach is to use a weighted sum of losses for different components. For bounding box regression, smooth L1 loss or GIoU loss are often used because they're more robust to outliers than squared error loss. For classification, focal loss is sometimes used to address the class imbalance problem where negative examples (background) vastly outnumber positive examples (actual objects).</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding object detection as a multi-task learning problem.</strong> Imagine a teacher grading student work on two dimensions: whether they understood the concept (classification) and how well they explained their thinking (quality). Grading only on one dimension would miss important information. You need to assess both. Object detection similarly requires assessing multiple dimensions: the class of each object and the precise location of each object. The challenge is that different mistakes have different costs. Misclassifying a cat as a dog is one type of error. Predicting a bounding box that's off by a few pixels is a different type of error. Designing good loss functions means understanding how to penalize these different mistakes appropriately so the network learns to do both tasks well.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding object detection architectures and approaches</span>
+
+<span class="code-comment"># YOLO-style approach: divide image into grid, predict boxes and classes</span>
+<span class="code-keyword">def</span> <span class="code-function">yolo_output_interpretation</span>(predictions):
+    <span class="code-comment"># Predictions shape: (batch, grid_h, grid_w, 5 + num_classes)</span>
+    <span class="code-comment"># Each grid cell predicts:</span>
+    <span class="code-comment">#   - 4 bounding box values (x, y, w, h relative to cell)</span>
+    <span class="code-comment">#   - 1 objectness score (confidence that cell contains object)</span>
+    <span class="code-comment">#   - num_classes class probabilities</span>
+    
+    batch_size, grid_h, grid_w, output_size = predictions.shape
+    num_classes = output_size - <span class="code-number">5</span>
+    
+    bboxes = []
+    confidences = []
+    class_probs = []
+    
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> <span class="code-function">range</span>(grid_h):
+        <span class="code-keyword">for</span> j <span class="code-keyword">in</span> <span class="code-function">range</span>(grid_w):
+            <span class="code-comment"># Extract predictions for this grid cell</span>
+            cell_pred = predictions[<span class="code-number">0</span>, i, j, :]
+            
+            <span class="code-comment"># Bounding box in cell-relative coordinates</span>
+            x, y, w, h = cell_pred[<span class="code-number">0</span>:<span class="code-number">4</span>]
+            <span class="code-comment"># Convert to absolute coordinates</span>
+            x_abs = (j + x) <span class="code-comment"># Relative to grid position</span>
+            y_abs = (i + y)
+            
+            <span class="code-comment"># Objectness: how likely this cell contains an object</span>
+            objectness = cell_pred[<span class="code-number">4</span>]
+            
+            <span class="code-comment"># Class probabilities</span>
+            class_probs_cell = cell_pred[<span class="code-number">5</span>:]
+            
+            <span class="code-comment"># Store predictions that have high confidence</span>
+            <span class="code-keyword">if</span> objectness > <span class="code-number">0.5</span>:
+                bboxes.append((x_abs, y_abs, w, h))
+                confidences.append(objectness)
+                class_probs.append(class_probs_cell)
+    
+    <span class="code-keyword">return</span> bboxes, confidences, class_probs
+
+<span class="code-comment"># Faster R-CNN style approach: find candidate regions, then classify and refine</span>
+<span class="code-keyword">def</span> <span class="code-function">region_based_detection_pipeline</span>(image, model):
+    <span class="code-comment"># Step 1: Extract feature map from backbone (ResNet, etc)</span>
+    backbone = model.backbone
+    feature_map = backbone(image)
+    
+    <span class="code-comment"># Step 2: Region Proposal Network finds candidate regions</span>
+    rpn = model.rpn
+    region_proposals = rpn(feature_map)
+    
+    <span class="code-comment"># Step 3: For each proposal, extract features and classify</span>
+    roi_head = model.roi_head
+    predictions = []
+    
+    <span class="code-keyword">for</span> proposal <span class="code-keyword">in</span> region_proposals:
+        <span class="code-comment"># Extract RoI (Region of Interest) from feature map</span>
+        roi_features = roi_head.pool(feature_map, proposal)
+        
+        <span class="code-comment"># Classify the region and refine bbox</span>
+        class_pred = roi_head.classifier(roi_features)
+        bbox_pred = roi_head.bbox_regressor(roi_features)
+        
+        predictions.append({
+            <span class="code-string">'class'</span>: class_pred,
+            <span class="code-string">'bbox'</span>: bbox_pred,
+            <span class="code-string">'proposal'</span>: proposal
+        })
+    
+    <span class="code-keyword">return</span> predictions
+
+<span class="code-comment"># Two paradigms for object detection:</span>
+<span class="code-comment"># Single-stage (YOLO, SSD): one forward pass, grid-based predictions</span>
+<span class="code-comment"># Two-stage (Faster R-CNN): propose regions then classify, more accurate</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">⚡ Object Detection Architectures: Different Approaches to the Same Problem</div>
+      <div class="concept-body">
+        <p>YOLO revolutionized object detection by treating it as a single-stage problem where a single neural network predicts all bounding boxes and class probabilities in one forward pass. The image is divided into a grid, and for each grid cell, the network predicts the probability that an object is centered in that cell, bounding box coordinates, and the class of that object. YOLO is fast because of this single forward pass approach, making it suitable for real-time applications. However, YOLO struggles with multiple objects in the same grid cell because each cell predicts only one object.</p>
+
+        <p>SSD extends YOLO's approach by using multiple feature maps at different scales. Early feature maps (which are larger but coarser) detect large objects. Later feature maps (which are smaller but have more detail) detect small objects. By using multiple scales, SSD handles objects of different sizes better than YOLO while maintaining single-stage efficiency. RetinaNet introduces focal loss to address class imbalance, where the vast majority of grid cells contain background (no objects). Focal loss down-weights easy examples and focuses training on hard examples, dramatically improving detection of small and occluded objects.</p>
+
+        <p>Faster R-CNN uses a two-stage approach. The first stage uses a Region Proposal Network to identify candidate regions likely to contain objects. The second stage classifies these proposals and refines their bounding boxes. The advantage is higher accuracy because the network can focus on regions that matter rather than processing the entire image uniformly. The disadvantage is slower speed because processing multiple regions is more expensive than a single forward pass. Mask R-CNN extends Faster R-CNN by adding a branch for instance segmentation, predicting a pixel-level mask for each detected object.</p>
+
+        <p>These different approaches represent different points on the accuracy-speed tradeoff. YOLO and SSD prioritize speed. Faster R-CNN and Mask R-CNN prioritize accuracy. The choice depends on your application's requirements. For autonomous vehicles and robots, speed is critical. For analyzing photographs after the fact, accuracy is paramount.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="segmentation">
+    <div class="section-label">Understanding Pixels and Regions</div>
+    <h2 class="section-title">Segmentation: From Detection to Pixel-Level Understanding</h2>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🖼️ Semantic vs Instance vs Panoptic Segmentation: Different Levels of Understanding</div>
+      <div class="concept-body">
+        <p>Segmentation goes beyond object detection by assigning a class label to every pixel in an image. In semantic segmentation, all pixels belonging to the same object class receive the same label. If an image contains two cats and a dog, all cat pixels receive the cat label and all dog pixels receive the dog label. However, the two cats are not distinguished as separate objects. Instance segmentation makes this distinction. Each object receives a unique label, so the two cats are treated as separate instances. Panoptic segmentation combines these two concepts by assigning both a class label and an instance identifier to each pixel.</p>
+
+        <p>Let me clarify these differences with a concrete example. Imagine a photograph containing two people sitting on a couch. In semantic segmentation, all pixels belonging to both people would be labeled as person. You wouldn't distinguish between the two people. In instance segmentation, the first person's pixels would be labeled as person_1 and the second person's pixels would be labeled as person_2. Panoptic segmentation would do both: label all person pixels and distinguish which pixels belong to which person.</p>
+
+        <p>Semantic segmentation requires a different architecture than classification because the output must have the same spatial resolution as the input. Classification networks progressively reduce spatial resolution through pooling and striding. Segmentation networks must maintain or recover spatial resolution. U-Net introduces skip connections that connect early high-resolution feature maps to later layers, allowing the network to maintain spatial information while still benefiting from the hierarchical feature learning of deeper networks. The U-shaped architecture (hence the name) encodes the image down to a bottleneck feature map, then decodes back up, recovering spatial resolution while benefiting from learned high-level features.</p>
+
+        <p>FCNs (Fully Convolutional Networks) use transposed convolutions to upsample feature maps to the original image resolution. This approach is simpler than U-Net but often less accurate because upsampling loses information. DeepLab introduces atrous convolution (dilated convolution), which increases the receptive field without reducing resolution. This allows capturing contextual information important for understanding the entire image before making per-pixel decisions.</p>
+
+        <p>Instance segmentation is more complex than semantic segmentation because it must not only classify pixels but also group them into separate object instances. Mask R-CNN combines the region-based detection approach of Faster R-CNN with a mask prediction head. For each detected object, the network predicts a binary mask indicating which pixels belong to that object. This approach is very accurate but computationally expensive because it processes multiple regions.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding segmentation as precise spatial understanding.</strong> Imagine being a teacher grading student essays. Classification would be like giving a single overall grade. Object detection would be like identifying which paragraphs are well-written and which are problematic. Semantic segmentation would be like marking every sentence as well-written or problematic, without distinguishing which sentences belong to different ideas. Instance segmentation would be like marking every sentence and also grouping them by idea, so you know which sentences belong together. Panoptic segmentation does both. Segmentation tasks require increasingly precise spatial understanding, from coarse object locations to pixel-level accuracy.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding segmentation architectures: encoders and decoders</span>
+
+<span class="code-keyword">class</span> <span class="code-function">UNetSegmentation</span>:
+    <span class="code-comment"># U-Net: encoder-decoder with skip connections for segmentation</span>
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(<span class="code-keyword">self</span>, num_classes):
+        <span class="code-comment"># Encoder: progressively downsample and extract features</span>
+        <span class="code-keyword">self</span>.enc1 = ConvBlock(<span class="code-number">3</span>, <span class="code-number">64</span>)      <span class="code-comment"># 256x256 -> 256x256</span>
+        <span class="code-keyword">self</span>.pool1 = MaxPool()              <span class="code-comment"># 256x256 -> 128x128</span>
+        <span class="code-keyword">self</span>.enc2 = ConvBlock(<span class="code-number">64</span>, <span class="code-number">128</span>)
+        <span class="code-keyword">self</span>.pool2 = MaxPool()              <span class="code-comment"># 128x128 -> 64x64</span>
+        
+        <span class="code-comment"># Bottleneck</span>
+        <span class="code-keyword">self</span>.bottleneck = ConvBlock(<span class="code-number">128</span>, <span class="code-number">256</span>)
+        
+        <span class="code-comment"># Decoder: progressively upsample and recover resolution</span>
+        <span class="code-keyword">self</span>.upconv2 = TransposedConv()    <span class="code-comment"># 64x64 -> 128x128</span>
+        <span class="code-comment"># Skip connection: concatenate with enc2 features</span>
+        <span class="code-keyword">self</span>.dec2 = ConvBlock(<span class="code-number">256</span>, <span class="code-number">128</span>)
+        
+        <span class="code-keyword">self</span>.upconv1 = TransposedConv()    <span class="code-comment"># 128x128 -> 256x256</span>
+        <span class="code-comment"># Skip connection: concatenate with enc1 features</span>
+        <span class="code-keyword">self</span>.dec1 = ConvBlock(<span class="code-number">128</span>, <span class="code-number">64</span>)
+        
+        <span class="code-comment"># Final layer: output per-pixel class predictions</span>
+        <span class="code-keyword">self</span>.final = Conv(<span class="code-number">64</span>, num_classes, kernel_size=<span class="code-number">1</span>)
+    
+    <span class="code-keyword">def</span> <span class="code-function">forward</span>(<span class="code-keyword">self</span>, x):
+        <span class="code-comment"># Encoder path: extract features at multiple scales</span>
+        enc1 = self.enc1(x)
+        pool1 = self.pool1(enc1)
+        enc2 = self.enc2(pool1)
+        pool2 = self.pool2(enc2)
+        
+        <span class="code-comment"># Bottleneck: deepest learned features</span>
+        bottleneck = self.bottleneck(pool2)
+        
+        <span class="code-comment"># Decoder path: recover resolution using skip connections</span>
+        <span class="code-comment"># Key insight: skip connections carry spatial information</span>
+        upconv2 = self.upconv2(bottleneck)
+        <span class="code-comment"># Concatenate skip connection from encoder</span>
+        dec2_input = torch.cat([upconv2, enc2], dim=<span class="code-number">1</span>)
+        dec2 = self.dec2(dec2_input)
+        
+        upconv1 = self.upconv1(dec2)
+        dec1_input = torch.cat([upconv1, enc1], dim=<span class="code-number">1</span>)
+        dec1 = self.dec1(dec1_input)
+        
+        <span class="code-comment"># Final output: per-pixel class predictions</span>
+        output = self.final(dec1)
+        <span class="code-keyword">return</span> output
+
+<span class="code-comment"># U-Net's key insight: skip connections preserve spatial detail</span>
+<span class="code-comment"># Early features have fine spatial resolution; skip connections</span>
+<span class="code-comment"># carry this detail forward to decoder, enabling precise segmentation</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">🎭 Keypoint Detection and Pose Estimation: Understanding Object Parts</div>
+      <div class="concept-body">
+        <p>While segmentation understands entire objects, keypoint detection focuses on specific parts of objects. For human pose estimation, you want to identify the locations of joints: head, shoulders, elbows, wrists, hips, knees, ankles. For face detection, you want to identify eyes, nose, mouth, and face outline points. For hand tracking, you want to identify finger joint positions. The network must predict the 2D coordinates of these keypoints in the image.</p>
+
+        <p>Pose estimation is typically solved by having the network output heatmaps, one for each keypoint. A heatmap is a 2D probability distribution showing where in the image a particular keypoint likely appears. For each keypoint, you create a heatmap of the same spatial resolution as the network's feature maps. Each location in the heatmap contains a value indicating the probability that the keypoint appears at that image location. A high value at a location means the network believes the keypoint is at that position. By applying Gaussian kernels centered at true keypoint locations during training, you teach the network to produce concentrated peaks at keypoint locations.</p>
+
+        <p>OpenPose is a influential architecture for multi-person pose estimation. It uses a two-stage approach. The first stage detects all people in the image (treating each person as a region). The second stage detects keypoints for each person, solving the difficult problem of identifying which keypoints belong to which person when multiple people are present and potentially occluded. The approach uses bipartite matching to group keypoints into coherent people poses.</p>
+
+        <p>Face detection and recognition extend these concepts to faces specifically. Face detection identifies where faces appear in images using similar approaches to object detection. Face recognition goes further by computing embeddings that represent facial identity. Two images of the same person produce similar embeddings, while images of different people produce different embeddings. This enables tasks like face verification (confirming two faces are the same person) and face identification (determining who in a database matches a given face).</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="advanced">
+    <div class="section-label">Understanding Space and Motion</div>
+    <h2 class="section-title">3D Vision: From 2D Images to 3D Understanding</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">🎬 Depth Estimation and 3D Reconstruction: Building Models of the World</div>
+      <div class="concept-body">
+        <p>Depth estimation predicts, for each pixel in an image, how far away that part of the scene is from the camera. Rather than outputting a class label or bounding box, the network outputs a depth value for each pixel. This depth can be represented as distance (in meters or other units) or as relative depth (closer or farther). Depth estimation enables reconstructing 3D structure from single images. A camera sees a 2D projection of a 3D world. Given only that projection, depth estimation helps recover the third dimension.</p>
+
+        <p>There are two approaches to depth estimation. Supervised approaches train the network using ground-truth depth from depth sensors, LiDAR, or photogrammetry. The network learns to predict depth values that match these ground truths. Unsupervised approaches use consistency losses that don't require ground truth depth. For example, if you have consecutive video frames, you can warp one frame toward another using predicted depth and compare the result to the actual next frame. If the prediction is accurate, the warped frame should closely match the actual next frame. The difference between them provides a training signal without requiring ground-truth depth labels.</p>
+
+        <p>Optical flow predicts, for each pixel, which direction and how far that pixel moved between consecutive video frames. While depth tells you how far away pixels are, optical flow tells you how pixels are moving. Unlike depth which is a single scalar per pixel, optical flow is a 2D vector per pixel (x and y motion components). Optical flow is useful for video compression, motion estimation, action recognition, and 3D reconstruction from video.</p>
+
+        <p>3D object detection extends object detection to three dimensions. Rather than predicting 2D bounding boxes, the network predicts 3D bounding boxes showing the object's position, size, and orientation in 3D space. This requires understanding not just what is in the image but how that image relates to the 3D world. Some approaches use multiple camera views or depth sensors to directly observe 3D structure. Others use single images and learn to infer 3D structure from appearance cues learned during training. 3D reconstruction goes further by building complete 3D models of scenes, either as point clouds, meshes, or volumetric representations.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding 3D vision as recovering hidden information.</strong> Imagine being shown a photograph and asked to draw the 3D scene. You can infer approximate depths from cues like occlusion (near objects block far objects), perspective (parallel lines converge), and size (distant objects appear smaller). Your brain uses these cues to infer 3D structure from 2D images. Deep networks learn similar cues. A network trained on images and depth learns to recognize patterns that indicate depth, size, and position. Optical flow learning to track pixels across frames. 3D object detection learning to infer 3D positions from 2D appearances. These tasks require inferring information not directly visible in the images.
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Understanding depth estimation and 3D reasoning</span>
+
+<span class="code-keyword">class</span> <span class="code-function">DepthEstimationNetwork</span>:
+    <span class="code-comment"># Network that predicts depth map from single image</span>
+    <span class="code-keyword">def</span> <span class="code-function">__init__</span>(<span class="code-keyword">self</span>):
+        <span class="code-comment"># Encoder: extract features from input image</span>
+        <span class="code-keyword">self</span>.encoder = ResNet50Backbone()
+        
+        <span class="code-comment"># Decoder: upsample feature map to depth map</span>
+        <span class="code-keyword">self</span>.decoder = DepthDecoder()
+    
+    <span class="code-keyword">def</span> <span class="code-function">forward</span>(<span class="code-keyword">self</span>, image):
+        <span class="code-comment"># Extract hierarchical features from image</span>
+        features = self.encoder(image)
+        
+        <span class="code-comment"># Decode into depth map: same spatial resolution as image</span>
+        depth_map = self.decoder(features)
+        
+        <span class="code-keyword">return</span> depth_map
+
+<span class="code-keyword">def</span> <span class="code-function">unsupervised_depth_loss</span>(
+    current_frame, next_frame, predicted_depth,
+    camera_intrinsics, camera_motion
+):
+    <span class="code-comment"># Unsupervised depth learning using temporal consistency</span>
+    
+    <span class="code-comment"># Step 1: Use predicted depth and camera motion to warp current frame</span>
+    <span class="code-comment"># toward next frame</span>
+    
+    <span class="code-comment"># For each pixel, compute its 3D position using depth</span>
+    <span class="code-comment"># Apply camera motion (rotation and translation)</span>
+    <span class="code-comment"># Project back to 2D image coordinates</span>
+    warped_frame = warp_frame(current_frame, predicted_depth,
+                              camera_motion, camera_intrinsics)
+    
+    <span class="code-comment"># Step 2: Compare warped frame to actual next frame</span>
+    <span class="code-comment"># If depth prediction is good, warped frame should match next frame</span>
+    photometric_loss = <span class="code-function">l1_loss</span>(warped_frame, next_frame)
+    
+    <span class="code-comment"># Step 3: Encourage depth smoothness (nearby pixels should have similar depth)</span>
+    depth_smoothness_loss = smoothness_loss(predicted_depth)
+    
+    <span class="code-comment"># Combined loss: both photometric and smoothness</span>
+    total_loss = photometric_loss + lambda_smooth * depth_smoothness_loss
+    
+    <span class="code-keyword">return</span> total_loss
+
+<span class="code-comment"># Key insight: depth and camera motion are related</span>
+<span class="code-comment"># If you know depth, you can predict how frames change with motion</span>
+<span class="code-comment"># Mismatch between prediction and reality provides training signal</span>
+      </code-block>
+    </div>
+
+  </section>
+
+  <section>
+    <div class="section-label">Understanding the Full Spectrum</div>
+    <h2 class="section-title">Connecting Vision Tasks: From Simple to Complex Understanding</h2>
+
+    <div class="insight-box" style="--insight-color: var(--cool);">
+      <div class="insight-title">Each Task Builds On Previous Understanding</div>
+      <div class="insight-content">Image classification learns to recognize what objects are present. Object detection extends this by localizing where objects appear. Semantic segmentation extends detection by understanding every pixel. Instance segmentation distinguishes separate instances. Panoptic segmentation combines both. Keypoint detection focuses on object parts. Pose estimation connects keypoints into structured poses. Depth estimation adds the third dimension. 3D object detection localizes objects in 3D space. 3D reconstruction builds complete models. Optical flow tracks motion through time. Each task builds on previous understanding while adding new dimensions of information. Understanding this progression helps you recognize that vision is not a single problem but a spectrum of related problems.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--green);">
+      <div class="insight-title">Architecture Choices Reflect Task Requirements</div>
+      <div class="insight-content">Different tasks require different architectural choices. Classification networks can progressively reduce spatial resolution because they only need to make one decision per image. Detection networks must maintain spatial resolution information to localize objects. Segmentation networks must preserve even finer spatial resolution for per-pixel predictions. Multi-task networks that solve multiple tasks simultaneously use architectural designs that balance these competing requirements. Understanding why each architecture makes its choices helps you design networks for novel tasks with similar requirements.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--warm);">
+      <div class="insight-title">Real-World Problems Often Require Multiple Tasks</div>
+      <div class="insight-content">Autonomous vehicles need object detection to identify pedestrians and vehicles, depth estimation to understand distance, optical flow to track motion, pose estimation of pedestrians to predict behavior, and 3D reconstruction to build maps. Medical imaging needs segmentation to delineate structures, keypoint detection to identify anatomical landmarks, and 3D reconstruction to understand patient anatomy. Rather than solving single tasks in isolation, real applications combine multiple vision capabilities. This combinatorial approach enables robust, comprehensive scene understanding that no single task could provide alone.</div>
+    </insight-box>
+
+  </section>
+
+</div>
+
+<footer>
+  <p class="footer-text">Computer Vision Tasks with CNNs — The Foundation of Machine Perception</p>
+</footer>
+
+</body>
+</html>
