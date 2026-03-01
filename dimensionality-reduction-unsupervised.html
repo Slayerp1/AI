@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dimensionality Reduction and Unsupervised Tasks — Finding Patterns in High-Dimensional Data</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #04040a;
+  --accent: #7b2fff;
+  --hot: #ff2d78;
+  --cool: #00e5ff;
+  --warm: #ffb800;
+  --green: #00ff9d;
+  --text: #e0e0f0;
+  --muted: #4a4a6a;
+  --card: #0a0a14;
+  --border: rgba(255,255,255,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(123,47,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0,229,255,0.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(4,4,10,0.9);
+  backdrop-filter: blur(24px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); margin-right: auto; letter-spacing: 2px; }
+.nav-pill {
+  font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 2px;
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(123,47,255,0.4);
+  color: rgba(123,47,255,0.8); text-decoration: none; transition: all 0.2s;
+}
+.nav-pill:hover { background: rgba(123,47,255,0.15); border-color: var(--accent); color: #fff; }
+
+.hero { padding: 90px 0 50px; }
+.hero-eyebrow {
+  font-family: 'Syne Mono', monospace; font-size: 11px; letter-spacing: 4px;
+  color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+  display: flex; align-items: center; gap: 12px;
+}
+.hero-eyebrow::after { content: ''; flex: 1; height: 1px; background: rgba(123,47,255,0.3); }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(48px, 10vw, 100px);
+  line-height: 0.92; margin-bottom: 28px;
+  color: #fff;
+}
+
+.hero-desc { max-width: 750px; font-size: 16px; color: rgba(210,210,240,0.72); line-height: 1.8; margin-bottom: 40px; }
+
+section { padding: 70px 0; border-top: 1px solid var(--border); }
+.section-label { font-family: 'Syne Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 64px); line-height: 1; margin-bottom: 40px; color: #fff; }
+
+.concept-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 36px;
+  border-left: 4px solid var(--card-accent, var(--accent));
+  transition: all 0.3s;
+}
+
+.concept-card:hover {
+  border-color: var(--card-accent, var(--accent));
+  background: linear-gradient(135deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+  transform: translateY(-2px);
+}
+
+.concept-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  color: var(--card-accent, var(--accent));
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.concept-body {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.9;
+  margin-bottom: 28px;
+}
+
+.concept-body p {
+  margin-bottom: 18px;
+}
+
+.concept-body strong {
+  color: #fff;
+}
+
+.code-block {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,229,255,0.2);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 28px 0;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: #fff;
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.code-comment { color: #5c7a8a; }
+.code-keyword { color: var(--accent); }
+.code-string { color: var(--green); }
+.code-number { color: var(--warm); }
+.code-function { color: var(--cool); }
+
+.teaching-box {
+  background: rgba(123,47,255,0.1);
+  border-left: 4px solid var(--accent);
+  padding: 24px;
+  border-radius: 10px;
+  margin: 28px 0;
+  font-size: 15px;
+  color: rgba(210,210,240,0.9);
+  line-height: 1.8;
+}
+
+.teaching-box strong {
+  color: #fff;
+}
+
+.impact-box {
+  background: linear-gradient(135deg, rgba(123,47,255,0.15) 0%, rgba(0,229,255,0.08) 100%);
+  border: 1px solid rgba(123,47,255,0.3);
+  border-radius: 14px;
+  padding: 32px;
+  margin-top: 32px;
+}
+
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+}
+
+.impact-item {
+  padding: 24px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+  border-left: 4px solid var(--impact-color, var(--accent));
+}
+
+.impact-item-title {
+  font-family: 'Syne Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--impact-color, var(--accent));
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+.impact-item-content {
+  font-size: 13px;
+  color: rgba(200,200,220,0.88);
+  line-height: 1.8;
+}
+
+.insight-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  margin: 28px 0;
+  border-left: 4px solid var(--insight-color, var(--accent));
+}
+
+.insight-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  color: var(--insight-color, var(--accent));
+  margin-bottom: 16px;
+  letter-spacing: 1px;
+}
+
+.insight-content {
+  font-size: 15px;
+  color: rgba(210,210,240,0.88);
+  line-height: 1.8;
+}
+
+footer {
+  padding: 60px 0 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-text {
+  font-family: 'Syne Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .hero { padding: 60px 0 40px; }
+  section { padding: 50px 0; }
+  .impact-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">DIMENSIONALITY REDUCTION & UNSUPERVISED</div>
+  <a href="#reduction" class="nav-pill">Reduction</a>
+  <a href="#visualization" class="nav-pill">Visualization</a>
+  <a href="#detection" class="nav-pill">Detection</a>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="hero-eyebrow">Working with High-Dimensional Data and Finding Hidden Patterns</div>
+    <h1>Dimensionality Reduction and Other Unsupervised Tasks</h1>
+    <p class="hero-desc">Real-world data often exists in very high dimensions. An image is thousands of pixels. A text document is tens of thousands of word frequencies. A genetic dataset has millions of genes. These high-dimensional representations contain a lot of redundancy and noise. The true underlying patterns often live in much lower-dimensional spaces. A face image might really be determined by a handful of meaningful variations: how bright the face is, how wide the face is, how rotated it is. A thousand-gene genetic expression might really be explained by a handful of underlying biological processes. Dimensionality reduction discovers these lower-dimensional representations, compressing data while preserving its essential structure and relationships. This transformation serves multiple purposes: it reduces computational cost and storage requirements, it helps visualize high-dimensional data so humans can see patterns, and it often improves machine learning model performance by removing noise and focusing on signal. Beyond dimensionality reduction, this section covers other important unsupervised tasks like anomaly detection that identifies unusual observations, density estimation that learns the probability distribution of data, and association rule mining that discovers relationships between variables. These tasks share a common thread: they extract understanding from data without labels telling you what patterns to find. This section teaches you when high-dimensional data needs reduction, how different reduction techniques preserve different properties, when visualization techniques help understanding, and how to approach other unsupervised learning problems systematically.</p>
+  </section>
+
+  <section id="reduction">
+    <div class="section-label">Compressing Data Systematically</div>
+    <h2 class="section-title">Dimensionality Reduction: Finding Lower-Dimensional Representations</h2>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">📉 Understanding the Dimensionality Reduction Problem</div>
+      <div class="concept-body">
+        <p>Dimensionality reduction addresses a fundamental challenge: high-dimensional data is hard to work with and often redundant. Imagine a dataset with ten thousand features representing gene expression across ten thousand genes. This high dimensionality creates multiple problems. First, computational cost grows with dimension. Algorithms that run in seconds on one thousand features might run in hours on ten thousand. Second, storage becomes expensive. Third, and most subtly, the curse of dimensionality means that as dimensions increase, distances become less meaningful because everything becomes roughly equally far from everything else. Fourth, high-dimensional data often contains noise, and algorithms may overfit to this noise rather than finding true patterns.</p>
+
+        <p>The insight underlying dimensionality reduction is that real data usually has hidden structure. Despite living in high dimensions, the data often lies near a lower-dimensional manifold. A manifold is a smooth surface in high-dimensional space. Imagine points scattered near a two-dimensional surface embedded in three-dimensional space. The points are in three dimensions, but they're essentially two-dimensional because they lie on a surface. Dimensionality reduction discovers these lower-dimensional representations, transforming high-dimensional data into lower dimensions while preserving the relationships and structure that matter.</p>
+
+        <p>There's a crucial distinction between feature selection and feature extraction. Feature selection chooses which of the original features to keep. If you have ten thousand genes and select the one thousand most important, you still work with original gene measurements. Feature extraction creates new features that are combinations of original features. Principal component analysis, for instance, creates new features that are linear combinations of all original features. Feature selection preserves interpretability—the selected features are still genes. Feature extraction sacrifices some interpretability—principal components are abstract combinations—but often captures more information more efficiently.</p>
+
+        <p>Another crucial distinction is between linear and non-linear dimensionality reduction. Linear techniques like PCA assume the underlying structure is a linear subspace. The data might be concentrated near a plane in high-dimensional space, which PCA would discover. Non-linear techniques like t-SNE and UMAP assume the underlying structure is a non-linear manifold. The data might lie near a curve or more complex surface. Non-linear techniques can capture structure that linear techniques miss but at the cost of computational complexity and sometimes less interpretable results.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding dimensionality reduction as finding hidden structure.</strong> Imagine a massive spreadsheet with ten thousand columns. Most columns are noisy or redundant. The true meaningful information is captured by a handful of underlying factors. Dimensionality reduction identifies these factors and projects data into this low-dimensional space. You still have all the information, just organized more efficiently around what truly matters. This is like realizing that a thousand-page novel's plot can be summarized by ten core themes. The themes are lower-dimensional representations that capture the essential story structure without the redundancy and noise.
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">🔄 Principal Component Analysis: Finding Directions of Maximum Variance</div>
+      <div class="concept-body">
+        <p>Principal Component Analysis is the most widely used linear dimensionality reduction technique. PCA finds directions in the high-dimensional space where data varies the most. The intuition is that dimensions where data varies a lot contain information, while dimensions where all points are similar contain redundancy. The first principal component is the direction where data has maximum variance. The second principal component is the direction perpendicular to the first with maximum remaining variance. And so on. If you keep only the first few principal components, you've compressed the data while preserving most of the variation.</p>
+
+        <p>Mathematically, PCA solves an eigenvalue problem on the covariance matrix of the data. The eigenvectors are the principal component directions. The eigenvalues tell you how much variance is explained by each component. This mathematical foundation makes PCA elegant and computationally efficient. You can compute PCA in closed form rather than iteratively searching for good solutions. The result is deterministic and reproducible.</p>
+
+        <p>The power of PCA comes from its simplicity and interpretability of variance. By looking at which original features contribute to each principal component, you understand what real patterns each component represents. The first component might be "overall expression level" if all genes contribute equally. The second might be "contrast between gene sets A and B" if genes in set A have positive loadings and genes in set B have negative loadings. This interpretability is valuable for understanding what patterns your data contains.</p>
+
+        <p>The limitation of PCA is that it's linear. If the true underlying structure is non-linear, PCA might need many components to approximate it. Imagine data arranged on a spiral curve in three dimensions. PCA would need many dimensions to approximate this curve. A non-linear technique could capture it in two dimensions. Additionally, PCA is unsupervised—it maximizes variance without considering whether this variance is predictive of labels. Sometimes dimensions with low variance are more predictive. For prediction tasks, supervised dimensionality reduction techniques that consider labels might be better.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Principal Component Analysis: finding directions of maximum variance</span>
+<span class="code-keyword">from</span> sklearn.decomposition <span class="code-keyword">import</span> PCA
+<span class="code-keyword">from</span> sklearn.preprocessing <span class="code-keyword">import</span> StandardScaler
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+<span class="code-keyword">import</span> matplotlib.pyplot <span class="code-keyword">as</span> plt
+
+<span class="code-comment"># PCA requires standardized data (zero mean, unit variance)</span>
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)  <span class="code-comment"># X is high-dimensional data</span>
+
+<span class="code-comment"># Fit PCA without specifying number of components</span>
+<span class="code-comment"># This computes all components, useful for understanding variance explained</span>
+pca_full = PCA()
+pca_full.fit(X_scaled)
+
+<span class="code-comment"># Explained variance ratio: what fraction of total variance each component explains</span>
+<span class="code-function">print</span>(<span class="code-string">f"Explained variance ratio: {pca_full.explained_variance_ratio_}"</span>)
+
+<span class="code-comment"># Cumulative explained variance: total variance captured by first k components</span>
+cumsum_variance = np.cumsum(pca_full.explained_variance_ratio_)
+<span class="code-function">print</span>(<span class="code-string">f"Cumulative explained variance: {cumsum_variance}"</span>)
+
+<span class="code-comment"># Find how many components needed to explain 95% of variance</span>
+n_components_95 = np.argmax(cumsum_variance >= <span class="code-number">0.95</span>) + <span class="code-number">1</span>
+<span class="code-function">print</span>(<span class="code-string">f"Components needed for 95% variance: {n_components_95}"</span>)
+
+<span class="code-comment"># PCA with selected number of components</span>
+pca = PCA(n_components=<span class="code-number">2</span>)  <span class="code-comment"># Reduce to 2D for visualization</span>
+X_pca = pca.fit_transform(X_scaled)
+
+<span class="code-comment"># Component loadings: how much each original feature contributes to each component</span>
+loadings = pca.components_  <span class="code-comment"># Shape: (n_components, n_features)</span>
+
+<span class="code-comment"># Visualize principal components</span>
+<span class="code-function">print</span>(<span class="code-string">f"PC1 loadings (first 5 features): {loadings[0, :5]}"</span>)
+<span class="code-function">print</span>(<span class="code-string">f"PC2 loadings (first 5 features): {loadings[1, :5]}"</span>)
+
+<span class="code-comment"># Scatterplot of data projected onto first two principal components</span>
+plt.scatter(X_pca[:, <span class="code-number">0</span>], X_pca[:, <span class="code-number">1</span>], alpha=<span class="code-number">0.5</span>)
+plt.xlabel(<span class="code-string">f'PC1 ({pca.explained_variance_ratio_[0]:.1%} variance)'</span>)
+plt.ylabel(<span class="code-string">f'PC2 ({pca.explained_variance_ratio_[1]:.1%} variance)'</span>)
+plt.title(<span class="code-string">'Data Projected onto First Two Principal Components'</span>)
+plt.show()
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🔀 Independent Component Analysis: Separating Independent Signals</div>
+      <div class="concept-body">
+        <p>Independent Component Analysis takes a different perspective on dimensionality reduction. While PCA finds directions of maximum variance, ICA finds directions where the components are statistically independent. This matters in situations where your data is a mixture of independent signals that you want to separate. Imagine a room with multiple people speaking simultaneously. The microphone records a mixture of all voices. ICA can separate these mixed signals into individual speaker signals by finding directions where the resulting components sound like independent voices rather than noise.</p>
+
+        <p>Formally, ICA solves the blind source separation problem: given only a mixture of independent sources, recover the original sources. The algorithm assumes your data is a linear combination of independent components and finds the unmixing matrix. Unlike PCA which is deterministic and has a closed-form solution, ICA is iterative and finds a local optimum. Additionally, ICA can't determine the order or scaling of recovered components—it can recover the components but not which corresponds to which source or their original scales.</p>
+
+        <p>ICA is valuable in specific domains like signal processing, medical imaging (separating different types of brain activity in EEG), and genomics (separating independent biological processes). For general-purpose dimensionality reduction, ICA is less commonly used than PCA. But in domains where your data is known to be a mixture of independent components, ICA often recovers interpretable components that PCA misses.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Independent Component Analysis: separating mixed independent signals</span>
+<span class="code-keyword">from</span> sklearn.decomposition <span class="code-keyword">import</span> FastICA
+
+<span class="code-comment"># ICA assumes data is mixture of independent components</span>
+<span class="code-comment"># It finds the independent components and the unmixing matrix</span>
+
+ica = FastICA(
+    n_components=<span class="code-number">2</span>,  <span class="code-comment"># Number of independent components to extract</span>
+    random_state=<span class="code-number">42</span>,
+    max_iter=<span class="code-number">500</span>
+)
+X_ica = ica.fit_transform(X_scaled)
+
+<span class="code-comment"># Component loadings: how original features mix to create independent components</span>
+<span class="code-comment"># Inverted: tells you how components mix to create original data</span>
+<span class="code-function">print</span>(<span class="code-string">f"ICA components shape: {ica.components_.shape}"</span>)
+
+<span class="code-comment"># Unlike PCA, ICA components aren't ordered by importance</span>
+<span class="code-comment"># But they should be interpretable as independent sources</span>
+      </code-block>
+    </div>
+
+  </section>
+
+  <section id="visualization">
+    <div class="section-label">Making High-Dimensional Data Visible</div>
+    <h2 class="section-title">Visualization Techniques: t-SNE and UMAP for Exploratory Understanding</h2>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">🎨 Understanding Why Visualization Matters for High-Dimensional Data</div>
+      <div class="concept-body">
+        <p>Humans are visual creatures. We can instantly perceive patterns in two-dimensional plots that would take hours to understand from numerical summaries. Yet high-dimensional data resists visualization. You can't directly plot ten-thousand-dimensional data. You must project it into two or three dimensions that humans can see. The challenge is that this projection inevitably loses information. The question becomes: which information to preserve? Different visualization techniques preserve different properties.</p>
+
+        <p>Traditional techniques like PCA project data into the two-dimensional subspace that explains the most variance. This preserves global structure and is fast to compute. However, local structure—how nearby points relate—might get distorted. If clusters of similar points are close in high-dimensional space, this proximity might not be apparent in the two-dimensional PCA projection. Modern techniques like t-SNE and UMAP prioritize local structure, attempting to preserve which points are neighbors in high-dimensional space when projecting to two dimensions. Points that are close in high dimensions should be close in the visualization, even if the global structure gets distorted.</p>
+
+        <p>The distinction is important for interpretation. A PCA plot shows you the overall variance structure. If the plot shows tight clusters well-separated, you know clusters are separated in the primary variance directions. A t-SNE plot shows you local neighborhoods. If the plot shows tight clusters, you know these clusters have similar internal structure and are distinct from other clusters, but you can't necessarily conclude they're separated in the high-dimensional global structure. A single dataset might look very different in PCA versus t-SNE because they preserve different properties.</p>
+      </div>
+
+      <div class="teaching-box">
+        <strong>Understanding visualization as choosing what to preserve during compression.</strong> Imagine creating a map of a city. You could emphasize transportation routes (preserving which neighborhoods are accessible from each other). You could emphasize geographic features (preserving overall layout). You could emphasize population density (preserving where most people live). Different maps for the same city look different because they preserve different properties. Visualization techniques are similar. PCA is like a geographic map showing overall layout. t-SNE is like a social network map showing who interacts with whom. Both are valid visualizations of the same data, each emphasizing different properties. Understanding what property each technique emphasizes prevents misinterpreting visualizations.
+      </div>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--cool);">
+      <div class="concept-title">📍 t-SNE: Visualizing Local Structure and Discovering Clusters</div>
+      <div class="concept-body">
+        <p>t-Distributed Stochastic Neighbor Embedding is a powerful technique for visualizing high-dimensional data. The name reflects its mechanism: it models similarities between points using t-distributions and iteratively adjusts two-dimensional positions to match high-dimensional similarities as closely as possible. Points that are similar in high dimensions should be near each other in the visualization. Points that are dissimilar should be far apart.</p>
+
+        <p>The power of t-SNE is that it naturally reveals clustering structure. Clusters of similar points appear as tight clouds in the visualization. Points between clusters appear isolated or on the periphery. This makes t-SNE excellent for exploratory data analysis and understanding whether your data has natural cluster structure. You can visualize a dataset and instantly see how many clusters exist and what they look like.</p>
+
+        <p>The challenge with t-SNE is computational cost. The algorithm is O(N²) in time and space, prohibitive for very large datasets. Additionally, t-SNE has hyperparameters—perplexity controls the balance between local and global structure, learning rate affects convergence—that significantly impact results. Different hyperparameter choices produce different visualizations of the same data. Furthermore, t-SNE is non-deterministic, producing different results with different random seeds. This means you should run it multiple times to ensure results are stable.</p>
+
+        <p>Critically, t-SNE is a visualization tool, not a dimensionality reduction tool suitable for downstream analysis. The distances in the t-SNE plot are not meaningful for further processing. Clusters that appear well-separated in t-SNE might not be useful for clustering algorithms. The projection is optimized for visualization, not for preserving distances suitable for analysis. If you need dimensionality reduction for downstream tasks, use PCA. If you need visualization to understand structure, use t-SNE.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># t-SNE: visualizing local structure and cluster discovery</span>
+<span class="code-keyword">from</span> sklearn.manifold <span class="code-keyword">import</span> TSNE
+<span class="code-keyword">import</span> matplotlib.pyplot <span class="code-keyword">as</span> plt
+
+<span class="code-comment"># t-SNE projection to 2D (or 3D)</span>
+<span class="code-comment"># perplexity: effective number of neighbors (typically 5-50)</span>
+<span class="code-comment"># n_iter: number of iterations (higher = better convergence but slower)</span>
+tsne = TSNE(
+    n_components=<span class="code-number">2</span>,
+    perplexity=<span class="code-number">30</span>,  <span class="code-comment"># Balance between local and global structure</span>
+    n_iter=<span class="code-number">1000</span>,
+    random_state=<span class="code-number">42</span>
+)
+X_tsne = tsne.fit_transform(X_scaled)
+
+<span class="code-comment"># Visualize with cluster coloring</span>
+plt.figure(figsize=(<span class="code-number">10</span>, <span class="code-number">8</span>))
+scatter = plt.scatter(X_tsne[:, <span class="code-number">0</span>], X_tsne[:, <span class="code-number">1</span>], c=labels, cmap=<span class="code-string">'viridis'</span>, alpha=<span class="code-number">0.6</span>)
+plt.title(<span class="code-string">'t-SNE Visualization of High-Dimensional Data'</span>)
+plt.xlabel(<span class="code-string">'t-SNE 1'</span>)
+plt.ylabel(<span class="code-string">'t-SNE 2'</span>)
+plt.colorbar(scatter, label=<span class="code-string">'Cluster'</span>)
+plt.show()
+
+<span class="code-comment"># Try different perplexity values to see how results change</span>
+<span class="code-keyword">for</span> perplexity <span class="code-keyword">in</span> [<span class="code-number">5</span>, <span class="code-number">30</span>, <span class="code-number">50</span>]:
+    tsne_temp = TSNE(n_components=<span class="code-number">2</span>, perplexity=perplexity, random_state=<span class="code-number">42</span>)
+    X_tsne_temp = tsne_temp.fit_transform(X_scaled)
+    
+    <span class="code-comment"># Different perplexity produces different visualizations</span>
+    <span class="code-comment"># Low perplexity: emphasizes local structure</span>
+    <span class="code-comment"># High perplexity: emphasizes global structure</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">🗺️ UMAP: Balancing Local and Global Structure with Computational Efficiency</div>
+      <div class="concept-body">
+        <p>UMAP (Uniform Manifold Approximation and Projection) is a newer technique that combines many advantages of earlier methods. Like t-SNE, it preserves local neighborhood structure. Unlike t-SNE, it also attempts to preserve global structure, showing overall shape and connectivity patterns. UMAP builds a graph where edges connect nearby points and gradually adjusts this graph to make a lower-dimensional version that preserves the structure.</p>
+
+        <p>The power of UMAP is that it's significantly faster than t-SNE—often ten to one hundred times faster—while producing visualizations that are often more informative. UMAP shows both the local clusters you'd see in t-SNE and the global relationships between clusters. Points that are on opposite sides of the visualization in t-SNE might be closer in UMAP if they're globally related. This makes UMAP better for understanding overall data structure while still revealing clusters.</p>
+
+        <p>Like t-SNE, UMAP has hyperparameters—n_neighbors and min_dist—that affect results. Increasing n_neighbors emphasizes global structure; decreasing emphasizes local structure. Increasing min_dist creates more space between points; decreasing creates tighter clusters. Unlike t-SNE which is quite sensitive to hyperparameters, UMAP is relatively robust, working well with default settings for most problems.</p>
+
+        <p>UMAP has become increasingly popular for high-dimensional data visualization because it balances speed, interpretability, and preservation of both local and global structure. If you need to visualize high-dimensional data and have limited computational resources, UMAP is often better than t-SNE. If you need to understand fine local structure within clusters and don't mind slower computation, t-SNE might be preferable.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># UMAP: efficient visualization preserving local and global structure</span>
+<span class="code-keyword">import</span> umap
+
+<span class="code-comment"># UMAP reducer</span>
+<span class="code-comment"># n_neighbors: size of local neighborhoods (larger = more global)</span>
+<span class="code-comment"># min_dist: minimum distance between points in embedding</span>
+reducer = umap.UMAP(
+    n_components=<span class="code-number">2</span>,
+    n_neighbors=<span class="code-number">15</span>,  <span class="code-comment"># Balance local vs global (default usually good)</span>
+    min_dist=<span class="code-number">0.1</span>,  <span class="code-comment"># Space between points</span>
+    random_state=<span class="code-number">42</span>
+)
+X_umap = reducer.fit_transform(X_scaled)
+
+<span class="code-comment"># Visualize UMAP projection</span>
+plt.figure(figsize=(<span class="code-number">10</span>, <span class="code-number">8</span>))
+scatter = plt.scatter(X_umap[:, <span class="code-number">0</span>], X_umap[:, <span class="code-number">1</span>], c=labels, cmap=<span class="code-string">'viridis'</span>, alpha=<span class="code-number">0.6</span>)
+plt.title(<span class="code-string">'UMAP Visualization: Local and Global Structure'</span>)
+plt.xlabel(<span class="code-string">'UMAP 1'</span>)
+plt.ylabel(<span class="code-string">'UMAP 2'</span>)
+plt.colorbar(scatter, label=<span class="code-string">'Cluster'</span>)
+plt.show()
+
+<span class="code-comment"># UMAP is often much faster than t-SNE</span>
+<span class="code-comment"># Can handle large datasets that would be impractical for t-SNE</span>
+      </code-block>
+    </div>
+
+  </section>
+
+  <section id="detection">
+    <div class="section-label">Finding Unusual and Hidden Patterns</div>
+    <h2 class="section-title">Anomaly Detection, Density Estimation, and Association Rules</h2>
+
+    <div class="concept-card" style="--card-accent: var(--warm);">
+      <div class="concept-title">⚠️ Anomaly Detection: Identifying Unusual Observations</div>
+      <div class="concept-body">
+        <p>Anomaly detection identifies unusual observations that deviate from normal patterns. In fraud detection, anomalies are suspicious transactions. In network security, anomalies are unusual connection patterns suggesting intrusion. In manufacturing, anomalies are defects. In healthcare, anomalies are unusual patient vitals suggesting illness. These problems share a common structure: most observations are normal, but a small percentage are abnormal in ways you want to detect.</p>
+
+        <p>The challenge is defining "normal" and "unusual" without labeled examples of each. You might have data about normal transactions and want to detect fraudulent ones, but fraudsters actively try to make their transactions look normal. You might have manufacturing data mostly from non-defective items but want to detect the rare defects. The asymmetry—plenty of normal data, very few anomalies—makes traditional classification approaches inappropriate because they assume balanced classes.</p>
+
+        <p>Several approaches exist for anomaly detection. Density-based approaches assume anomalies are in low-density regions. If most transactions are in a dense region of feature space and a transaction is far from all others, it's anomalous. Isolation Forest builds random trees and measures how quickly anomalies get isolated versus normal points. Local Outlier Factor compares local density to neighboring density; points in low-density regions relative to their neighbors are anomalous. Gaussian models fit a normal distribution to normal data and flag points unlikely under that distribution as anomalies.</p>
+
+        <p>The key decision is setting the anomaly threshold. How unusual does something need to be to be flagged? This depends on your tolerance for false positives (normal data incorrectly flagged) versus false negatives (anomalies missed). A fraud detector that flags everything as suspicious catches all fraud but is unusable because of false alarms. A detector that flags nothing is missing fraud. The right threshold balances costs of mistakes.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Anomaly detection: identifying unusual observations</span>
+<span class="code-keyword">from</span> sklearn.ensemble <span class="code-keyword">import</span> IsolationForest
+<span class="code-keyword">from</span> sklearn.neighbors <span class="code-keyword">import</span> LocalOutlierFactor
+<span class="code-keyword">from</span> sklearn.covariance <span class="code-keyword">import</span> EllipticEnvelope
+
+<span class="code-comment"># Method 1: Isolation Forest - isolates anomalies through random splitting</span>
+iso_forest = IsolationForest(
+    contamination=<span class="code-number">0.05</span>,  <span class="code-comment"># Expected proportion of anomalies</span>
+    random_state=<span class="code-number">42</span>
+)
+anomaly_labels_if = iso_forest.fit_predict(X_scaled)
+<span class="code-comment"># Returns: 1 for normal, -1 for anomaly</span>
+
+<span class="code-comment"># Method 2: Local Outlier Factor - compares local density to neighbor density</span>
+lof = LocalOutlierFactor(
+    n_neighbors=<span class="code-number">20</span>,  <span class="code-comment"># Size of neighborhood</span>
+    contamination=<span class="code-number">0.05</span>  <span class="code-comment"># Expected proportion of anomalies</span>
+)
+anomaly_labels_lof = lof.fit_predict(X_scaled)
+
+<span class="code-comment"># Method 3: Elliptic Envelope - fits robust covariance estimate</span>
+<span class="code-comment"># Assumes normal data follows multivariate normal distribution</span>
+<span class="code-comment"># Points outside the ellipse are anomalies</span>
+elliptic = EllipticEnvelope(contamination=<span class="code-number">0.05</span>, random_state=<span class="code-number">42</span>)
+anomaly_labels_ee = elliptic.fit_predict(X_scaled)
+
+<span class="code-comment"># Visualize anomalies in 2D (using PCA for projection)</span>
+pca_2d = PCA(n_components=<span class="code-number">2</span>)
+X_pca_2d = pca_2d.fit_transform(X_scaled)
+
+plt.figure(figsize=(<span class="code-number">12</span>, <span class="code-number">4</span>))
+
+<span class="code-keyword">for</span> idx, (labels, method) <span class="code-keyword">in</span> <span class="code-function">enumerate</span>([
+    (anomaly_labels_if, <span class="code-string">'Isolation Forest'</span>),
+    (anomaly_labels_lof, <span class="code-string">'Local Outlier Factor'</span>),
+    (anomaly_labels_ee, <span class="code-string">'Elliptic Envelope'</span>)
+]):
+    plt.subplot(<span class="code-number">1</span>, <span class="code-number">3</span>, idx+<span class="code-number">1</span>)
+    colors = [<span class="code-string">'blue'</span> <span class="code-keyword">if</span> l == <span class="code-number">1</span> <span class="code-keyword">else</span> <span class="code-string">'red'</span> <span class="code-keyword">for</span> l <span class="code-keyword">in</span> labels]
+    plt.scatter(X_pca_2d[:, <span class="code-number">0</span>], X_pca_2d[:, <span class="code-number">1</span>], c=colors, alpha=<span class="code-number">0.6</span>)
+    plt.title(method)
+    plt.xlabel(<span class="code-string">'PC1'</span>)
+    plt.ylabel(<span class="code-string">'PC2'</span>)
+
+plt.tight_layout()
+plt.show()
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--green);">
+      <div class="concept-title">📊 Density Estimation: Learning the Probability Distribution</div>
+      <div class="concept-body">
+        <p>Density estimation learns the probability distribution of your data. Given observations from some unknown distribution, density estimation creates a model that approximates that distribution. This is fundamentally different from clustering which groups similar observations, or anomaly detection which flags unusual observations. Density estimation asks: what is the probability of observing any particular value?</p>
+
+        <p>The value of density estimation is that many downstream tasks benefit from knowing the probability distribution. Sampling from the learned distribution generates synthetic data resembling your original dataset. Computing the probability density of new observations tells you how likely they are under the estimated distribution, useful for anomaly detection or information-theoretic calculations. Understanding where probability concentrates reveals where your data is dense and where it's sparse.</p>
+
+        <p>Approaches include parametric methods that assume a specific distribution shape (like Gaussian or Mixture of Gaussians), and non-parametric methods like Kernel Density Estimation that make fewer assumptions. Gaussian Mixture Models were discussed in the clustering section but also serve as density estimators. KDE smooths observed points with kernels to estimate density. The choice between methods involves balancing assumptions about distribution shape against flexibility to capture complex distributions.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Density estimation: learning probability distributions</span>
+<span class="code-keyword">from</span> sklearn.neighbors <span class="code-keyword">import</span> KernelDensity
+<span class="code-keyword">from</span> sklearn.mixture <span class="code-keyword">import</span> GaussianMixture
+
+<span class="code-comment"># Method 1: Kernel Density Estimation - non-parametric approach</span>
+<span class="code-comment"># Smooths observed points with kernels to estimate density</span>
+kde = KernelDensity(
+    bandwidth=<span class="code-number">0.5</span>,  <span class="code-comment"># Width of smoothing kernel (controls smoothness)</span>
+    kernel=<span class="code-string">'gaussian'</span>  <span class="code-comment"># Type of kernel (gaussian, tophat, epanechnikov, etc.)</span>
+)
+kde.fit(X_scaled)
+
+<span class="code-comment"># Evaluate probability density at arbitrary points</span>
+test_points = np.array([[<span class="code-number">0</span>, <span class="code-number">0</span>], [<span class="code-number">1</span>, <span class="code-number">1</span>], [-<span class="code-number">1</span>, -<span class="code-number">1</span>]])
+log_densities = kde.score_samples(test_points)  <span class="code-comment"># log probability</span>
+densities = np.exp(log_densities)  <span class="code-comment"># Convert to probability</span>
+
+<span class="code-comment"># Method 2: Gaussian Mixture Model - parametric approach</span>
+<span class="code-comment"># Assumes data comes from mixture of Gaussians</span>
+gmm = GaussianMixture(n_components=<span class="code-number">3</span>, random_state=<span class="code-number">42</span>)
+gmm.fit(X_scaled)
+
+<span class="code-comment"># Evaluate probability density and log-likelihood</span>
+log_likelihood = gmm.score(X_scaled)  <span class="code-comment"># Average log-likelihood of data</span>
+log_densities_gmm = gmm.score_samples(X_scaled)  <span class="code-comment"># Per-sample log probability</span>
+
+<span class="code-comment"># Generate new samples from the estimated distribution</span>
+X_samples, labels = gmm.sample(n_samples=<span class="code-number">100</span>)
+<span class="code-comment"># These synthetic samples come from estimated distribution</span>
+      </code-block>
+    </div>
+
+    <div class="concept-card" style="--card-accent: var(--hot);">
+      <div class="concept-title">🔗 Association Rules and Pattern Mining: Finding Relationships Between Variables</div>
+      <div class="concept-body">
+        <p>Association rule mining discovers relationships between variables in large datasets. The most famous example comes from retail: discovering that customers who buy beer often also buy diapers. This seemingly odd relationship reveals that people buying supplies for small children (diapers) also stock up on beer (since they'll have less social time). Once discovered, this rule can inform store layout and marketing. Association rules describe dependencies like "if customers buy X, they're likely to buy Y."</p>
+
+        <p>Association rules operate on categorical data. Each observation is a set of items or attributes. The goal is finding frequent itemsets—combinations of items that appear frequently together—and rules that predict one item from others. Metrics like support (how frequently a rule appears), confidence (how often the conclusion is true when the premise is true), and lift (how much more likely the conclusion is given the premise) quantify rule strength.</p>
+
+        <p>Applications extend beyond retail. In healthcare, discovering that patients with symptoms A and B often develop condition C informs diagnosis. In biology, discovering which genes are co-expressed helps understand gene networks. In website analytics, discovering which pages users visit together informs site design and personalization. The challenge is that even with modest numbers of items, the number of possible itemsets explodes combinatorially. Algorithms like Apriori use frequency thresholds to prune search space and scale to real datasets.</p>
+      </div>
+
+      <div class="code-block">
+<span class="code-comment"># Association rule mining: finding relationships between variables</span>
+<span class="code-keyword">from</span> mlxtend.frequent_patterns <span class="code-keyword">import</span> apriori, association_rules
+<span class="code-keyword">from</span> mlxtend.preprocessing <span class="code-keyword">import</span> TransactionEncoder
+<span class="code-keyword">import</span> pandas <span class="code-keyword">as</span> pd
+
+<span class="code-comment"># Prepare transaction data (what items each customer bought)</span>
+<span class="code-comment"># Each transaction is a set of items</span>
+transactions = [
+    [<span class="code-string">'milk'</span>, <span class="code-string">'bread'</span>, <span class="code-string">'butter'</span>],
+    [<span class="code-string">'milk'</span>, <span class="code-string">'diapers'</span>, <span class="code-string">'beer'</span>],
+    [<span class="code-string">'milk'</span>, <span class="code-string">'bread'</span>, <span class="code-string">'diapers'</span>, <span class="code-string">'beer'</span>],
+    [<span class="code-string">'milk'</span>, <span class="code-string">'bread'</span>, <span class="code-string">'butter'</span>],
+    [<span class="code-string">'beer'</span>, <span class="code-string">'diapers'</span>],
+    <span class="code-comment"># ... more transactions ...</span>
+]
+
+<span class="code-comment"># Convert to one-hot encoded dataframe (binary matrix)</span>
+te = TransactionEncoder()
+te_ary = te.fit(transactions).transform(transactions)
+df_encoded = pd.DataFrame(te_ary, columns=te.columns_)
+
+<span class="code-comment"># Find frequent itemsets using Apriori algorithm</span>
+<span class="code-comment"># min_support: minimum fraction of transactions containing the itemset</span>
+frequent_itemsets = apriori(df_encoded, min_support=<span class="code-number">0.3</span>, use_colnames=<span class="code-keyword">True</span>)
+
+<span class="code-comment"># Generate association rules from frequent itemsets</span>
+<span class="code-comment"># metric='confidence': how often conclusion follows premise</span>
+<span class="code-comment"># min_threshold: minimum confidence for rule</span>
+rules = association_rules(frequent_itemsets, metric=<span class="code-string">'confidence'</span>, min_threshold=<span class="code-number">0.5</span>)
+
+<span class="code-comment"># Rules have antecedents (premises) and consequents (conclusions)</span>
+<span class="code-comment"># Support: fraction of transactions containing both</span>
+<span class="code-comment"># Confidence: P(consequent | antecedent)</span>
+<span class="code-comment"># Lift: how much more likely consequent given antecedent</span>
+<span class="code-function">print</span>(rules[[<span class="code-string">'antecedents'</span>, <span class="code-string">'consequents'</span>, <span class="code-string">'support'</span>, <span class="code-string">'confidence'</span>, <span class="code-string">'lift'</span>]])
+
+<span class="code-comment"># Sort by lift to find most interesting rules</span>
+rules_sorted = rules.sort_values(by=<span class="code-string">'lift'</span>, ascending=<span class="code-keyword">False</span>)
+<span class="code-function">print</span>(<span class="code-string">"Top rules by lift (most interesting):"</span>)
+<span class="code-function">print</span>(rules_sorted.head())
+      </code-block>
+    </div>
+
+  </section>
+
+  <section>
+    <div class="section-label">Choosing Your Unsupervised Approach</div>
+    <h2 class="section-title">Integrating Unsupervised Techniques Into Your Data Understanding Workflow</h2>
+
+    <div class="insight-box" style="--insight-color: var(--cool);">
+      <div class="insight-title">Use Dimensionality Reduction When You Need Efficiency or Visualization</div>
+      <div class="insight-content">When you have high-dimensional data and need to reduce computation cost, PCA is your default choice. It's fast, interpretable, and preserves the main directions of variation. When you need to visualize data to understand structure, use UMAP first—it's faster than t-SNE, preserves both local and global structure, and usually produces informative visualizations. Use t-SNE when you specifically care about local neighborhood structure and can afford the computational cost. Remember that visualization techniques like t-SNE and UMAP distort distances and shouldn't be used for downstream analysis—use them only for understanding structure visually.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--green);">
+      <div class="insight-title">Use Clustering When You Want to Group Similar Observations</div>
+      <div class="insight-content">When you want to discover natural groups, use K-means first. If results seem wrong or clusters have unusual shapes, try DBSCAN. If you want probabilistic assignments and to understand relationships, use Gaussian Mixture Models. These unsupervised grouping methods work well even with limited labeled data. The challenge is evaluating quality without ground truth labels, which is where metrics like silhouette score help.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--warm);">
+      <div class="insight-title">Use Anomaly Detection When You Need to Find Unusual Observations</div>
+      <div class="insight-content">When you need to identify unusual observations, start with Isolation Forest—it's fast, interpretable, and works well without specifying what "unusual" means. Use Local Outlier Factor when you suspect anomalies cluster in low-density regions. Remember that setting the contamination threshold is critical and should reflect your tolerance for false positives versus false negatives. Validate results through visualization and domain expertise rather than trusting anomaly scores blindly.</div>
+    </insight-box>
+
+    <div class="insight-box" style="--insight-color: var(--hot);">
+      <div class="insight-title">Use Association Rules When You Want to Discover Item Relationships</div>
+      <div class="insight-content">When working with categorical transaction data, association rule mining discovers meaningful relationships. The Apriori algorithm efficiently explores the combinatorial space of possible itemsets. Interpret rules using lift rather than confidence alone—high confidence with low lift means the rule is obvious (no new information), while high lift with moderate confidence means the rule reveals surprising relationships. Validate rules through domain expertise rather than statistics alone, as statistical significance with enough data doesn't guarantee business value.</div>
+    </insight-box>
+
+  </section>
+
+</div>
+
+<footer>
+  <p class="footer-text">Dimensionality Reduction and Unsupervised Tasks — Finding Structure and Understanding Complex Data</p>
+</footer>
+
+</body>
+</html>
